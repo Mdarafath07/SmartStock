@@ -48,6 +48,7 @@ class ReportService {
 
     for (final doc in snapshot.docs) {
       final data = doc.data();
+      if (data['saleType'] == 'warranty_claim') continue;
       final catId = data['categoryId'] as String? ?? 'unknown';
       String catName = data['categoryName'] as String? ?? '';
       if (catName.isEmpty) {
@@ -79,6 +80,7 @@ class ReportService {
 
     for (final doc in snapshot.docs) {
       final data = doc.data();
+      if (data['saleType'] == 'warranty_claim') continue;
       final productId = data['productId'] as String? ?? '';
       if (productId.isEmpty) continue;
 
@@ -125,6 +127,7 @@ class ReportService {
 
     for (final doc in snapshot.docs) {
       final data = doc.data();
+      if (data['saleType'] == 'warranty_claim') continue;
       final saleDate = (data['saleDate'] as Timestamp).toDate();
       final dayKey =
           '${saleDate.year}-${saleDate.month.toString().padLeft(2, '0')}-${saleDate.day.toString().padLeft(2, '0')}';
@@ -163,6 +166,7 @@ class ReportService {
 
     for (final doc in snapshot.docs) {
       final data = doc.data();
+      if (data['saleType'] == 'warranty_claim') continue;
       final saleDate = (data['saleDate'] as Timestamp).toDate();
       final monthKey = '${saleDate.year}-${saleDate.month.toString().padLeft(2, '0')}';
 
@@ -195,6 +199,7 @@ class ReportService {
 
     for (final doc in snapshot.docs) {
       final data = doc.data();
+      if (data['saleType'] == 'warranty_claim') continue;
       totalSales += (data['salePrice'] as num?)?.toDouble() ?? 0.0;
       totalProfit += (data['profit'] as num?)?.toDouble() ?? 0.0;
       totalTransactions += 1;
@@ -216,6 +221,7 @@ class ReportService {
 
     for (final doc in snapshot.docs) {
       final data = doc.data() as Map<String, dynamic>;
+      if (data['saleType'] == 'warranty_claim') continue;
       totalSales += (data['salePrice'] as num?)?.toDouble() ?? 0.0;
       totalProfit += (data['profit'] as num?)?.toDouble() ?? 0.0;
       totalProducts += 1;

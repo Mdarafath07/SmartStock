@@ -72,6 +72,7 @@ class CustomerService {
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => Sale.fromJson(doc.data(), doc.id))
+            .where((sale) => sale.saleType != 'warranty_claim')
             .toList());
   }
 

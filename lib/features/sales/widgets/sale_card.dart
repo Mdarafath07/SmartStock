@@ -36,11 +36,13 @@ class SaleCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (sale.isReplacement)
+                  if (sale.warrantyClaimed || sale.isWarrantyClaim)
+                    _badge('Warranty', Colors.blue, theme)
+                  else if (sale.isReplacement)
                     _badge('Replacement', Colors.orange, theme)
-                  else if (sale.isWarrantyClaim)
-                    _badge('Warranty', Colors.blue, theme),
-                  if (!sale.isReplacement && !sale.isWarrantyClaim)
+                  else if (sale.warrantyExpiryDate.isAfter(DateTime.now()))
+                    _badge('Warranty', Colors.green, theme)
+                  else
                     Text(
                       timeFormatter.format(sale.saleDate),
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -57,20 +59,37 @@ class SaleCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              GestureDetector(
-                onLongPress: () {
-                  Clipboard.setData(ClipboardData(text: sale.serialNumber));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Serial number copied')),
-                  );
-                },
-                child: Text(
+              if (sale.isWarrantyClaim)
+                Text(
                   'S/N: ${sale.serialNumber}',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                )
+              else if (sale.warrantyClaimed)
+                Text(
+                  'New S/N: ${sale.newSerialNumber ?? '-'}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                )
+              else
+                GestureDetector(
+                  onLongPress: () {
+                    Clipboard.setData(ClipboardData(text: sale.serialNumber));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Serial number copied')),
+                    );
+                  },
+                  child: Text(
+                    'S/N: ${sale.serialNumber}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
-              ),
               const SizedBox(height: 8),
               Row(
                 children: [

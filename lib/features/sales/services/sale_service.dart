@@ -222,6 +222,7 @@ class SaleService {
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => Sale.fromJson(doc.data(), doc.id))
+            .where((sale) => sale.saleType != 'warranty_claim')
             .toList());
   }
 
@@ -260,6 +261,7 @@ class SaleService {
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => Sale.fromJson(doc.data() as Map<String, dynamic>, doc.id))
+            .where((sale) => sale.saleType != 'warranty_claim')
             .toList());
   }
 
@@ -283,15 +285,18 @@ class SaleService {
 
     double totalAmount = 0;
     double totalProfit = 0;
+    int totalCount = 0;
     for (final doc in snapshot.docs) {
       final data = doc.data();
+      if (data['saleType'] == 'warranty_claim') continue;
       totalAmount += (data['salePrice'] as num?)?.toDouble() ?? 0.0;
       totalProfit += (data['profit'] as num?)?.toDouble() ?? 0.0;
+      totalCount++;
     }
 
     return {
       'totalAmount': totalAmount,
-      'totalCount': snapshot.docs.length,
+      'totalCount': totalCount,
       'totalProfit': totalProfit,
     };
   }

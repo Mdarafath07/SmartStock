@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:smartstock/features/sales/models/sale_model.dart';
 import 'package:smartstock/features/sales/providers/sale_provider.dart';
+import 'package:smartstock/features/warranty/screens/warranty_details_screen.dart';
 
 class SaleDetailsScreen extends StatefulWidget {
   final String saleId;
@@ -126,12 +127,22 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                     const SizedBox(height: 12),
                     _buildInfoRow(theme, 'Product', sale.productName),
                     _buildInfoRow(theme, 'Model', sale.modelNumber),
-                    _buildInfoRow(theme, 'Serial Number', sale.serialNumber, onLongPress: () {
-                      Clipboard.setData(ClipboardData(text: sale.serialNumber));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Serial number copied')),
-                      );
-                    }),
+                    if (sale.isWarrantyClaim) ...[
+                      _buildInfoRow(theme, 'Old Serial', sale.oldSerialNumber ?? '-'),
+                      _buildInfoRow(theme, 'New Serial', sale.serialNumber,
+                          valueColor: theme.colorScheme.primary),
+                    ] else if (sale.warrantyClaimed) ...[
+                      _buildInfoRow(theme, 'Serial Number', sale.serialNumber),
+                      if (sale.newSerialNumber != null)
+                        _buildInfoRow(theme, 'New Serial', sale.newSerialNumber!,
+                            valueColor: Colors.green),
+                    ] else
+                      _buildInfoRow(theme, 'Serial Number', sale.serialNumber, onLongPress: () {
+                        Clipboard.setData(ClipboardData(text: sale.serialNumber));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Serial number copied')),
+                        );
+                      }),
                   ],
                 ),
               ),
@@ -193,36 +204,73 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                             style: theme.textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.bold)),
                         const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: isWarrantyValid
-                                ? Colors.green.withValues(alpha: 0.1)
-                                : Colors.red.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            isWarrantyValid ? 'Active' : 'Expired',
-                            style: TextStyle(
-                              color:
-                                  isWarrantyValid ? Colors.green : Colors.red,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
+                        if (sale.warrantyClaimed)
+                          _badge('Claimed', Colors.grey)
+                        else if (isWarrantyValid)
+                          _badge('Active', Colors.green)
+                        else
+                          _badge('Expired', Colors.red),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    _buildInfoRow(theme, 'Expiry Date',
-                        dateFormatter.format(sale.warrantyExpiryDate)),
-                    const SizedBox(height: 8),
-                    LinearProgressIndicator(
-                      value: _getWarrantyProgress(sale),
-                      backgroundColor:
-                          theme.colorScheme.surfaceContainerHighest,
-                      color: isWarrantyValid ? Colors.green : Colors.red,
+                    if (sale.warrantyClaimed) ...[
+                      _buildInfoRow(theme, 'Old Serial', sale.serialNumber),
+                      if (sale.newSerialNumber != null)
+                        _buildInfoRow(theme, 'New Serial', sale.newSerialNumber!,
+                            valueColor: theme.colorScheme.primary),
+                      _buildInfoRow(theme, 'Status', 'Warranty'),
+                      if (sale.claimDate != null)
+                        _buildInfoRow(theme, 'Claim Date',
+                            dateFormatter.format(sale.claimDate!)),
+                      if (sale.relatedSaleId != null) ...[
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => SaleDetailsScreen(saleId: sale.relatedSaleId!),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.receipt, size: 18),
+                            label: const Text('View Claim Sale'),
+                          ),
+                        ),
+                      ],
+                    ] else if (isWarrantyValid) ...[
+                      _buildInfoRow(theme, 'Expiry Date',
+                          dateFormatter.format(sale.warrantyExpiryDate)),
+                      const SizedBox(height: 8),
+                      LinearProgressIndicator(
+                        value: _getWarrantyProgress(sale),
+                        backgroundColor:
+                            theme.colorScheme.surfaceContainerHighest,
+                        color: Colors.green,
+                      ),
+                    ] else ...[
+                      _buildInfoRow(theme, 'Expiry Date',
+                          dateFormatter.format(sale.warrantyExpiryDate)),
+                      _buildInfoRow(theme, 'Status', 'Warranty expired'),
+                    ],
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  WarrantyDetailsScreen(warrantyId: sale.id),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.open_in_new, size: 18),
+                        label: const Text('View Warranty Details'),
+                      ),
                     ),
                   ],
                 ),

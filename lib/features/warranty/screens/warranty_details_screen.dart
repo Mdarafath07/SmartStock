@@ -7,6 +7,7 @@ import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/utils/date_utils.dart';
 import 'package:smartstock/core/widgets/error_widget.dart';
 import 'package:smartstock/features/warranty/models/warranty_model.dart';
+import 'package:smartstock/features/sales/screens/sale_details_screen.dart';
 import 'package:smartstock/features/warranty/providers/warranty_provider.dart';
 
 class WarrantyDetailsScreen extends StatefulWidget {
@@ -19,6 +20,9 @@ class WarrantyDetailsScreen extends StatefulWidget {
 }
 
 class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
+  bool _isClaiming = false;
+  Map<String, dynamic>? _claimResult;
+
   @override
   void initState() {
     super.initState();
@@ -82,52 +86,231 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
           _buildSectionTitle('Warranty Timeline'),
           const SizedBox(height: 8),
           _buildTimeline(warranty),
+          if (warranty.isClaimable) ...[
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _isClaiming ? null : _claim,
+                icon: _isClaiming
+                    ? const SizedBox(
+                        width: 18, height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.verified_user),
+                label: const Text('Claim Your Warranty'),
+              ),
+            ),
+          ],
+          if (warranty.warrantyClaimed) ...[
+            const SizedBox(height: 20),
+            _buildClaimSummary(warranty),
+          ],
         ],
       ),
     );
   }
 
+  Future<void> _claim() async {
+    final provider = context.read<WarrantyProvider>();
+    final w = provider.selectedWarranty;
+    if (w == null) return;
+
+    final newSerial = await showDialog<String>(
+      context: context,
+      builder: (ctx) => const _ClaimFormDialog(),
+    );
+    if (newSerial == null || !mounted) return;
+
+    setState(() => _isClaiming = true);
+    try {
+      await provider.processClaim(
+        saleId: w.saleId,
+        serialNumber: w.serialNumber,
+        newSerialNumber: newSerial,
+        notes: 'Claimed from warranty details',
+      );
+      setState(() {
+        _claimResult = {'newSerial': newSerial};
+      });
+      if (mounted) {
+        provider.loadBySaleId(widget.warrantyId);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isClaiming = false);
+    }
+  }
+
+  Widget _buildClaimSummary(Warranty warranty) {
+    final isClaimSale = warranty.saleType == 'warranty_claim';
+    final dateFormat = DateFormat('MMM dd, yyyy');
+
+    final String oldSerial;
+    final String? oldName;
+    final String? oldModel;
+    final DateTime? oldDate;
+
+    final String newSerial;
+    final String? newName;
+    final String? newModel;
+    final DateTime? newDate;
+
+    if (isClaimSale) {
+      oldSerial = warranty.oldSerialNumber ?? '-';
+      oldName = null;
+      oldModel = null;
+      oldDate = warranty.oldPurchaseDate;
+
+      newSerial = warranty.serialNumber;
+      newName = warranty.productName;
+      newModel = warranty.modelNumber;
+      newDate = warranty.purchaseDate;
+    } else {
+      oldSerial = warranty.serialNumber;
+      oldName = warranty.productName;
+      oldModel = warranty.modelNumber;
+      oldDate = warranty.purchaseDate;
+
+      newSerial = _claimResult != null
+          ? _claimResult!['newSerial'] as String
+          : warranty.newSerialNumber ?? '-';
+      newName = null;
+      newModel = null;
+      newDate = warranty.claimDate;
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.assignment_rounded, color: ColorConstants.onSurfaceVariant),
+                const SizedBox(width: 8),
+                Text('Warranty Claim Summary',
+                    style: AppTextStyles.titleMd.copyWith(fontWeight: FontWeight.w600)),
+              ],
+            ),
+            const Divider(height: 24),
+            Text('Original Product (Returned)',
+                style: AppTextStyles.titleMd.copyWith(fontSize: 14, color: ColorConstants.onSurfaceVariant)),
+            const SizedBox(height: 8),
+            if (oldName != null) _infoRow(Icons.inventory_2_rounded, 'Product: $oldName'),
+            if (oldModel != null) _infoRow(Icons.qr_code_rounded, 'Model: $oldModel'),
+            _infoRow(Icons.confirmation_number_rounded, 'Serial: $oldSerial'),
+            if (oldDate != null) _infoRow(Icons.date_range_rounded, 'Purchase: ${dateFormat.format(oldDate)}'),
+            const Divider(height: 24),
+            Text('Replacement Product (Warranty)',
+                style: AppTextStyles.titleMd.copyWith(fontSize: 14, color: ColorConstants.onSurfaceVariant)),
+            const SizedBox(height: 8),
+            if (newName != null) _infoRow(Icons.inventory_2_rounded, 'Product: $newName'),
+            if (newModel != null) _infoRow(Icons.qr_code_rounded, 'Model: $newModel'),
+            _infoRow(Icons.qr_code_rounded, 'Serial: $newSerial',
+                customColor: ColorConstants.primary),
+            if (newDate != null) _infoRow(Icons.date_range_rounded, 'Claim Date: ${dateFormat.format(newDate)}',
+                customColor: ColorConstants.primary),
+            if (warranty.relatedSaleId != null) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            SaleDetailsScreen(saleId: warranty.relatedSaleId!),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.receipt, size: 18),
+                  label: Text(isClaimSale ? 'View Original Sale' : 'View Claim Sale'),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildStatusBanner(Warranty warranty) {
+    final bool isClaimed = warranty.warrantyClaimed;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: warranty.isActive
-            ? ColorConstants.successContainer
-            : ColorConstants.errorContainer,
+        color: isClaimed
+            ? ColorConstants.surfaceContainerHighest
+            : warranty.isActive
+                ? ColorConstants.successContainer
+                : ColorConstants.errorContainer,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         children: [
           Icon(
-            warranty.isActive
-                ? Icons.check_circle_rounded
-                : Icons.cancel_rounded,
+            isClaimed
+                ? Icons.assignment_rounded
+                : warranty.isActive
+                    ? Icons.check_circle_rounded
+                    : Icons.cancel_rounded,
             size: 64,
-            color: warranty.isActive
-                ? ColorConstants.success
-                : ColorConstants.error,
+            color: isClaimed
+                ? ColorConstants.onSurfaceVariant
+                : warranty.isActive
+                    ? ColorConstants.success
+                    : ColorConstants.error,
           ),
           const SizedBox(height: 12),
           Text(
-            warranty.isActive ? 'Warranty Active' : 'Warranty Expired',
+            isClaimed
+                ? 'Warranty Claimed'
+                : warranty.isActive
+                    ? 'Warranty Active'
+                    : 'Warranty Expired',
             style: AppTextStyles.titleMd.copyWith(
-              color: warranty.isActive
-                  ? ColorConstants.success
-                  : ColorConstants.error,
+              color: isClaimed
+                  ? ColorConstants.onSurfaceVariant
+                  : warranty.isActive
+                      ? ColorConstants.success
+                      : ColorConstants.error,
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            warranty.isActive
-                ? 'Valid Until: ${AppDateUtils.formatDate(warranty.expiryDate)}'
-                : 'Expired On: ${AppDateUtils.formatDate(warranty.expiryDate)}',
-            style: AppTextStyles.bodyMd.copyWith(
-              color: warranty.isActive
-                  ? ColorConstants.success
-                  : ColorConstants.error,
+          if (isClaimed) ...[
+            Text(
+              'Old Serial: ${warranty.serialNumber}',
+              style: AppTextStyles.bodyMd.copyWith(
+                color: ColorConstants.onSurfaceVariant,
+              ),
             ),
-          ),
+            if (warranty.newSerialNumber != null)
+              Text(
+                'New Serial: ${warranty.newSerialNumber}',
+                style: AppTextStyles.bodyMd.copyWith(
+                  color: ColorConstants.primary,
+                ),
+              ),
+          ] else
+            Text(
+              warranty.isActive
+                  ? 'Valid Until: ${AppDateUtils.formatDate(warranty.expiryDate)}'
+                  : 'Expired On: ${AppDateUtils.formatDate(warranty.expiryDate)}',
+              style: AppTextStyles.bodyMd.copyWith(
+                color: warranty.isActive
+                    ? ColorConstants.success
+                    : ColorConstants.error,
+              ),
+            ),
         ],
       ),
     );
@@ -366,10 +549,12 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
     );
   }
 
-  Widget _infoRow(IconData icon, String text, {VoidCallback? onLongPress}) {
+  Widget _infoRow(IconData icon, String text, {VoidCallback? onLongPress, Color? customColor}) {
+    final iconColor = customColor ?? ColorConstants.onSurfaceVariant;
+    final textColor = customColor ?? ColorConstants.onSurface;
     return Row(
       children: [
-        Icon(icon, size: 18, color: ColorConstants.onSurfaceVariant),
+        Icon(icon, size: 18, color: iconColor),
         const SizedBox(width: 8),
         Expanded(
           child: onLongPress != null
@@ -378,16 +563,73 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
                   child: Text(
                     text,
                     style: AppTextStyles.bodyMd.copyWith(
-                      color: ColorConstants.onSurface,
+                      color: textColor,
                     ),
                   ),
                 )
               : Text(
                   text,
                   style: AppTextStyles.bodyMd.copyWith(
-                    color: ColorConstants.onSurface,
+                    color: textColor,
                   ),
                 ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ClaimFormDialog extends StatefulWidget {
+  const _ClaimFormDialog();
+
+  @override
+  State<_ClaimFormDialog> createState() => _ClaimFormDialogState();
+}
+
+class _ClaimFormDialogState extends State<_ClaimFormDialog> {
+  final _serialCtrl = TextEditingController();
+  final _reasonCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _serialCtrl.dispose();
+    _reasonCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Claim Warranty'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _serialCtrl,
+            decoration: const InputDecoration(
+              labelText: 'New Serial Number',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _reasonCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Reason',
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 2,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _serialCtrl.text.trim()),
+          child: const Text('Submit'),
         ),
       ],
     );

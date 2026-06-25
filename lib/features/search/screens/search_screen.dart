@@ -159,6 +159,7 @@ class _SearchScreenState extends State<SearchScreen> {
     return snapshot.docs
         .where((doc) {
           final data = doc.data();
+          if (data['saleType'] == 'warranty_claim') return false;
           final productName =
               (data['productName'] as String? ?? '').toLowerCase();
           final serial =

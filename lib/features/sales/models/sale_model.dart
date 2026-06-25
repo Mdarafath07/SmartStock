@@ -21,6 +21,9 @@ class Sale {
   final String saleType;
   final String? relatedSaleId;
   final String? oldSerialNumber;
+  final bool warrantyClaimed;
+  final String? newSerialNumber;
+  final DateTime? claimDate;
 
   Sale({
     this.id = '',
@@ -43,12 +46,17 @@ class Sale {
     this.saleType = 'normal',
     this.relatedSaleId,
     this.oldSerialNumber,
+    this.warrantyClaimed = false,
+    this.newSerialNumber,
+    this.claimDate,
   })  : saleDate = saleDate ?? DateTime.now(),
         warrantyExpiryDate = warrantyExpiryDate ?? DateTime.now(),
         createdAt = createdAt ?? DateTime.now();
 
   bool get isReplacement => saleType == 'replacement';
   bool get isWarrantyClaim => saleType == 'warranty_claim';
+  bool get isWarrantyClaimable =>
+      saleType == 'normal' && warrantyExpiryDate.isAfter(DateTime.now()) && !warrantyClaimed;
 
   factory Sale.fromJson(Map<String, dynamic> json, String id) {
     return Sale(
@@ -73,6 +81,9 @@ class Sale {
       saleType: json['saleType'] as String? ?? 'normal',
       relatedSaleId: json['relatedSaleId'] as String?,
       oldSerialNumber: json['oldSerialNumber'] as String?,
+      warrantyClaimed: json['warrantyClaimed'] as bool? ?? false,
+      newSerialNumber: json['newSerialNumber'] as String?,
+      claimDate: (json['claimDate'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -97,6 +108,9 @@ class Sale {
       'saleType': saleType,
       'relatedSaleId': relatedSaleId,
       'oldSerialNumber': oldSerialNumber,
+      'warrantyClaimed': warrantyClaimed,
+      'newSerialNumber': newSerialNumber,
+      'claimDate': claimDate != null ? Timestamp.fromDate(claimDate!) : null,
     };
   }
 
@@ -123,6 +137,9 @@ class Sale {
     String? saleType,
     String? relatedSaleId,
     String? oldSerialNumber,
+    bool? warrantyClaimed,
+    String? newSerialNumber,
+    DateTime? claimDate,
   }) {
     return Sale(
       id: id ?? this.id,
@@ -145,6 +162,9 @@ class Sale {
       saleType: saleType ?? this.saleType,
       relatedSaleId: relatedSaleId ?? this.relatedSaleId,
       oldSerialNumber: oldSerialNumber ?? this.oldSerialNumber,
+      warrantyClaimed: warrantyClaimed ?? this.warrantyClaimed,
+      newSerialNumber: newSerialNumber ?? this.newSerialNumber,
+      claimDate: claimDate ?? this.claimDate,
     );
   }
 }

@@ -84,13 +84,16 @@ class DashboardService {
         .get();
 
     double totalAmount = 0;
+    int totalQuantity = 0;
     for (final doc in snapshot.docs) {
       final data = doc.data();
+      if (data['saleType'] == 'warranty_claim') continue;
       totalAmount += (data['salePrice'] as num?)?.toDouble() ?? 0.0;
+      totalQuantity++;
     }
     return {
       'totalAmount': totalAmount,
-      'totalQuantity': snapshot.docs.length,
+      'totalQuantity': totalQuantity,
     };
   }
 
@@ -125,6 +128,7 @@ class DashboardService {
     final missingImages = <String>{};
     for (final doc in snapshot.docs) {
       final data = doc.data();
+      if (data['saleType'] == 'warranty_claim') continue;
       final productId = data['productId'] as String? ?? '';
       if (productId.isEmpty) continue;
       final existing = aggregated[productId];
@@ -233,6 +237,7 @@ class DashboardService {
     final salesByProduct = <String, List<Map<String, dynamic>>>{};
     for (final doc in snapshot.docs) {
       final data = doc.data();
+      if (data['saleType'] == 'warranty_claim') continue;
       final productId = data['productId'] as String? ?? '';
       if (productId.isEmpty) continue;
       salesByProduct.putIfAbsent(productId, () => []).add(data);

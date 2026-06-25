@@ -15,6 +15,13 @@ class Warranty {
   final int warrantyMonths;
   final String imageUrl;
   final double salePrice;
+  final bool warrantyClaimed;
+  final String? relatedSaleId;
+  final String? newSerialNumber;
+  final String saleType;
+  final String? oldSerialNumber;
+  final DateTime? oldPurchaseDate;
+  final DateTime? claimDate;
 
   const Warranty({
     this.id = '',
@@ -31,9 +38,17 @@ class Warranty {
     this.warrantyMonths = 0,
     this.imageUrl = '',
     this.salePrice = 0.0,
+    this.warrantyClaimed = false,
+    this.relatedSaleId,
+    this.newSerialNumber,
+    this.saleType = 'normal',
+    this.oldSerialNumber,
+    this.oldPurchaseDate,
+    this.claimDate,
   });
 
-  bool get isActive => expiryDate.isAfter(DateTime.now());
+  bool get isActive => expiryDate.isAfter(DateTime.now()) && !warrantyClaimed;
+  bool get isClaimable => isActive;
 
   factory Warranty.fromSale({
     required String saleId,
@@ -88,6 +103,13 @@ class Warranty {
       warrantyMonths: (json['warrantyMonths'] as num?)?.toInt() ?? 0,
       imageUrl: json['imageUrl'] as String? ?? '',
       salePrice: (json['salePrice'] as num?)?.toDouble() ?? 0.0,
+      warrantyClaimed: json['warrantyClaimed'] as bool? ?? false,
+      relatedSaleId: json['relatedSaleId'] as String?,
+      newSerialNumber: json['newSerialNumber'] as String?,
+      saleType: json['saleType'] as String? ?? 'normal',
+      oldSerialNumber: json['oldSerialNumber'] as String?,
+      oldPurchaseDate: (json['oldPurchaseDate'] as Timestamp?)?.toDate(),
+      claimDate: (json['claimDate'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -112,6 +134,13 @@ class Warranty {
       'warrantyMonths': warrantyMonths,
       'imageUrl': imageUrl,
       'salePrice': salePrice,
+      'warrantyClaimed': warrantyClaimed,
+      'relatedSaleId': relatedSaleId,
+      'newSerialNumber': newSerialNumber,
+      'saleType': saleType,
+      'oldSerialNumber': oldSerialNumber,
+      'oldPurchaseDate': oldPurchaseDate != null ? Timestamp.fromDate(oldPurchaseDate!) : null,
+      'claimDate': claimDate != null ? Timestamp.fromDate(claimDate!) : null,
     };
   }
 
@@ -130,6 +159,13 @@ class Warranty {
     int? warrantyMonths,
     String? imageUrl,
     double? salePrice,
+    bool? warrantyClaimed,
+    String? relatedSaleId,
+    String? newSerialNumber,
+    String? saleType,
+    String? oldSerialNumber,
+    DateTime? oldPurchaseDate,
+    DateTime? claimDate,
   }) {
     return Warranty(
       id: id ?? this.id,
@@ -146,6 +182,13 @@ class Warranty {
       warrantyMonths: warrantyMonths ?? this.warrantyMonths,
       imageUrl: imageUrl ?? this.imageUrl,
       salePrice: salePrice ?? this.salePrice,
+      warrantyClaimed: warrantyClaimed ?? this.warrantyClaimed,
+      relatedSaleId: relatedSaleId ?? this.relatedSaleId,
+      newSerialNumber: newSerialNumber ?? this.newSerialNumber,
+      saleType: saleType ?? this.saleType,
+      oldSerialNumber: oldSerialNumber ?? this.oldSerialNumber,
+      oldPurchaseDate: oldPurchaseDate ?? this.oldPurchaseDate,
+      claimDate: claimDate ?? this.claimDate,
     );
   }
 }

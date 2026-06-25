@@ -31,7 +31,9 @@ class WarrantyProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _warranties = await _repository.getAllWarranties();
+      _warranties = (await _repository.getAllWarranties())
+          .where((w) => !(w.warrantyClaimed && w.saleType != 'warranty_claim'))
+          .toList();
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -101,7 +103,9 @@ class WarrantyProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _warranties = await _repository.getExpiredWarranties();
+      _warranties = (await _repository.getExpiredWarranties())
+          .where((w) => !(w.warrantyClaimed && w.saleType != 'warranty_claim'))
+          .toList();
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -116,7 +120,9 @@ class WarrantyProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _warranties = await _repository.getActiveWarranties();
+      _warranties = (await _repository.getActiveWarranties())
+          .where((w) => !(w.warrantyClaimed && w.saleType != 'warranty_claim'))
+          .toList();
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -129,6 +135,7 @@ class WarrantyProvider extends ChangeNotifier {
     required String saleId,
     required String serialNumber,
     required String newSerialNumber,
+    String? reason,
     String? notes,
   }) async {
     _isLoading = true;
@@ -140,6 +147,7 @@ class WarrantyProvider extends ChangeNotifier {
         saleId: saleId,
         serialNumber: serialNumber,
         newSerialNumber: newSerialNumber,
+        reason: reason,
         notes: notes,
       );
     } catch (e) {

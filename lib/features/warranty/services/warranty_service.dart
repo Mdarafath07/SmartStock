@@ -103,6 +103,7 @@ class WarrantyService {
     required String saleId,
     required String serialNumber,
     required String newSerialNumber,
+    String? reason,
     String? notes,
   }) async {
     final batch = _firestore.batch();
@@ -155,10 +156,6 @@ class WarrantyService {
 
     // 3. Find new serial and update to sold
     String newProductId = '';
-    String newProductName = '';
-    String newModelNumber = '';
-    double newSellingPrice = 0;
-    double newPurchasePrice = 0;
 
     final newSerialSnapshot = await _firestore
         .collection('serial_numbers')
@@ -172,18 +169,11 @@ class WarrantyService {
       final newSerialData = newSerialSnapshot.docs.first.data();
       newProductId = newSerialData['productId'] as String? ?? '';
 
-      // Get new product details
       if (newProductId.isNotEmpty) {
         final newProductDoc =
             await _firestore.collection('products').doc(newProductId).get();
         if (newProductDoc.exists) {
           final npData = newProductDoc.data()!;
-          newProductName = npData['productName'] as String? ?? '';
-          newModelNumber = npData['modelNumber'] as String? ?? '';
-          newSellingPrice = (npData['sellingPrice'] as num?)?.toDouble() ?? 0;
-          newPurchasePrice = (npData['purchasePrice'] as num?)?.toDouble() ?? 0;
-
-          // Decrement new product stock
           final currentQty = (npData['availableQuantity'] as num?)?.toInt() ?? 0;
           batch.update(newProductDoc.reference, {
             'availableQuantity': (currentQty - 1).clamp(0, 999999),
@@ -192,32 +182,36 @@ class WarrantyService {
       }
     }
 
-    // 4. Create sale record
+    // 4. Create sale record (warranty claim — product transferred, no profit)
     final now = DateTime.now();
+    final oldSaleDate = (saleData['saleDate'] as Timestamp?)?.toDate();
     final saleRef = _firestore.collection('sales').doc();
-    final profit = newSellingPrice - newPurchasePrice;
     batch.set(saleRef, {
-      'productId': newProductId.isNotEmpty ? newProductId : productId,
-      'productName': newProductName.isNotEmpty ? newProductName : (saleData['productName'] ?? ''),
-      'modelNumber': newModelNumber.isNotEmpty ? newModelNumber : (saleData['modelNumber'] ?? ''),
+      'productId': productId,
+      'productName': saleData['productName'] ?? '',
+      'modelNumber': saleData['modelNumber'] ?? '',
       'serialNumber': newSerialNumber,
       'serialNumberId': newSerialId,
-      'categoryId': '',
-      'categoryName': '',
+      'categoryId': saleData['categoryId'] ?? '',
+      'categoryName': saleData['categoryName'] ?? '',
       'customerId': saleData['customerId'] ?? '',
       'customerName': saleData['customerName'] ?? '',
       'customerPhone': saleData['customerPhone'] ?? '',
-      'salePrice': newSellingPrice,
-      'purchasePrice': newPurchasePrice,
-      'profit': profit,
+      'salePrice': saleData['salePrice'] ?? 0,
+      'purchasePrice': saleData['purchasePrice'] ?? 0,
+      'profit': 0,
       'saleDate': Timestamp.fromDate(now),
       'warrantyExpiryDate': Timestamp.fromDate(now),
       'warrantyMonths': 0,
       'createdAt': Timestamp.fromDate(now),
-      'imageUrl': '',
+      'imageUrl': saleData['imageUrl'] ?? '',
       'saleType': 'warranty_claim',
+      'warrantyClaimed': true,
       'relatedSaleId': saleId,
       'oldSerialNumber': serialNumber,
+      'oldPurchaseDate': oldSaleDate != null ? Timestamp.fromDate(oldSaleDate) : null,
+      if (reason != null) 'claimReason': reason,
+      if (notes != null) 'notes': notes,
     });
 
     // 5. Update new serial to sold
@@ -234,6 +228,8 @@ class WarrantyService {
     // 6. Mark original sale as warranty claimed
     batch.update(saleDoc.reference, {
       'warrantyClaimed': true,
+      'newSerialNumber': newSerialNumber,
+      'claimDate': Timestamp.fromDate(now),
     });
 
     await batch.commit();

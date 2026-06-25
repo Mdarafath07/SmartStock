@@ -4,6 +4,7 @@ import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/widgets/empty_state.dart';
 import 'package:smartstock/core/widgets/error_widget.dart';
 import 'package:smartstock/features/warranty/providers/warranty_provider.dart';
+import 'package:smartstock/features/warranty/screens/warranty_claim_screen.dart';
 import 'package:smartstock/features/warranty/widgets/warranty_card.dart';
 import 'package:smartstock/features/warranty/widgets/warranty_search_bar.dart';
 
@@ -110,15 +111,42 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
         itemCount: warranties.length,
         itemBuilder: (context, index) {
           final warranty = warranties[index];
-          return WarrantyCard(
-            warranty: warranty,
-            onTap: () {
-              Navigator.pushNamed(
-                context,
-                '/warranty/details',
-                arguments: warranty.id,
-              );
-            },
+          return Column(
+            children: [
+              WarrantyCard(
+                warranty: warranty,
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/warranty/details',
+                    arguments: warranty.id,
+                  );
+                },
+              ),
+              if (warranty.isActive)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        final result = await Navigator.push<bool>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                WarrantyClaimScreen(warranty: warranty),
+                          ),
+                        );
+                        if (result == true) {
+                          provider.loadAll();
+                        }
+                      },
+                      icon: const Icon(Icons.assignment),
+                      label: const Text('Process Claim'),
+                    ),
+                  ),
+                ),
+            ],
           );
         },
       ),

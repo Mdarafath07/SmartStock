@@ -14,8 +14,7 @@ class SaleCard extends StatelessWidget {
     final theme = Theme.of(context);
     final timeFormatter = DateFormat('hh:mm a');
     final priceFormatter = NumberFormat.currency(symbol: '\$');
-    final profitColor =
-        sale.profit >= 0 ? Colors.green : Colors.red;
+    final profitColor = sale.profit >= 0 ? Colors.green : Colors.red;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -37,12 +36,17 @@ class SaleCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Text(
-                    timeFormatter.format(sale.saleDate),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                  if (sale.isReplacement)
+                    _badge('Replacement', Colors.orange, theme)
+                  else if (sale.isWarrantyClaim)
+                    _badge('Warranty', Colors.blue, theme),
+                  if (!sale.isReplacement && !sale.isWarrantyClaim)
+                    Text(
+                      timeFormatter.format(sale.saleDate),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
                 ],
               ),
               const SizedBox(height: 4),
@@ -112,6 +116,24 @@ class SaleCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _badge(String label, Color color, ThemeData theme) {
+    return Container(
+      margin: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

@@ -106,9 +106,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   TopSellingSection(
                       topSelling: provider.stats!.topSellingProducts),
                   const SizedBox(height: 24),
-                  RecentProductsSection(
-                      title: 'Recently Added',
-                      products: provider.stats!.recentlyAddedProducts),
+                  const DailyAddedProductsSection(),
                   const SizedBox(height: 24),
                   RecentProductsSection(
                       title: 'Recently Sold',
@@ -240,6 +238,23 @@ class _DashboardScreenState extends State<DashboardScreen>
             onTap: () {
               Navigator.pop(context);
               Navigator.pushNamed(context, AppRoutes.reportsAnalytics);
+            },
+          ),
+          const Divider(),
+          _DrawerItem(
+            icon: Icons.bug_report,
+            title: 'Product Issues',
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, AppRoutes.productIssues);
+            },
+          ),
+          _DrawerItem(
+            icon: Icons.swap_horiz,
+            title: 'Replacements',
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, AppRoutes.replacements);
             },
           ),
           const Divider(),

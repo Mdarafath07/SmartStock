@@ -37,12 +37,23 @@ class ReportService {
   Future<List<CategorySales>> getCategorySalesReport() async {
     final snapshot = await _firestore.collection('sales').get();
 
+    final categoriesSnapshot = await _firestore.collection('categories').get();
+    final Map<String, String> categoryNameMap = {};
+    for (final cat in categoriesSnapshot.docs) {
+      final name = cat.data()['name'] as String? ?? 'Unknown';
+      categoryNameMap[cat.id] = name;
+    }
+
     final Map<String, _CategoryAggregate> categoryMap = {};
 
     for (final doc in snapshot.docs) {
       final data = doc.data();
       final catId = data['categoryId'] as String? ?? 'unknown';
-      final catName = data['categoryName'] as String? ?? 'Unknown';
+      String catName = data['categoryName'] as String? ?? '';
+      if (catName.isEmpty) {
+        catName = categoryNameMap[catId] ?? 'Unknown';
+      }
+
       final salePrice = (data['salePrice'] as num?)?.toDouble() ?? 0.0;
 
       categoryMap.putIfAbsent(catId, () => _CategoryAggregate(name: catName));
@@ -135,6 +146,67 @@ class ReportService {
       );
     }).toList()
       ..sort((a, b) => a.date.compareTo(b.date));
+  }
+
+  Future<List<SalesReport>> getYearlySalesReport(int year) async {
+    final startOfYear = DateTime(year, 1, 1);
+    final endOfYear = DateTime(year + 1, 1, 1);
+
+    final snapshot = await _firestore
+        .collection('sales')
+        .where('saleDate',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfYear))
+        .where('saleDate', isLessThan: Timestamp.fromDate(endOfYear))
+        .get();
+
+    final Map<String, _DailyAggregate> monthlyMap = {};
+
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      final saleDate = (data['saleDate'] as Timestamp).toDate();
+      final monthKey = '${saleDate.year}-${saleDate.month.toString().padLeft(2, '0')}';
+
+      monthlyMap.putIfAbsent(monthKey, () => _DailyAggregate(date: DateTime(saleDate.year, saleDate.month, 1)));
+      monthlyMap[monthKey]!.totalSales +=
+          (data['salePrice'] as num?)?.toDouble() ?? 0.0;
+      monthlyMap[monthKey]!.totalProfit +=
+          (data['profit'] as num?)?.toDouble() ?? 0.0;
+      monthlyMap[monthKey]!.totalTransactions += 1;
+    }
+
+    return monthlyMap.entries.map((e) {
+      return SalesReport(
+        date: e.value.date,
+        totalSales: e.value.totalSales,
+        totalProfit: e.value.totalProfit,
+        totalTransactions: e.value.totalTransactions,
+        totalProductsSold: e.value.totalTransactions,
+      );
+    }).toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
+  }
+
+  Future<SalesReport> getAllTimeSummary() async {
+    final snapshot = await _firestore.collection('sales').get();
+
+    double totalSales = 0;
+    double totalProfit = 0;
+    int totalTransactions = 0;
+
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      totalSales += (data['salePrice'] as num?)?.toDouble() ?? 0.0;
+      totalProfit += (data['profit'] as num?)?.toDouble() ?? 0.0;
+      totalTransactions += 1;
+    }
+
+    return SalesReport(
+      date: DateTime.now(),
+      totalSales: totalSales,
+      totalProfit: totalProfit,
+      totalTransactions: totalTransactions,
+      totalProductsSold: totalTransactions,
+    );
   }
 
   SalesReport _aggregateSales(QuerySnapshot snapshot, DateTime date) {

@@ -100,7 +100,12 @@ class PurchaseHistoryTable extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    _buildWarrantyBadge(theme, sale),
+                    if (sale.isReplacement)
+                      _badge('Replacement', Colors.orange)
+                    else if (sale.isWarrantyClaim)
+                      _badge('Warranty Claim', Colors.blue)
+                    else
+                      _buildWarrantyBadge(theme, sale),
                   ],
                 ),
               ],
@@ -108,6 +113,24 @@ class PurchaseHistoryTable extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _badge(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          color: color,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
     );
   }
 

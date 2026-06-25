@@ -19,6 +19,10 @@ import '../../features/warranty/screens/warranty_check_screen.dart';
 import '../../features/warranty/screens/warranty_details_screen.dart';
 import '../../features/reports/screens/reports_screen.dart';
 import '../../features/reports/screens/analytics_screen.dart';
+import '../../features/product_issues/screens/product_issue_list_screen.dart';
+import '../../features/product_issues/screens/product_issue_details_screen.dart';
+import '../../features/replacements/screens/replacement_list_screen.dart';
+import '../../features/replacements/screens/replacement_details_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 import '../../features/search/screens/search_screen.dart';
 
@@ -122,6 +126,26 @@ class RouteGenerator {
       case AppRoutes.reportsAnalytics:
         return _materialPageRoute(
           const AnalyticsScreen(),
+          settings,
+        );
+      case AppRoutes.productIssues:
+        return _materialPageRoute(
+          const ProductIssueListScreen(),
+          settings,
+        );
+      case AppRoutes.productIssuesDetails:
+        return _materialPageRoute(
+          ProductIssueDetailsScreen(issueId: args as String),
+          settings,
+        );
+      case AppRoutes.replacements:
+        return _materialPageRoute(
+          const ReplacementListScreen(),
+          settings,
+        );
+      case AppRoutes.replacementsDetails:
+        return _materialPageRoute(
+          ReplacementDetailsScreen(replacementId: args as String),
           settings,
         );
       case AppRoutes.settings:

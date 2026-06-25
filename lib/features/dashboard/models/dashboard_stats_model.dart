@@ -154,6 +154,7 @@ class ProductSummary {
   final String categoryName;
   final int availableQuantity;
   final int soldCount;
+  final DateTime? createdAt;
 
   const ProductSummary({
     required this.productId,
@@ -163,6 +164,7 @@ class ProductSummary {
     this.categoryName = '',
     this.availableQuantity = 0,
     this.soldCount = 0,
+    this.createdAt,
   });
 
   factory ProductSummary.fromJson(Map<String, dynamic> json) {
@@ -174,6 +176,9 @@ class ProductSummary {
       categoryName: json['categoryName'] as String? ?? '',
       availableQuantity: (json['availableQuantity'] as num?)?.toInt() ?? 0,
       soldCount: (json['soldCount'] as num?)?.toInt() ?? 0,
+      createdAt: json['createdAt'] != null
+          ? (json['createdAt'] as dynamic)?.toDate()
+          : null,
     );
   }
 

@@ -325,9 +325,19 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(sale.productName,
-                                style: theme.textTheme.bodyMedium
-                                    ?.copyWith(fontWeight: FontWeight.w500)),
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(sale.productName,
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(fontWeight: FontWeight.w500)),
+                                ),
+                                if (sale.isReplacement)
+                                  _saleBadge('Replacement', Colors.orange)
+                                else if (sale.isWarrantyClaim)
+                                  _saleBadge('Warranty', Colors.blue),
+                              ],
+                            ),
                             GestureDetector(
                               onLongPress: () {
                                 Clipboard.setData(ClipboardData(text: sale.serialNumber));
@@ -360,6 +370,25 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                 ),
               )),
         ],
+      ),
+    );
+  }
+
+  Widget _saleBadge(String label, Color color) {
+    return Container(
+      margin: const EdgeInsets.only(left: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 9,
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

@@ -13,4 +13,12 @@ class DashboardRepository {
       throw Exception('Failed to load dashboard stats: $e');
     }
   }
+
+  Future<List<ProductSummary>> getProductsAddedOnDate(DateTime date) async {
+    try {
+      return await _service.getProductsAddedOnDate(date);
+    } catch (e) {
+      throw Exception('Failed to load products: $e');
+    }
+  }
 }

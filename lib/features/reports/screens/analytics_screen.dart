@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/constants/color_constants.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
+import 'package:smartstock/core/utils/formatters.dart';
 import 'package:smartstock/core/widgets/error_widget.dart';
 import 'package:smartstock/features/reports/providers/report_provider.dart';
 import 'package:smartstock/features/reports/widgets/download_report_button.dart';
@@ -51,20 +52,20 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  _buildSectionTitle('Today\'s Overview'),
+                  const SizedBox(height: 12),
                   StatisticsGrid(
-                    totalSales:
-                        provider.dailyReport?.totalSales ?? 0,
-                    totalProfit:
-                        provider.dailyReport?.totalProfit ?? 0,
-                    totalTransactions:
-                        provider.dailyReport?.totalTransactions ?? 0,
-                    totalProducts:
-                        provider.dailyReport?.totalProductsSold ?? 0,
+                    totalSales: provider.dailyReport?.totalSales ?? 0,
+                    totalProfit: provider.dailyReport?.totalProfit ?? 0,
+                    totalTransactions: provider.dailyReport?.totalTransactions ?? 0,
+                    totalProducts: provider.dailyReport?.totalProductsSold ?? 0,
                   ),
-                  const SizedBox(height: 24),
-                  _buildSectionTitle('Today\'s Summary'),
                   const SizedBox(height: 12),
                   _buildDailySummary(provider),
+                  const SizedBox(height: 24),
+                  _buildAllTimeSummary(provider),
+                  const SizedBox(height: 24),
+                  _buildYearlyReport(provider),
                   const SizedBox(height: 24),
                   if (provider.categorySales.isNotEmpty) ...[
                     _buildSectionTitle('Sales by Category'),
@@ -76,6 +77,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     _buildSectionTitle('Top Selling Products'),
                     const SizedBox(height: 12),
                     _buildTopProducts(provider),
+                  ],
+                  const SizedBox(height: 24),
+                  if (provider.yearlyReports.length >= 2) ...[
+                    _buildSectionTitle('Monthly Breakdown'),
+                    const SizedBox(height: 12),
+                    _buildMonthlyChart(provider),
                   ],
                   const SizedBox(height: 24),
                   DownloadReportButton(
@@ -119,8 +126,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             Expanded(
               child: _summaryItem(
                 Icons.trending_up_rounded,
-                'Sales',
-                '\$${daily.totalSales.toStringAsFixed(2)}',
+                'Today Sales',
+                AppFormatters.formatCurrency(daily.totalSales),
                 ColorConstants.primary,
               ),
             ),
@@ -132,8 +139,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             Expanded(
               child: _summaryItem(
                 Icons.account_balance_wallet_rounded,
-                'Profit',
-                '\$${daily.totalProfit.toStringAsFixed(2)}',
+                'Today Profit',
+                AppFormatters.formatCurrency(daily.totalProfit),
                 ColorConstants.success,
               ),
             ),
@@ -145,12 +152,213 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             Expanded(
               child: _summaryItem(
                 Icons.receipt_long_rounded,
-                'Sales',
+                'Transactions',
                 '${daily.totalTransactions}',
                 ColorConstants.info,
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAllTimeSummary(ReportProvider provider) {
+    final allTime = provider.allTimeSummary;
+    if (allTime == null || allTime.totalTransactions == 0) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('All-Time Summary'),
+        const SizedBox(height: 12),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: _summaryItem(
+                        Icons.trending_up_rounded,
+                        'Total Sales',
+                        AppFormatters.formatCurrency(allTime.totalSales),
+                        ColorConstants.primary,
+                      ),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 48,
+                      color: ColorConstants.outlineVariant,
+                    ),
+                    Expanded(
+                      child: _summaryItem(
+                        Icons.account_balance_wallet_rounded,
+                        'Total Profit',
+                        AppFormatters.formatCurrency(allTime.totalProfit),
+                        ColorConstants.success,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _summaryItem(
+                        Icons.receipt_long_rounded,
+                        'Transactions',
+                        '${allTime.totalTransactions}',
+                        ColorConstants.info,
+                      ),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 48,
+                      color: ColorConstants.outlineVariant,
+                    ),
+                    Expanded(
+                      child: _summaryItem(
+                        Icons.inventory_2_rounded,
+                        'Items Sold',
+                        '${allTime.totalProductsSold}',
+                        ColorConstants.warning,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildYearlyReport(ReportProvider provider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildSectionTitle('Yearly Report'),
+            Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed: () {
+                    final newYear = provider.selectedYear - 1;
+                    provider.setSelectedYear(newYear);
+                    provider.loadYearlyReport(year: newYear);
+                  },
+                ),
+                Text(
+                  '${provider.selectedYear}',
+                  style: AppTextStyles.titleMd.copyWith(fontSize: 16),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: () {
+                    final newYear = provider.selectedYear + 1;
+                    provider.setSelectedYear(newYear);
+                    provider.loadYearlyReport(year: newYear);
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _buildYearlyStats(provider),
+      ],
+    );
+  }
+
+  Widget _buildYearlyStats(ReportProvider provider) {
+    final reports = provider.yearlyReports;
+    if (reports.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Center(
+            child: Text(
+              'No data for ${provider.selectedYear}',
+              style: AppTextStyles.bodyMd.copyWith(
+                color: ColorConstants.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final totalYearSales = reports.fold<double>(0, (s, r) => s + r.totalSales);
+    final totalYearProfit = reports.fold<double>(0, (s, r) => s + r.totalProfit);
+    final totalYearTransactions = reports.fold<int>(0, (s, r) => s + r.totalTransactions);
+
+    return Column(
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _summaryItem(
+                    Icons.trending_up_rounded,
+                    'Year Sales',
+                    AppFormatters.formatCurrency(totalYearSales),
+                    ColorConstants.primary,
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 48,
+                  color: ColorConstants.outlineVariant,
+                ),
+                Expanded(
+                  child: _summaryItem(
+                    Icons.account_balance_wallet_rounded,
+                    'Year Profit',
+                    AppFormatters.formatCurrency(totalYearProfit),
+                    ColorConstants.success,
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 48,
+                  color: ColorConstants.outlineVariant,
+                ),
+                Expanded(
+                  child: _summaryItem(
+                    Icons.receipt_long_rounded,
+                    'Transactions',
+                    '$totalYearTransactions',
+                    ColorConstants.info,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMonthlyChart(ReportProvider provider) {
+    final reports = provider.yearlyReports;
+    if (reports.isEmpty) return const SizedBox.shrink();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: SalesBarChart(
+          data: reports,
+          title: '',
         ),
       ),
     );
@@ -196,7 +404,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 value: cat.totalSales,
                 maxValue: maxSales,
                 color: ColorConstants.primary,
-                formatValue: (v) => '\$${v.toStringAsFixed(2)}',
+                formatValue: (v) => AppFormatters.formatCurrency(v),
               ),
             );
           }).toList(),
@@ -258,7 +466,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   ),
                 ),
                 Text(
-                  '\$${product.totalRevenue.toStringAsFixed(2)}',
+                  AppFormatters.formatCurrency(product.totalRevenue),
                   style: AppTextStyles.labelSm.copyWith(
                     color: ColorConstants.onSurfaceVariant,
                   ),

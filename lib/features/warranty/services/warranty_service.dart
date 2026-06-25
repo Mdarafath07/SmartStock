@@ -91,6 +91,154 @@ class WarrantyService {
     return _mapWarranty(doc);
   }
 
+  /// Claim warranty for a product:
+  /// 1. Check warranty is active and not already claimed
+  /// 2. Old serial → status "available", returnType "warranty"
+  /// 3. Old product stock +1
+  /// 4. New serial → status "sold"
+  /// 5. New product stock -1
+  /// 6. Create sale record (saleType: 'warranty_claim')
+  /// 7. Mark original sale as warrantyClaimed
+  Future<void> claimWarranty({
+    required String saleId,
+    required String serialNumber,
+    required String newSerialNumber,
+    String? notes,
+  }) async {
+    final batch = _firestore.batch();
+
+    // Get original sale
+    final saleDoc = await _firestore.collection('sales').doc(saleId).get();
+    if (!saleDoc.exists) throw Exception('Sale not found');
+    final saleData = saleDoc.data()!;
+
+    // Check if warranty already claimed
+    if (saleData['warrantyClaimed'] == true) {
+      throw Exception('Warranty has already been claimed for this product');
+    }
+
+    // Check warranty is active
+    final expiryDate = (saleData['warrantyExpiryDate'] as Timestamp?)?.toDate();
+    if (expiryDate != null && expiryDate.isBefore(DateTime.now())) {
+      throw Exception('Warranty has expired');
+    }
+
+    // 1. Find old serial and update
+    final oldSerialSnapshot = await _firestore
+        .collection('serial_numbers')
+        .where('serialNumber', isEqualTo: serialNumber)
+        .limit(1)
+        .get();
+
+    String oldSerialId = '';
+    String productId = saleData['productId'] as String? ?? '';
+    if (oldSerialSnapshot.docs.isNotEmpty) {
+      oldSerialId = oldSerialSnapshot.docs.first.id;
+      batch.update(_firestore.collection('serial_numbers').doc(oldSerialId), {
+        'status': 'available',
+        'saleId': FieldValue.delete(),
+        'returnType': 'warranty',
+      });
+    }
+
+    // 2. Increment old product stock
+    if (productId.isNotEmpty) {
+      final productRef = _firestore.collection('products').doc(productId);
+      final productDoc = await productRef.get();
+      if (productDoc.exists) {
+        final currentQty = (productDoc.data()?['availableQuantity'] as num?)?.toInt() ?? 0;
+        batch.update(productRef, {
+          'availableQuantity': currentQty + 1,
+        });
+      }
+    }
+
+    // 3. Find new serial and update to sold
+    String newProductId = '';
+    String newProductName = '';
+    String newModelNumber = '';
+    double newSellingPrice = 0;
+    double newPurchasePrice = 0;
+
+    final newSerialSnapshot = await _firestore
+        .collection('serial_numbers')
+        .where('serialNumber', isEqualTo: newSerialNumber)
+        .limit(1)
+        .get();
+
+    String newSerialId = '';
+    if (newSerialSnapshot.docs.isNotEmpty) {
+      newSerialId = newSerialSnapshot.docs.first.id;
+      final newSerialData = newSerialSnapshot.docs.first.data();
+      newProductId = newSerialData['productId'] as String? ?? '';
+
+      // Get new product details
+      if (newProductId.isNotEmpty) {
+        final newProductDoc =
+            await _firestore.collection('products').doc(newProductId).get();
+        if (newProductDoc.exists) {
+          final npData = newProductDoc.data()!;
+          newProductName = npData['productName'] as String? ?? '';
+          newModelNumber = npData['modelNumber'] as String? ?? '';
+          newSellingPrice = (npData['sellingPrice'] as num?)?.toDouble() ?? 0;
+          newPurchasePrice = (npData['purchasePrice'] as num?)?.toDouble() ?? 0;
+
+          // Decrement new product stock
+          final currentQty = (npData['availableQuantity'] as num?)?.toInt() ?? 0;
+          batch.update(newProductDoc.reference, {
+            'availableQuantity': (currentQty - 1).clamp(0, 999999),
+          });
+        }
+      }
+    }
+
+    // 4. Create sale record
+    final now = DateTime.now();
+    final saleRef = _firestore.collection('sales').doc();
+    final profit = newSellingPrice - newPurchasePrice;
+    batch.set(saleRef, {
+      'productId': newProductId.isNotEmpty ? newProductId : productId,
+      'productName': newProductName.isNotEmpty ? newProductName : (saleData['productName'] ?? ''),
+      'modelNumber': newModelNumber.isNotEmpty ? newModelNumber : (saleData['modelNumber'] ?? ''),
+      'serialNumber': newSerialNumber,
+      'serialNumberId': newSerialId,
+      'categoryId': '',
+      'categoryName': '',
+      'customerId': saleData['customerId'] ?? '',
+      'customerName': saleData['customerName'] ?? '',
+      'customerPhone': saleData['customerPhone'] ?? '',
+      'salePrice': newSellingPrice,
+      'purchasePrice': newPurchasePrice,
+      'profit': profit,
+      'saleDate': Timestamp.fromDate(now),
+      'warrantyExpiryDate': Timestamp.fromDate(now),
+      'warrantyMonths': 0,
+      'createdAt': Timestamp.fromDate(now),
+      'imageUrl': '',
+      'saleType': 'warranty_claim',
+      'relatedSaleId': saleId,
+      'oldSerialNumber': serialNumber,
+    });
+
+    // 5. Update new serial to sold
+    if (newSerialId.isNotEmpty) {
+      batch.update(
+        _firestore.collection('serial_numbers').doc(newSerialId),
+        {
+          'status': 'sold',
+          'saleId': saleRef.id,
+        },
+      );
+    }
+
+    // 6. Mark original sale as warranty claimed
+    batch.update(saleDoc.reference, {
+      'warrantyClaimed': true,
+    });
+
+    await batch.commit();
+  }
+
   List<Warranty> _mapToWarranties(QuerySnapshot snapshot) {
     return snapshot.docs.map((doc) => _mapWarranty(doc)).toList();
   }

@@ -28,4 +28,12 @@ class ReportRepository {
   }) {
     return _service.getProfitReport(start: start, end: end);
   }
+
+  Future<List<SalesReport>> getYearlySalesReport(int year) {
+    return _service.getYearlySalesReport(year);
+  }
+
+  Future<SalesReport> getAllTimeSummary() {
+    return _service.getAllTimeSummary();
+  }
 }

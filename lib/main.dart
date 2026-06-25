@@ -11,6 +11,8 @@ import 'package:smartstock/features/inventory/providers/inventory_provider.dart'
 import 'package:smartstock/features/inventory/repositories/inventory_repository.dart';
 import 'package:smartstock/features/inventory/services/inventory_service.dart';
 import 'package:smartstock/features/products/providers/product_provider.dart';
+import 'package:smartstock/features/product_issues/providers/product_issue_provider.dart';
+import 'package:smartstock/features/replacements/providers/replacement_provider.dart';
 import 'package:smartstock/features/reports/providers/report_provider.dart';
 import 'package:smartstock/features/sales/providers/sale_provider.dart';
 import 'package:smartstock/features/settings/providers/settings_provider.dart';
@@ -49,6 +51,8 @@ class SmartStockApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => WarrantyProvider()),
         ChangeNotifierProvider(create: (_) => ReportProvider()),
+        ChangeNotifierProvider(create: (_) => ProductIssueProvider()),
+        ChangeNotifierProvider(create: (_) => ReplacementProvider()),
       ],
       child: MaterialApp(
         title: 'SmartStock',

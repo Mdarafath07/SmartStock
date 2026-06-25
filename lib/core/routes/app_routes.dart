@@ -20,6 +20,10 @@ class AppRoutes {
   static const String warrantyDetails = '/warranty/details';
   static const String reports = '/reports';
   static const String reportsAnalytics = '/reports/analytics';
+  static const String productIssues = '/product-issues';
+  static const String productIssuesDetails = '/product-issues/details';
+  static const String replacements = '/replacements';
+  static const String replacementsDetails = '/replacements/details';
   static const String settings = '/settings';
   static const String search = '/search';
 }

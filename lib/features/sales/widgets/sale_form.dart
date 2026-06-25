@@ -3,12 +3,13 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:smartstock/core/constants/color_constants.dart';
+import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/features/categories/providers/category_provider.dart';
 import 'package:smartstock/features/products/models/product_model.dart';
 import 'package:smartstock/features/products/providers/product_provider.dart';
 import 'package:smartstock/features/sales/providers/sale_provider.dart';
 import 'package:smartstock/features/sales/models/serial_number_model.dart';
-import 'package:smartstock/core/theme/app_colors.dart';
 
 class SaleForm extends StatefulWidget {
   final VoidCallback onSaleComplete;
@@ -26,6 +27,7 @@ class _SaleFormState extends State<SaleForm> {
   final _customerNameFocus = FocusNode();
   final _customerPhoneFocus = FocusNode();
   int _currentStep = 0;
+  bool _isSubmitting = false;
 
   final List<_CartItem> _cartItems = [];
 
@@ -52,6 +54,7 @@ class _SaleFormState extends State<SaleForm> {
   }
 
   Future<void> _submitSale() async {
+    if (_isSubmitting) return;
     if (!_formKey.currentState!.validate()) return;
     if (_cartItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -59,6 +62,8 @@ class _SaleFormState extends State<SaleForm> {
       );
       return;
     }
+
+    setState(() => _isSubmitting = true);
 
     final saleProvider = context.read<SaleProvider>();
     final items = _cartItems.map((item) {
@@ -70,6 +75,7 @@ class _SaleFormState extends State<SaleForm> {
         'modelNumber': item.product.modelNumber,
         'imageUrl': item.product.imageUrl,
         'categoryId': item.product.categoryId,
+        'categoryName': item.product.categoryName,
         'salePrice': item.product.sellingPrice,
         'purchasePrice': item.product.purchasePrice,
         'warrantyExpiryDate':
@@ -102,6 +108,8 @@ class _SaleFormState extends State<SaleForm> {
           SnackBar(content: Text('Failed to complete sale: $e')),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -160,8 +168,14 @@ class _SaleFormState extends State<SaleForm> {
             child: Row(
               children: [
                 FilledButton(
-                  onPressed: details.onStepContinue,
-                  child: Text(_currentStep == 1 ? 'Complete Sale' : 'Next'),
+                  onPressed: _isSubmitting ? null : details.onStepContinue,
+                  child: _isSubmitting && _currentStep == 1
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(_currentStep == 1 ? 'Complete Sale' : 'Next'),
                 ),
                 const SizedBox(width: 12),
                 if (_currentStep > 0)
@@ -219,7 +233,7 @@ class _SaleFormState extends State<SaleForm> {
                     padding: EdgeInsets.symmetric(vertical: 24),
                     child: Center(
                       child: Text('No items added yet',
-                          style: TextStyle(color: AppColors.onSurfaceVariant)),
+                          style: TextStyle(color: ColorConstants.onSurfaceVariant)),
                     ),
                   )
                 else
@@ -233,7 +247,7 @@ class _SaleFormState extends State<SaleForm> {
                             '${item.serials.length} × \$${item.product.sellingPrice.toStringAsFixed(2)}'),
                         trailing: IconButton(
                           icon: const Icon(Icons.delete_outline,
-                              color: AppColors.error),
+                              color: ColorConstants.error),
                           onPressed: () {
                             setState(() => _cartItems.removeAt(index));
                           },
@@ -310,7 +324,6 @@ class _AddItemSheetState extends State<_AddItemSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final categoryProvider = context.watch<CategoryProvider>();
     final productProvider = context.watch<ProductProvider>();
     final products = productProvider.products;
@@ -336,8 +349,8 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('Add Item to Cart',
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold)),
+                         style: AppTextStyles.titleMd.copyWith(
+                             color: ColorConstants.onSurface)),
                     IconButton(
                       icon: const Icon(Icons.close),
                       onPressed: () => Navigator.pop(context),
@@ -349,8 +362,8 @@ class _AddItemSheetState extends State<_AddItemSheet> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text('Select Category',
-                    style: theme.textTheme.labelLarge
-                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                    style: AppTextStyles.labelMd.copyWith(
+                        color: ColorConstants.onSurfaceVariant)),
               ),
               const SizedBox(height: 8),
               SizedBox(
@@ -384,12 +397,12 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                 horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(
                               color: selected
-                                  ? theme.colorScheme.primaryContainer
-                                  : theme.colorScheme.surfaceContainerHighest,
+                                  ? ColorConstants.primaryContainer
+                                  : ColorConstants.surfaceContainerHigh,
                               borderRadius: BorderRadius.circular(24),
                               border: selected
                                   ? Border.all(
-                                      color: theme.colorScheme.primary,
+                                      color: ColorConstants.primary,
                                       width: 1.5)
                                   : null,
                             ),
@@ -400,8 +413,8 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                   Icons.category,
                                   size: 18,
                                   color: selected
-                                      ? theme.colorScheme.onPrimaryContainer
-                                      : theme.colorScheme.onSurfaceVariant,
+                                      ? ColorConstants.onPrimaryContainer
+                                      : ColorConstants.onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
@@ -411,8 +424,8 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                         ? FontWeight.w600
                                         : FontWeight.w500,
                                     color: selected
-                                        ? theme.colorScheme.onPrimaryContainer
-                                        : theme.colorScheme.onSurface,
+                                        ? ColorConstants.onPrimaryContainer
+                                        : ColorConstants.onSurface,
                                   ),
                                 ),
                               ],
@@ -429,16 +442,16 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text('Select Product',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant)),
+                      style: AppTextStyles.labelMd.copyWith(
+                          color: ColorConstants.onSurfaceVariant)),
                 ),
                 const SizedBox(height: 8),
                 Expanded(
                   child: products.isEmpty
                       ? Center(
                           child: Text('No products in this category',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant)))
+                              style: AppTextStyles.bodyMd.copyWith(
+                                  color: ColorConstants.onSurfaceVariant)))
                       : ListView(
                           controller: scrollController,
                           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -465,18 +478,15 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                   child: Container(
                                     decoration: BoxDecoration(
                                       color: selected
-                                          ? theme.colorScheme
-                                              .primaryContainer
-                                          : theme
-                                              .colorScheme.surfaceContainerLow,
+                                          ? ColorConstants.primaryContainer
+                                          : ColorConstants.surface,
                                       borderRadius: BorderRadius.circular(12),
-                                      border: selected
-                                          ? Border.all(
-                                              color: theme.colorScheme.primary,
-                                              width: 2)
-                                          : Border.all(
-                                              color: theme.colorScheme.outlineVariant
-                                                  .withValues(alpha: 0.5)),
+                                      border: Border.all(
+                                        color: selected
+                                            ? ColorConstants.primary
+                                            : ColorConstants.outlineVariant,
+                                        width: selected ? 2 : 1,
+                                      ),
                                     ),
                                     child: Padding(
                                       padding: const EdgeInsets.all(12),
@@ -492,12 +502,14 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                                   ? Image.network(
                                                       p.imageUrl,
                                                       fit: BoxFit.cover,
-errorBuilder: (_, _,
-        _) =>
-    _productPlaceholder(
-        theme),
+                                                      loadingBuilder: (ctx, child, progress) {
+                                                        if (progress == null) return child;
+                                                        return _productPlaceholder();
+                                                      },
+                                                      errorBuilder: (_, _, _) =>
+                                                          _productPlaceholder(),
                                                     )
-                                                  : _productPlaceholder(theme),
+                                                  : _productPlaceholder(),
                                             ),
                                           ),
                                           const SizedBox(width: 12),
@@ -508,11 +520,10 @@ errorBuilder: (_, _,
                                               children: [
                                                 Text(
                                                   p.productName,
-                                                  style: theme
-                                                      .textTheme.bodyMedium
-                                                      ?.copyWith(
-                                                          fontWeight:
-                                                              FontWeight.w600),
+                                                  style: AppTextStyles.bodyMd.copyWith(
+                                                    fontWeight: FontWeight.w600,
+                                                    color: ColorConstants.onSurface,
+                                                  ),
                                                   maxLines: 1,
                                                   overflow:
                                                       TextOverflow.ellipsis,
@@ -520,39 +531,28 @@ errorBuilder: (_, _,
                                                 const SizedBox(height: 2),
                                                 Text(
                                                   '${p.brandName} ${p.modelNumber}',
-                                                  style: theme
-                                                      .textTheme.bodySmall
-                                                      ?.copyWith(
-                                                          color: theme
-                                                              .colorScheme
-                                                              .onSurfaceVariant),
+                                                  style: AppTextStyles.labelMd.copyWith(
+                                                    color: ColorConstants.onSurfaceVariant,
+                                                  ),
                                                 ),
                                                 const SizedBox(height: 2),
                                                 Row(
                                                   children: [
                                                     Text(
                                                       '\$${p.sellingPrice.toStringAsFixed(2)}',
-                                                      style: theme
-                                                          .textTheme.labelMedium
-                                                          ?.copyWith(
-                                                              color: theme
-                                                                  .colorScheme
-                                                                  .primary,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600),
+                                                      style: AppTextStyles.labelMd.copyWith(
+                                                        color: ColorConstants.primary,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
                                                     ),
                                                     const SizedBox(width: 8),
                                                     Text(
                                                       daysSince == 0
                                                           ? 'today'
                                                           : '${daysSince}d ago',
-                                                      style: theme
-                                                          .textTheme.labelSmall
-                                                          ?.copyWith(
-                                                              color: theme
-                                                                  .colorScheme
-                                                                  .onSurfaceVariant),
+                                                      style: AppTextStyles.labelSm.copyWith(
+                                                        color: ColorConstants.onSurfaceVariant,
+                                                      ),
                                                     ),
                                                   ],
                                                 ),
@@ -561,8 +561,7 @@ errorBuilder: (_, _,
                                           ),
                                           if (selected)
                                             Icon(Icons.check_circle,
-                                                color:
-                                                    theme.colorScheme.primary,
+                                                color: ColorConstants.primary,
                                                 size: 22),
                                         ],
                                       ),
@@ -666,10 +665,9 @@ errorBuilder: (_, _,
                                     ),
                                     const SizedBox(height: 12),
                                     Text('Select Serial Numbers',
-                                        style: theme.textTheme.bodyMedium
-                                            ?.copyWith(
-                                                fontWeight:
-                                                    FontWeight.w600)),
+                                        style: AppTextStyles.bodyMd.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: ColorConstants.onSurface)),
                                     const SizedBox(height: 4),
                                     SizedBox(
                                       height: 100,
@@ -680,10 +678,10 @@ errorBuilder: (_, _,
                                     Row(
                                       children: [
                                         Expanded(
-                                          child: Text(
+                                          child:                                           Text(
                                               '${_selectedSerialIds.length} selected',
-                                              style: theme
-                                                  .textTheme.bodySmall),
+                                              style: AppTextStyles.labelMd.copyWith(
+                                                  color: ColorConstants.onSurfaceVariant)),
                                         ),
                                         FilledButton(
                                           onPressed: _selectedSerialIds
@@ -753,11 +751,11 @@ errorBuilder: (_, _,
     );
   }
 
-  Widget _productPlaceholder(ThemeData theme) {
+  Widget _productPlaceholder() {
     return Container(
-      color: theme.colorScheme.surfaceContainerHighest,
+      color: ColorConstants.surfaceContainerHigh,
       child: Icon(Icons.inventory_2,
-          color: theme.colorScheme.onSurfaceVariant, size: 28),
+          color: ColorConstants.onSurfaceVariant, size: 28),
     );
   }
 

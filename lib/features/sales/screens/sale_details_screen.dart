@@ -71,9 +71,18 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Sale Information',
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold)),
+                    Row(
+                      children: [
+                        Text('Sale Information',
+                            style: theme.textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold)),
+                        const Spacer(),
+                        if (sale.isReplacement)
+                          _badge('Replacement', Colors.orange)
+                        else if (sale.isWarrantyClaim)
+                          _badge('Warranty Claim', Colors.blue),
+                      ],
+                    ),
                     const SizedBox(height: 12),
                     _buildInfoRow(theme, 'Sale ID', sale.id),
                     _buildInfoRow(
@@ -315,6 +324,24 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                   ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _badge(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

@@ -191,6 +191,34 @@ class DashboardService {
         imageUrl: data['imageUrl'] as String? ?? '',
         categoryName: data['categoryName'] as String? ?? '',
         availableQuantity: (data['availableQuantity'] as num?)?.toInt() ?? 0,
+        createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
+      );
+    }).toList();
+  }
+
+  Future<List<ProductSummary>> getProductsAddedOnDate(DateTime date) async {
+    final start = DateTime(date.year, date.month, date.day);
+    final end = start.add(const Duration(days: 1));
+
+    final snapshot = await _firestore
+        .collection('products')
+        .where('createdAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+        .where('createdAt', isLessThan: Timestamp.fromDate(end))
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      return ProductSummary(
+        productId: doc.id,
+        productName: data['productName'] as String? ?? '',
+        modelNumber: data['modelNumber'] as String? ?? '',
+        imageUrl: data['imageUrl'] as String? ?? '',
+        categoryName: data['categoryName'] as String? ?? '',
+        availableQuantity: (data['availableQuantity'] as num?)?.toInt() ?? 0,
+        soldCount: (data['soldQuantity'] as num?)?.toInt() ?? 0,
+        createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       );
     }).toList();
   }

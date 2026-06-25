@@ -6,6 +6,7 @@ import 'package:smartstock/features/warranty/services/warranty_service.dart';
 class WarrantyProvider extends ChangeNotifier {
   final WarrantyRepository _repository =
       WarrantyRepository(WarrantyService());
+  final WarrantyService _service = WarrantyService();
 
   List<Warranty> _warranties = [];
   List<Warranty> _searchResults = [];
@@ -118,6 +119,32 @@ class WarrantyProvider extends ChangeNotifier {
       _warranties = await _repository.getActiveWarranties();
     } catch (e) {
       _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> processClaim({
+    required String saleId,
+    required String serialNumber,
+    required String newSerialNumber,
+    String? notes,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _service.claimWarranty(
+        saleId: saleId,
+        serialNumber: serialNumber,
+        newSerialNumber: newSerialNumber,
+        notes: notes,
+      );
+    } catch (e) {
+      _error = e.toString();
+      rethrow;
     } finally {
       _isLoading = false;
       notifyListeners();

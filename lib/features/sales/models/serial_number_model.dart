@@ -6,6 +6,7 @@ class SerialNumber {
   final String serialNumber;
   final String status;
   final String? saleId;
+  final String? returnType;
   final DateTime createdAt;
 
   SerialNumber({
@@ -14,6 +15,7 @@ class SerialNumber {
     this.serialNumber = '',
     this.status = 'available',
     this.saleId,
+    this.returnType,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -24,6 +26,7 @@ class SerialNumber {
       serialNumber: json['serialNumber'] as String? ?? '',
       status: json['status'] as String? ?? 'available',
       saleId: json['saleId'] as String?,
+      returnType: json['returnType'] as String?,
       createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
@@ -34,9 +37,11 @@ class SerialNumber {
       'serialNumber': serialNumber,
       'status': status,
       'saleId': saleId,
+      'returnType': returnType,
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }
 
   bool get isAvailable => status == 'available';
+  bool get isWarrantyReturned => returnType == 'warranty';
 }

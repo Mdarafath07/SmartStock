@@ -18,6 +18,9 @@ class Sale {
   final DateTime warrantyExpiryDate;
   final DateTime createdAt;
   final String imageUrl;
+  final String saleType;
+  final String? relatedSaleId;
+  final String? oldSerialNumber;
 
   Sale({
     this.id = '',
@@ -37,9 +40,15 @@ class Sale {
     DateTime? warrantyExpiryDate,
     DateTime? createdAt,
     this.imageUrl = '',
+    this.saleType = 'normal',
+    this.relatedSaleId,
+    this.oldSerialNumber,
   })  : saleDate = saleDate ?? DateTime.now(),
         warrantyExpiryDate = warrantyExpiryDate ?? DateTime.now(),
         createdAt = createdAt ?? DateTime.now();
+
+  bool get isReplacement => saleType == 'replacement';
+  bool get isWarrantyClaim => saleType == 'warranty_claim';
 
   factory Sale.fromJson(Map<String, dynamic> json, String id) {
     return Sale(
@@ -61,6 +70,9 @@ class Sale {
           (json['warrantyExpiryDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
       createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       imageUrl: json['imageUrl'] as String? ?? '',
+      saleType: json['saleType'] as String? ?? 'normal',
+      relatedSaleId: json['relatedSaleId'] as String?,
+      oldSerialNumber: json['oldSerialNumber'] as String?,
     );
   }
 
@@ -82,6 +94,9 @@ class Sale {
       'warrantyExpiryDate': Timestamp.fromDate(warrantyExpiryDate),
       'createdAt': Timestamp.fromDate(createdAt),
       'imageUrl': imageUrl,
+      'saleType': saleType,
+      'relatedSaleId': relatedSaleId,
+      'oldSerialNumber': oldSerialNumber,
     };
   }
 
@@ -105,6 +120,9 @@ class Sale {
     DateTime? warrantyExpiryDate,
     DateTime? createdAt,
     String? imageUrl,
+    String? saleType,
+    String? relatedSaleId,
+    String? oldSerialNumber,
   }) {
     return Sale(
       id: id ?? this.id,
@@ -124,6 +142,9 @@ class Sale {
       warrantyExpiryDate: warrantyExpiryDate ?? this.warrantyExpiryDate,
       createdAt: createdAt ?? this.createdAt,
       imageUrl: imageUrl ?? this.imageUrl,
+      saleType: saleType ?? this.saleType,
+      relatedSaleId: relatedSaleId ?? this.relatedSaleId,
+      oldSerialNumber: oldSerialNumber ?? this.oldSerialNumber,
     );
   }
 }

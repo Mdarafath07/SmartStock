@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/constants/color_constants.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/categories/providers/category_provider.dart';
 import 'package:smartstock/features/products/models/product_model.dart';
 import 'package:smartstock/features/products/providers/product_provider.dart';
@@ -167,21 +168,27 @@ class _SaleFormState extends State<SaleForm> {
             padding: const EdgeInsets.only(top: 16),
             child: Row(
               children: [
-                FilledButton(
+                Debounced(
                   onPressed: _isSubmitting ? null : details.onStepContinue,
-                  child: _isSubmitting && _currentStep == 1
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(_currentStep == 1 ? 'Complete Sale' : 'Next'),
+                  builder: (context, isDisabled) => FilledButton(
+                    onPressed: (_isSubmitting || isDisabled) ? null : details.onStepContinue,
+                    child: _isSubmitting && _currentStep == 1
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(_currentStep == 1 ? 'Complete Sale' : 'Next'),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 if (_currentStep > 0)
-                  OutlinedButton(
+                  Debounced(
                     onPressed: details.onStepCancel,
-                    child: const Text('Back'),
+                    builder: (context, isDisabled) => OutlinedButton(
+                      onPressed: isDisabled ? null : details.onStepCancel,
+                      child: const Text('Back'),
+                    ),
                   ),
               ],
             ),
@@ -376,8 +383,8 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                       final selected = _categoryId == cat.id;
                       return Padding(
                         padding: const EdgeInsets.only(right: 10),
-                        child: GestureDetector(
-                          onTap: () {
+                        child: Debounced(
+                          onPressed: () {
                             setState(() {
                               _categoryId = cat.id;
                               _productId = null;
@@ -392,7 +399,23 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                 .read<ProductProvider>()
                                 .loadProducts(categoryId: cat.id);
                           },
-                          child: Container(
+                          builder: (context, isDisabled) => GestureDetector(
+                            onTap: isDisabled ? null : () {
+                              setState(() {
+                                _categoryId = cat.id;
+                                _productId = null;
+                                _product = null;
+                                _selectedSerialIds.clear();
+                                _serialNumbers = [];
+                                _salePriceController.clear();
+                                _warrantyValueController.text = '1';
+                                _warrantyUnit = 'year';
+                              });
+                              context
+                                  .read<ProductProvider>()
+                                  .loadProducts(categoryId: cat.id);
+                            },
+                            child: Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(
@@ -432,13 +455,14 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                             ),
                           ),
                         ),
-                      );
-                    }),
-                  ],
-                ),
+                      ),
+                    );
+                  }),
+                ],
               ),
-              const SizedBox(height: 12),
-              if (_categoryId != null) ...[
+            ),
+            const SizedBox(height: 12),
+            if (_categoryId != null) ...[
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text('Select Product',
@@ -462,8 +486,8 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                   DateTime.now().difference(p.createdAt).inDays;
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
-                                child: GestureDetector(
-                                  onTap: () {
+                                child: Debounced(
+                                  onPressed: () {
                                     setState(() {
                                       _productId = p.id;
                                       _product = p;
@@ -475,7 +499,20 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                         .read<SaleProvider>()
                                         .loadAvailableSerialNumbers(p.id);
                                   },
-                                  child: Container(
+                                  builder: (context, isDisabled) => GestureDetector(
+                                    onTap: isDisabled ? null : () {
+                                      setState(() {
+                                        _productId = p.id;
+                                        _product = p;
+                                        _selectedSerialIds.clear();
+                                        _salePriceController.text =
+                                            p.sellingPrice.toStringAsFixed(2);
+                                      });
+                                      context
+                                          .read<SaleProvider>()
+                                          .loadAvailableSerialNumbers(p.id);
+                                    },
+                                    child: Container(
                                     decoration: BoxDecoration(
                                       color: selected
                                           ? ColorConstants.primaryContainer
@@ -566,10 +603,11 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                         ],
                                       ),
                                     ),
-                                  ),
                                 ),
-                              );
-                            }),
+                              ),
+                            ),
+                          );
+                          }),
                             if (_productId != null && _product != null) ...[
                               const SizedBox(height: 8),
                               Container(
@@ -683,7 +721,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                               style: AppTextStyles.labelMd.copyWith(
                                                   color: ColorConstants.onSurfaceVariant)),
                                         ),
-                                        FilledButton(
+                                        Debounced(
                                           onPressed: _selectedSerialIds
                                                   .isEmpty
                                               ? null
@@ -730,8 +768,55 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                                   Navigator.pop(
                                                       context);
                                                 },
-                                          child:
-                                              const Text('Add to Cart'),
+                                          builder: (context, isDisabled) => FilledButton(
+                                            onPressed: (_selectedSerialIds.isEmpty || isDisabled)
+                                                ? null
+                                                : () {
+                                                    final salePrice =
+                                                        double.tryParse(
+                                                                _salePriceController
+                                                                    .text) ??
+                                                            _product!
+                                                                .sellingPrice;
+                                                    final warrantyValue =
+                                                        int.tryParse(
+                                                                _warrantyValueController
+                                                                    .text) ??
+                                                            1;
+                                                    final warrantyMonths =
+                                                        switch (
+                                                            _warrantyUnit) {
+                                                      'day' =>
+                                                        (warrantyValue /
+                                                                30)
+                                                            .ceil(),
+                                                      'year' =>
+                                                        warrantyValue *
+                                                            12,
+                                                      _ => warrantyValue,
+                                                    };
+                                                    final product = _product!
+                                                        .copyWith(
+                                                      sellingPrice:
+                                                          salePrice,
+                                                      warrantyMonths:
+                                                          warrantyMonths,
+                                                    );
+                                                    widget.onAddToCart(
+                                                      product,
+                                                      _serialNumbers
+                                                          .where((s) =>
+                                                              _selectedSerialIds
+                                                                  .contains(
+                                                                      s.id))
+                                                          .toList(),
+                                                    );
+                                                    Navigator.pop(
+                                                        context);
+                                                  },
+                                            child:
+                                                const Text('Add to Cart'),
+                                          ),
                                         ),
                                       ],
                                     ),

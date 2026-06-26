@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/dashboard/models/dashboard_stats_model.dart';
 
 class StatsGrid extends StatelessWidget {
@@ -86,9 +87,11 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => Navigator.pushNamed(context, route),
-        child: Container(
+      child: Debounced(
+        onPressed: () => Navigator.pushNamed(context, route),
+        builder: (context, isDisabled) => InkWell(
+          onTap: isDisabled ? null : () => Navigator.pushNamed(context, route),
+          child: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: gradientColors,
@@ -157,6 +160,7 @@ class _StatCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }

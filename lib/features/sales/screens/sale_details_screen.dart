@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/sales/models/sale_model.dart';
 import 'package:smartstock/features/sales/providers/sale_provider.dart';
 import 'package:smartstock/features/warranty/screens/warranty_details_screen.dart';
@@ -309,14 +310,20 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
           'Are you sure?',
         ),
         actions: [
-          TextButton(
+          Debounced(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            builder: (_, isDisabled) => TextButton(
+              onPressed: isDisabled ? null : () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
           ),
-          FilledButton(
+          Debounced(
             onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Void Sale'),
+            builder: (context, isDisabled) => FilledButton(
+              onPressed: isDisabled ? null : () => Navigator.pop(ctx, true),
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Void Sale'),
+            ),
           ),
         ],
       ),
@@ -351,15 +358,18 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                   ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
           Flexible(
             child: onLongPress != null
-                ? GestureDetector(
-                    onLongPress: onLongPress,
-                    child: Text(
-                      value,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: valueColor,
+                ? Debounced(
+                    onPressed: onLongPress,
+                    builder: (context, isDisabled) => GestureDetector(
+                      onTap: isDisabled ? null : onLongPress,
+                      child: Text(
+                        value,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: valueColor,
+                        ),
+                        textAlign: TextAlign.end,
                       ),
-                      textAlign: TextAlign.end,
                     ),
                   )
                 : Text(

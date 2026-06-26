@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smartstock/core/constants/color_constants.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 
 class SearchResultTile extends StatelessWidget {
   final IconData leadingIcon;
@@ -23,9 +24,11 @@ class SearchResultTile extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
+      child: Debounced(
+        onPressed: onTap,
+        builder: (context, isDisabled) => InkWell(
+          onTap: isDisabled ? null : onTap,
+          child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
@@ -94,6 +97,7 @@ class SearchResultTile extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

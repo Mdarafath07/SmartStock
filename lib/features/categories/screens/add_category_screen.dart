@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/features/categories/providers/category_provider.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 
 class AddCategoryScreen extends StatefulWidget {
   const AddCategoryScreen({super.key});
@@ -64,18 +65,21 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                 },
               ),
               const SizedBox(height: 24),
-              FilledButton(
+              Debounced(
                 onPressed: _isSaving ? null : _save,
-                child: _isSaving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.onPrimary,
-                        ),
-                      )
-                    : const Text('Save Category'),
+                builder: (context, isDisabled) => FilledButton(
+                  onPressed: (_isSaving || isDisabled) ? null : _save,
+                  child: _isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.onPrimary,
+                          ),
+                        )
+                      : const Text('Save Category'),
+                ),
               ),
             ],
           ),

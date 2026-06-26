@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/customers/providers/customer_provider.dart';
 import 'package:smartstock/features/customers/widgets/customer_info_card.dart';
 import 'package:smartstock/features/customers/widgets/purchase_history_table.dart';
@@ -127,11 +128,14 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
           ],
         ),
         actions: [
-          TextButton(
+          Debounced(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
+            builder: (_, isDisabled) => TextButton(
+              onPressed: isDisabled ? null : () => Navigator.of(ctx).pop(),
+              child: const Text('Cancel'),
+            ),
           ),
-          FilledButton(
+          Debounced(
             onPressed: () {
               final updated = customer.copyWith(
                 name: nameController.text.trim(),
@@ -143,7 +147,20 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
                   .updateCustomer(updated);
               Navigator.of(ctx).pop();
             },
-            child: const Text('Save'),
+            builder: (context, isDisabled) => FilledButton(
+              onPressed: isDisabled ? null : () {
+                final updated = customer.copyWith(
+                  name: nameController.text.trim(),
+                  phone: phoneController.text.trim(),
+                  address: addressController.text.trim(),
+                );
+                context
+                    .read<CustomerProvider>()
+                    .updateCustomer(updated);
+                Navigator.of(ctx).pop();
+              },
+              child: const Text('Save'),
+            ),
           ),
         ],
       ),

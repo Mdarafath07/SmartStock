@@ -7,6 +7,7 @@ import 'package:smartstock/features/inventory/screens/stock_details_screen.dart'
 import 'package:smartstock/features/inventory/widgets/filter_bar.dart';
 import 'package:smartstock/features/inventory/widgets/inventory_table.dart';
 import 'package:smartstock/features/inventory/widgets/stock_summary_cards.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -180,12 +181,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            FilledButton(
+            Debounced(
               onPressed: () => provider.loadInventory(),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primaryContainer,
+              builder: (context, isDisabled) => FilledButton(
+                onPressed: isDisabled ? null : () => provider.loadInventory(),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primaryContainer,
+                ),
+                child: const Text('Retry'),
               ),
-              child: const Text('Retry'),
             ),
           ],
         ),

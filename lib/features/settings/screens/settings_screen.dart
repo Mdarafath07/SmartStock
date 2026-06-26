@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/core/constants/color_constants.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/features/settings/providers/settings_provider.dart';
@@ -159,11 +160,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
         actions: [
-          TextButton(
+          Debounced(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            builder: (_, isDisabled) => TextButton(
+              onPressed: isDisabled ? null : () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
           ),
-          FilledButton(
+          Debounced(
             onPressed: () {
               settings.updateProfile(
                 nameController.text.trim(),
@@ -172,7 +176,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _showSnackBar('Profile updated');
               Navigator.pop(ctx);
             },
-            child: const Text('Save'),
+            builder: (context, isDisabled) => FilledButton(
+              onPressed: isDisabled ? null : () {
+                settings.updateProfile(
+                  nameController.text.trim(),
+                  emailController.text.trim(),
+                );
+                _showSnackBar('Profile updated');
+                Navigator.pop(ctx);
+              },
+              child: const Text('Save'),
+            ),
           ),
         ],
       ),
@@ -191,17 +205,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
           decoration: const InputDecoration(labelText: 'Store Name'),
         ),
         actions: [
-          TextButton(
+          Debounced(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            builder: (_, isDisabled) => TextButton(
+              onPressed: isDisabled ? null : () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
           ),
-          FilledButton(
+          Debounced(
             onPressed: () {
               settings.updateStoreName(controller.text.trim());
               _showSnackBar('Store name updated');
               Navigator.pop(ctx);
             },
-            child: const Text('Save'),
+            builder: (context, isDisabled) => FilledButton(
+              onPressed: isDisabled ? null : () {
+                settings.updateStoreName(controller.text.trim());
+                _showSnackBar('Store name updated');
+                Navigator.pop(ctx);
+              },
+              child: const Text('Save'),
+            ),
           ),
         ],
       ),
@@ -294,11 +318,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         actions: [
-          TextButton(
+          Debounced(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            builder: (_, isDisabled) => TextButton(
+              onPressed: isDisabled ? null : () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
           ),
-          FilledButton(
+          Debounced(
             onPressed: () {
               if (formKey.currentState?.validate() != true) return;
               final value = int.tryParse(controller.text) ?? current;
@@ -311,7 +338,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   '${isLow ? "Low stock" : "Overstock"} threshold updated to $value');
               Navigator.pop(ctx);
             },
-            child: const Text('Save'),
+            builder: (context, isDisabled) => FilledButton(
+              onPressed: isDisabled ? null : () {
+                if (formKey.currentState?.validate() != true) return;
+                final value = int.tryParse(controller.text) ?? current;
+                if (isLow) {
+                  settings.updateLowStockThreshold(value);
+                } else {
+                  settings.updateOverstockThreshold(value);
+                }
+                _showSnackBar(
+                    '${isLow ? "Low stock" : "Overstock"} threshold updated to $value');
+                Navigator.pop(ctx);
+              },
+              child: const Text('Save'),
+            ),
           ),
         ],
       ),

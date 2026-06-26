@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/products/models/product_model.dart';
 import 'package:smartstock/features/products/providers/product_provider.dart';
 import 'package:smartstock/features/products/screens/product_details_screen.dart';
@@ -66,7 +67,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
             product: provider.selectedProduct,
             isEdit: true,
             onSave: (Product product, List<String> serialNumbers) {
-              _handleSave(context, product, serialNumbers);
+              return _handleSave(context, product, serialNumbers);
             },
           );
         },
@@ -123,8 +124,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
               final isSold = dup.status == 'sold';
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: InkWell(
-                  onTap: () {
+                child: Debounced(
+                  onPressed: () {
                     Navigator.pop(ctx);
                     if (isSold && dup.saleId != null) {
                       Navigator.push(
@@ -143,7 +144,27 @@ class _EditProductScreenState extends State<EditProductScreen> {
                       );
                     }
                   },
-                  child: Container(
+                  builder: (context, isDisabled) => InkWell(
+                    onTap: isDisabled ? null : () {
+                      Navigator.pop(ctx);
+                      if (isSold && dup.saleId != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => SaleDetailsScreen(saleId: dup.saleId!),
+                          ),
+                        );
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ProductDetailsScreen(
+                                productId: dup.existingProductId),
+                          ),
+                        );
+                      }
+                    },
+                    child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: AppColors.surfaceContainerLow,
@@ -214,14 +235,18 @@ class _EditProductScreenState extends State<EditProductScreen> {
                     ),
                   ),
                 ),
+                  ),
               );
             }).toList(),
           ),
         ),
         actions: [
-          TextButton(
+          Debounced(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
+            builder: (_, isDisabled) => TextButton(
+              onPressed: isDisabled ? null : () => Navigator.pop(ctx),
+              child: const Text('OK'),
+            ),
           ),
         ],
       ),

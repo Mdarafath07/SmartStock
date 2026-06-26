@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/sales/models/sale_model.dart';
 
 class PurchaseHistoryTable extends StatelessWidget {
@@ -65,20 +66,28 @@ class PurchaseHistoryTable extends StatelessWidget {
                             ?.copyWith(fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 2),
-                      GestureDetector(
-                        onLongPress: () {
+                      Debounced(
+                        onPressed: () {
                           Clipboard.setData(ClipboardData(text: sale.serialNumber));
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Serial number copied')),
                           );
                         },
-                        child: Text(
-                          'Model: ${sale.modelNumber} | S/N: ${sale.serialNumber}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                        builder: (context, isDisabled) => GestureDetector(
+                          onTap: isDisabled ? null : () {
+                            Clipboard.setData(ClipboardData(text: sale.serialNumber));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Serial number copied')),
+                            );
+                          },
+                          child: Text(
+                            'Model: ${sale.modelNumber} | S/N: ${sale.serialNumber}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ),
-                      ),
+                        ),
                       const SizedBox(height: 2),
                       Text(
                         dateFormatter.format(sale.saleDate),

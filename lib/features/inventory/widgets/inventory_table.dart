@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/inventory/models/inventory_model.dart';
 
 class InventoryTable extends StatelessWidget {
@@ -48,9 +49,11 @@ class InventoryTable extends StatelessWidget {
   }
 
   Widget _buildRow(InventoryItem item) {
-    return InkWell(
-      onTap: () => onItemTap?.call(item),
-      child: Padding(
+    return Debounced(
+      onPressed: () => onItemTap?.call(item),
+      builder: (context, isDisabled) => InkWell(
+        onTap: isDisabled ? null : () => onItemTap?.call(item),
+        child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
           children: [
@@ -125,6 +128,7 @@ class InventoryTable extends StatelessWidget {
             _buildStatusChip(item.stockStatus),
           ],
         ),
+      ),
       ),
     );
   }

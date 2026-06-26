@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/sales/models/sale_model.dart';
 
 class SaleCard extends StatelessWidget {
@@ -18,122 +19,125 @@ class SaleCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      sale.productName,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
+      child: Debounced(
+        onPressed: onTap,
+        builder: (context, isDisabled) => InkWell(
+          onTap: isDisabled ? null : onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        sale.productName,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
+                    if (sale.warrantyClaimed || sale.isWarrantyClaim)
+                      _badge('Warranty', Colors.blue, theme)
+                    else if (sale.isReplacement)
+                      _badge('Replacement', Colors.orange, theme)
+                    else if (sale.warrantyExpiryDate.isAfter(DateTime.now()))
+                      _badge('Warranty', Colors.green, theme)
+                    else
+                      Text(
+                        timeFormatter.format(sale.saleDate),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Model: ${sale.modelNumber}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
-                  if (sale.warrantyClaimed || sale.isWarrantyClaim)
-                    _badge('Warranty', Colors.blue, theme)
-                  else if (sale.isReplacement)
-                    _badge('Replacement', Colors.orange, theme)
-                  else if (sale.warrantyExpiryDate.isAfter(DateTime.now()))
-                    _badge('Warranty', Colors.green, theme)
-                  else
-                    Text(
-                      timeFormatter.format(sale.saleDate),
+                ),
+                const SizedBox(height: 4),
+                if (sale.isWarrantyClaim)
+                  Text(
+                    'S/N: ${sale.serialNumber}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  )
+                else if (sale.warrantyClaimed)
+                  Text(
+                    'New S/N: ${sale.newSerialNumber ?? '-'}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  )
+                else
+                  GestureDetector(
+                    onLongPress: () {
+                      Clipboard.setData(ClipboardData(text: sale.serialNumber));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Serial number copied')),
+                      );
+                    },
+                    child: Text(
+                      'S/N: ${sale.serialNumber}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Model: ${sale.modelNumber}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 4),
-              if (sale.isWarrantyClaim)
-                Text(
-                  'S/N: ${sale.serialNumber}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w600,
                   ),
-                )
-              else if (sale.warrantyClaimed)
-                Text(
-                  'New S/N: ${sale.newSerialNumber ?? '-'}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                )
-              else
-                GestureDetector(
-                  onLongPress: () {
-                    Clipboard.setData(ClipboardData(text: sale.serialNumber));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Serial number copied')),
-                    );
-                  },
-                  child: Text(
-                    'S/N: ${sale.serialNumber}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            sale.customerName,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            sale.customerPhone,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          sale.customerName,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
+                          priceFormatter.format(sale.salePrice),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
                           ),
                         ),
                         Text(
-                          sale.customerPhone,
+                          'Profit: ${priceFormatter.format(sale.profit)}',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                            color: profitColor,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        priceFormatter.format(sale.salePrice),
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      Text(
-                        'Profit: ${priceFormatter.format(sale.profit)}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: profitColor,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

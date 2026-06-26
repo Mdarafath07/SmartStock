@@ -235,6 +235,55 @@ class WarrantyService {
     await batch.commit();
   }
 
+  Future<List<Map<String, String>>> getAvailableSerials() async {
+    final serialSnapshot = await _firestore
+        .collection('serial_numbers')
+        .where('status', isEqualTo: 'available')
+        .get();
+
+    final productIds = <String>{};
+    final serialsByProduct = <String, List<String>>{};
+
+    for (final doc in serialSnapshot.docs) {
+      final data = doc.data();
+      final pid = data['productId'] as String? ?? '';
+      final serial = data['serialNumber'] as String? ?? '';
+      if (pid.isNotEmpty && serial.isNotEmpty) {
+        productIds.add(pid);
+        serialsByProduct.putIfAbsent(pid, () => []).add(serial);
+      }
+    }
+
+    if (productIds.isEmpty) return [];
+
+    final productNames = <String, String>{};
+    final chunks = productIds.toList();
+    for (int i = 0; i < chunks.length; i += 30) {
+      final chunk = chunks.skip(i).take(30).toList();
+      final productSnapshot = await _firestore
+          .collection('products')
+          .where(FieldPath.documentId, whereIn: chunk)
+          .get();
+      for (final doc in productSnapshot.docs) {
+        productNames[doc.id] = doc.data()['productName'] as String? ?? 'Unknown';
+      }
+    }
+
+    final result = <Map<String, String>>[];
+    for (final entry in serialsByProduct.entries) {
+      final name = productNames[entry.key] ?? 'Unknown';
+      for (final serial in entry.value) {
+        result.add({
+          'serialNumber': serial,
+          'productName': name,
+          'productId': entry.key,
+        });
+      }
+    }
+    result.sort((a, b) => a['productName']!.compareTo(b['productName']!));
+    return result;
+  }
+
   List<Warranty> _mapToWarranties(QuerySnapshot snapshot) {
     return snapshot.docs.map((doc) => _mapWarranty(doc)).toList();
   }

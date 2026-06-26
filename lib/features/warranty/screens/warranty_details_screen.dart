@@ -5,10 +5,12 @@ import 'package:provider/provider.dart';
 import 'package:smartstock/core/constants/color_constants.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/utils/date_utils.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/core/widgets/error_widget.dart';
 import 'package:smartstock/features/warranty/models/warranty_model.dart';
 import 'package:smartstock/features/sales/screens/sale_details_screen.dart';
 import 'package:smartstock/features/warranty/providers/warranty_provider.dart';
+import 'package:smartstock/features/warranty/widgets/serial_number_picker_dialog.dart';
 
 class WarrantyDetailsScreen extends StatefulWidget {
   final String warrantyId;
@@ -558,15 +560,18 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
         const SizedBox(width: 8),
         Expanded(
           child: onLongPress != null
-              ? GestureDetector(
-                  onLongPress: onLongPress,
-                  child: Text(
-                    text,
-                    style: AppTextStyles.bodyMd.copyWith(
-                      color: textColor,
+              ? Debounced(
+                  onPressed: onLongPress,
+                  builder: (context, isDisabled) => GestureDetector(
+                    onTap: isDisabled ? null : onLongPress,
+                    child: Text(
+                      text,
+                      style: AppTextStyles.bodyMd.copyWith(
+                        color: textColor,
+                      ),
                     ),
                   ),
-                )
+              )
               : Text(
                   text,
                   style: AppTextStyles.bodyMd.copyWith(
@@ -589,6 +594,7 @@ class _ClaimFormDialog extends StatefulWidget {
 class _ClaimFormDialogState extends State<_ClaimFormDialog> {
   final _serialCtrl = TextEditingController();
   final _reasonCtrl = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
@@ -601,35 +607,70 @@ class _ClaimFormDialogState extends State<_ClaimFormDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Claim Warranty'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _serialCtrl,
-            decoration: const InputDecoration(
-              labelText: 'New Serial Number',
-              border: OutlineInputBorder(),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _serialCtrl,
+              readOnly: true,
+              decoration: const InputDecoration(
+                labelText: 'New Serial Number',
+                border: OutlineInputBorder(),
+                suffixIcon: Icon(Icons.arrow_drop_down),
+                helperText: 'Tap to select from available stock',
+              ),
+              onTap: () async {
+                final selected = await showDialog<String>(
+                  context: context,
+                  builder: (_) => const SerialNumberPickerDialog(),
+                );
+                if (selected != null) {
+                  _serialCtrl.text = selected;
+                }
+              },
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty)
+                      ? 'Serial number is required'
+                      : null,
             ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _reasonCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Reason',
-              border: OutlineInputBorder(),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _reasonCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Reason',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 2,
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Reason is required' : null,
             ),
-            maxLines: 2,
-          ),
-        ],
+          ],
+        ),
       ),
       actions: [
-        TextButton(
+        Debounced(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          builder: (_, isDisabled) => TextButton(
+            onPressed: isDisabled ? null : () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
         ),
-        FilledButton(
-          onPressed: () => Navigator.pop(context, _serialCtrl.text.trim()),
-          child: const Text('Submit'),
+        Debounced(
+          onPressed: () {
+            if (_formKey.currentState!.validate()) {
+              Navigator.pop(context, _serialCtrl.text.trim());
+            }
+          },
+          builder: (context, isDisabled) => FilledButton(
+            onPressed: isDisabled ? null : () {
+              if (_formKey.currentState!.validate()) {
+                Navigator.pop(context, _serialCtrl.text.trim());
+              }
+            },
+            child: const Text('Submit'),
+          ),
         ),
       ],
     );

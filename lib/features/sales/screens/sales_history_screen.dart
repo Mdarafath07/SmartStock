@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/sales/models/sale_model.dart';
 import 'package:smartstock/features/sales/providers/sale_provider.dart';
 import 'package:smartstock/features/sales/screens/sale_details_screen.dart';
@@ -299,13 +300,19 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
               ],
             ),
           ),
-          ...sales.map((sale) => InkWell(
-                onTap: () => Navigator.push(
+          ...sales.map((sale) => Debounced(
+                onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (_) => SaleDetailsScreen(saleId: sale.id)),
                 ),
-                child: Padding(
+                builder: (context, isDisabled) => InkWell(
+                  onTap: isDisabled ? null : () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => SaleDetailsScreen(saleId: sale.id)),
+                  ),
+                  child: Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
@@ -338,18 +345,26 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                   _saleBadge('Warranty', Colors.blue),
                               ],
                             ),
-                            GestureDetector(
-                              onLongPress: () {
+                            Debounced(
+                              onPressed: () {
                                 Clipboard.setData(ClipboardData(text: sale.serialNumber));
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('Serial number copied')),
                                 );
                               },
-                              child: Text('${sale.modelNumber} | S/N: ${sale.serialNumber}',
+                              builder: (context, isDisabled) => GestureDetector(
+                                onTap: isDisabled ? null : () {
+                                  Clipboard.setData(ClipboardData(text: sale.serialNumber));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Serial number copied')),
+                                  );
+                                },
+                                child: Text('${sale.modelNumber} | S/N: ${sale.serialNumber}',
                                   style: theme.textTheme.bodySmall?.copyWith(
                                       color:
                                           theme.colorScheme.onSurfaceVariant)),
                             ),
+                              ),
                           ],
                         ),
                       ),
@@ -368,7 +383,8 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                     ],
                   ),
                 ),
-              )),
+              ),
+                )),
         ],
       ),
     );

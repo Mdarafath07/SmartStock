@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/dashboard/models/dashboard_stats_model.dart';
 
 class TopSellingSection extends StatelessWidget {
@@ -25,9 +26,12 @@ class TopSellingSection extends StatelessWidget {
                 color: AppColors.onSurface,
               ),
             ),
-            TextButton(
+            Debounced(
               onPressed: () {},
-              child: const Text('View All'),
+              builder: (_, isDisabled) => TextButton(
+                onPressed: isDisabled ? null : () {},
+                child: const Text('View All'),
+              ),
             ),
           ],
         ),

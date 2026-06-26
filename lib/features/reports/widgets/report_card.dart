@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smartstock/core/constants/color_constants.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 
 class ReportCard extends StatelessWidget {
   final IconData icon;
@@ -22,9 +23,11 @@ class ReportCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
+      child: Debounced(
+        onPressed: onTap,
+        builder: (context, isDisabled) => InkWell(
+          onTap: isDisabled ? null : onTap,
+          child: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -77,6 +80,7 @@ class ReportCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

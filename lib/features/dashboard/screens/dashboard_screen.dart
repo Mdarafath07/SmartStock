@@ -9,6 +9,7 @@ import 'package:smartstock/features/dashboard/widgets/quick_search.dart';
 import 'package:smartstock/features/dashboard/widgets/recent_products_section.dart';
 import 'package:smartstock/features/dashboard/widgets/stats_grid.dart';
 import 'package:smartstock/features/dashboard/widgets/top_selling_section.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -85,9 +86,12 @@ class _DashboardScreenState extends State<DashboardScreen>
                   Text(provider.error!,
                       style: const TextStyle(color: AppColors.error)),
                   const SizedBox(height: 16),
-                  FilledButton(
+                  Debounced(
                     onPressed: () => provider.refresh(),
-                    child: const Text('Retry'),
+                    builder: (context, isDisabled) => FilledButton(
+                      onPressed: isDisabled ? null : () => provider.refresh(),
+                      child: const Text('Retry'),
+                    ),
                   ),
                 ],
               ),

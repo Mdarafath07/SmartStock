@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/products/models/product_model.dart';
 import 'package:smartstock/features/products/providers/product_provider.dart';
 import 'package:smartstock/features/products/screens/edit_product_screen.dart';
@@ -33,11 +34,14 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         title: const Text('Delete Product'),
         content: const Text('Are you sure you want to delete this product?'),
         actions: [
-          TextButton(
+          Debounced(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            builder: (_, isDisabled) => TextButton(
+              onPressed: isDisabled ? null : () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
           ),
-          FilledButton(
+          Debounced(
             onPressed: () {
               Navigator.pop(ctx);
               context
@@ -45,10 +49,21 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   .deleteProduct(widget.productId);
               Navigator.pop(context);
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.error,
+            builder: (context, isDisabled) => FilledButton(
+              onPressed: isDisabled
+                  ? null
+                  : () {
+                      Navigator.pop(ctx);
+                      context
+                          .read<ProductProvider>()
+                          .deleteProduct(widget.productId);
+                      Navigator.pop(context);
+                    },
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.error,
+              ),
+              child: const Text('Delete'),
             ),
-            child: const Text('Delete'),
           ),
         ],
       ),
@@ -104,13 +119,19 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       const SizedBox(height: 8),
                       Text(provider.error!),
                       const SizedBox(height: 16),
-                      FilledButton(
+                      Debounced(
                         onPressed: () =>
                             provider.loadProductById(widget.productId),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primaryContainer,
+                        builder: (context, isDisabled) => FilledButton(
+                          onPressed: isDisabled
+                              ? null
+                              : () =>
+                                  provider.loadProductById(widget.productId),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.primaryContainer,
+                          ),
+                          child: const Text('Retry'),
                         ),
-                        child: const Text('Retry'),
                       ),
                     ],
                   ),

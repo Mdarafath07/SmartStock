@@ -9,7 +9,7 @@ import 'package:smartstock/features/products/widgets/serial_number_list.dart';
 class ProductForm extends StatefulWidget {
   final Product? product;
   final bool isEdit;
-  final void Function(Product product, List<String> serialNumbers) onSave;
+  final Future<void> Function(Product product, List<String> serialNumbers) onSave;
 
   const ProductForm({
     super.key,
@@ -31,6 +31,7 @@ class _ProductFormState extends State<ProductForm> {
   final _sellingPriceController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _serialControllers = <TextEditingController>[];
+  bool _isSubmitting = false;
 
   String? _selectedCategoryId;
   String? _selectedCategoryName;
@@ -85,29 +86,39 @@ class _ProductFormState extends State<ProductForm> {
     super.dispose();
   }
 
-  void _submit() {
-    if (!_formKey.currentState!.validate()) return;
+  Future<void> _submit() async {
+    if (_isSubmitting) return;
+    setState(() => _isSubmitting = true);
 
-    final serialNumbers = _serialControllers
-        .map((c) => c.text.trim())
-        .where((s) => s.isNotEmpty)
-        .toList();
+    if (!_formKey.currentState!.validate()) {
+      if (mounted) setState(() => _isSubmitting = false);
+      return;
+    }
 
-    final product = Product(
-      id: widget.product?.id ?? '',
-      categoryId: _selectedCategoryId ?? '',
-      categoryName: _selectedCategoryName ?? '',
-      brandName: _brandController.text.trim(),
-      productName: _productNameController.text.trim(),
-      modelNumber: _modelNumberController.text.trim(),
-      imageUrl: _imageUrl,
-      description: _descriptionController.text.trim(),
-      purchasePrice: double.tryParse(_purchasePriceController.text) ?? 0,
-      sellingPrice: double.tryParse(_sellingPriceController.text) ?? 0,
-      warrantyMonths: _warrantyMonths,
-    );
+    try {
+      final serialNumbers = _serialControllers
+          .map((c) => c.text.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
 
-    widget.onSave(product, serialNumbers);
+      final product = Product(
+        id: widget.product?.id ?? '',
+        categoryId: _selectedCategoryId ?? '',
+        categoryName: _selectedCategoryName ?? '',
+        brandName: _brandController.text.trim(),
+        productName: _productNameController.text.trim(),
+        modelNumber: _modelNumberController.text.trim(),
+        imageUrl: _imageUrl,
+        description: _descriptionController.text.trim(),
+        purchasePrice: double.tryParse(_purchasePriceController.text) ?? 0,
+        sellingPrice: double.tryParse(_sellingPriceController.text) ?? 0,
+        warrantyMonths: _warrantyMonths,
+      );
+
+      await widget.onSave(product, serialNumbers);
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -207,21 +218,30 @@ class _ProductFormState extends State<ProductForm> {
             width: double.infinity,
             height: 48,
             child: FilledButton(
-              onPressed: _submit,
+              onPressed: _isSubmitting ? null : _submit,
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primaryContainer,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: Text(
-                widget.isEdit ? 'Update Product' : 'Save Product',
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      widget.isEdit ? 'Update Product' : 'Save Product',
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
             ),
           ),
           const SizedBox(height: 32),

@@ -26,15 +26,16 @@ class _DailyAddedProductsSectionState extends State<DailyAddedProductsSection> {
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
+    final provider = context.read<DashboardProvider>();
     final picked = await showDatePicker(
       context: context,
-      initialDate: context.read<DashboardProvider>().selectedDate,
+      initialDate: provider.selectedDate,
       firstDate: DateTime(2020),
       lastDate: now,
       helpText: 'Select date to view added products',
     );
     if (picked != null) {
-      context.read<DashboardProvider>().setDate(picked);
+      provider.setDate(picked);
     }
   }
 

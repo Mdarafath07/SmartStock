@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/color_constants.dart';
 import '../theme/text_styles.dart';
+import '../widgets/debounced.dart';
 
 class StatCard extends StatelessWidget {
   final String title;
@@ -23,10 +24,12 @@ class StatCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(
+      child: Debounced(
+        onPressed: onTap,
+        builder: (context, isDisabled) => InkWell(
+          onTap: isDisabled ? null : onTap,
+          child: Container(
+            decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
                 color.withValues(alpha: 0.08),
@@ -86,6 +89,7 @@ class StatCard extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }

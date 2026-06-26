@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smartstock/core/constants/color_constants.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 
 class SettingsTile extends StatelessWidget {
   final IconData leadingIcon;
@@ -25,9 +26,11 @@ class SettingsTile extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
+      child: Debounced(
+        onPressed: onTap,
+        builder: (context, isDisabled) => InkWell(
+          onTap: isDisabled ? null : onTap,
+          child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
@@ -79,6 +82,7 @@ class SettingsTile extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

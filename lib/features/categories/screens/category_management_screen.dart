@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/categories/models/category_model.dart';
 import 'package:smartstock/features/categories/providers/category_provider.dart';
 import 'package:smartstock/features/categories/screens/add_category_screen.dart';
@@ -52,9 +53,12 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                   Text(provider.error!,
                       style: const TextStyle(color: AppColors.error)),
                   const SizedBox(height: 16),
-                  FilledButton(
+                  Debounced(
                     onPressed: () => provider.loadCategories(),
-                    child: const Text('Retry'),
+                    builder: (context, isDisabled) => FilledButton(
+                      onPressed: isDisabled ? null : () => provider.loadCategories(),
+                      child: const Text('Retry'),
+                    ),
                   ),
                 ],
               ),
@@ -142,19 +146,28 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         title: const Text('Delete Category'),
         content: Text('Are you sure you want to delete "$name"?'),
         actions: [
-          TextButton(
+          Debounced(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.error,
+            builder: (_, isDisabled) => TextButton(
+              onPressed: isDisabled ? null : () => Navigator.pop(context),
+              child: const Text('Cancel'),
             ),
+          ),
+          Debounced(
             onPressed: () {
               context.read<CategoryProvider>().deleteCategory(id);
               Navigator.pop(context);
             },
-            child: const Text('Delete'),
+            builder: (context, isDisabled) => FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.error,
+              ),
+              onPressed: isDisabled ? null : () {
+                context.read<CategoryProvider>().deleteCategory(id);
+                Navigator.pop(context);
+              },
+              child: const Text('Delete'),
+            ),
           ),
         ],
       ),

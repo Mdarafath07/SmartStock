@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/categories/providers/category_provider.dart';
 import 'package:smartstock/features/products/models/product_model.dart';
 import 'package:smartstock/features/products/providers/product_provider.dart';
@@ -187,12 +188,16 @@ class _ProductListScreenState extends State<ProductListScreen> {
   Widget _buildSortToggle() {
     return Material(
       color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: () {
+      child: Debounced(
+        onPressed: () {
           setState(() => _sortNewestFirst = !_sortNewestFirst);
         },
-        child: Container(
+        builder: (context, isDisabled) => InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: isDisabled ? null : () {
+            setState(() => _sortNewestFirst = !_sortNewestFirst);
+          },
+          child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
             border: Border.all(color: AppColors.outlineVariant),
@@ -219,6 +224,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -227,9 +233,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
     required bool selected,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
+    return Debounced(
+      onPressed: onTap,
+      builder: (context, isDisabled) => GestureDetector(
+        onTap: isDisabled ? null : onTap,
+        child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
           color: selected ? AppColors.primaryContainer : Colors.transparent,
@@ -248,6 +256,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
             color: selected ? AppColors.onPrimary : AppColors.onSurfaceVariant,
           ),
         ),
+      ),
       ),
     );
   }
@@ -275,12 +284,15 @@ class _ProductListScreenState extends State<ProductListScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            FilledButton(
+            Debounced(
               onPressed: () => productProvider.loadProducts(),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primaryContainer,
+              builder: (context, isDisabled) => FilledButton(
+                onPressed: isDisabled ? null : () => productProvider.loadProducts(),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primaryContainer,
+                ),
+                child: const Text('Retry'),
               ),
-              child: const Text('Retry'),
             ),
           ],
         ),

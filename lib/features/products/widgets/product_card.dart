@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/products/models/product_model.dart';
 
 class ProductCard extends StatelessWidget {
@@ -29,9 +30,11 @@ class ProductCard extends StatelessWidget {
                 ? AppColors.primaryContainer.withValues(alpha: 0.6)
                 : AppColors.outlineVariant.withValues(alpha: 0.5)),
       ),
-      child: InkWell(
-        onTap: onTap,
-        child: Column(
+      child: Debounced(
+        onPressed: onTap,
+        builder: (context, isDisabled) => InkWell(
+          onTap: isDisabled ? null : onTap,
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Stack(
@@ -137,6 +140,7 @@ class ProductCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

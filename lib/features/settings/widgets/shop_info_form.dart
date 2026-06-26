@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smartstock/core/constants/color_constants.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/utils/validators.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 
 class ShopInfoForm extends StatefulWidget {
   final String storeName;
@@ -94,9 +95,12 @@ class _ShopInfoFormState extends State<ShopInfoForm> {
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
+            child: Debounced(
               onPressed: _save,
-              child: const Text('Save Changes'),
+              builder: (context, isDisabled) => ElevatedButton(
+                onPressed: isDisabled ? null : _save,
+                child: const Text('Save Changes'),
+              ),
             ),
           ),
         ],

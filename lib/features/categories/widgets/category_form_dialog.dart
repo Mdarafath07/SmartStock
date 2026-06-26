@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smartstock/core/widgets/debounced.dart';
 
 class CategoryFormDialog extends StatefulWidget {
   final String? initialName;
@@ -55,18 +56,29 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
         ),
       ),
       actions: [
-        TextButton(
+        Debounced(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          builder: (_, isDisabled) => TextButton(
+            onPressed: isDisabled ? null : () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
         ),
-        FilledButton(
+        Debounced(
           onPressed: () {
             if (_formKey.currentState!.validate()) {
               widget.onSave(_controller.text.trim());
               Navigator.pop(context);
             }
           },
-          child: const Text('Save'),
+          builder: (context, isDisabled) => FilledButton(
+            onPressed: isDisabled ? null : () {
+              if (_formKey.currentState!.validate()) {
+                widget.onSave(_controller.text.trim());
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Save'),
+          ),
         ),
       ],
     );

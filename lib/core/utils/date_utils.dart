@@ -30,7 +30,7 @@ class AppDateUtils {
     return expiryDate.isAfter(DateTime.now());
   }
 
-  static String formatCurrency(double amount) {
+  static String formatCurrency(double amount, {String symbol = r'$'}) {
     final parts = amount.toStringAsFixed(2).split('.');
     final intPart = parts[0];
     final decimalPart = parts[1];
@@ -45,7 +45,7 @@ class AppDateUtils {
       count++;
     }
 
-    return '\$${buffer.toString().split('').reversed.join()}.$decimalPart';
+    return '$symbol${buffer.toString().split('').reversed.join()}.$decimalPart';
   }
 
   static String getMonthName(int month) {

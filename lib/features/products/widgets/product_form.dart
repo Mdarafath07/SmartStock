@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/features/categories/providers/category_provider.dart';
 import 'package:smartstock/features/products/models/product_model.dart';
+import 'package:smartstock/features/products/widgets/barcode_scanner_screen.dart';
 import 'package:smartstock/features/products/widgets/image_picker_widget.dart';
 import 'package:smartstock/features/products/widgets/serial_number_list.dart';
 
@@ -35,10 +36,36 @@ class _ProductFormState extends State<ProductForm> {
 
   String? _selectedCategoryId;
   String? _selectedCategoryName;
-  int _warrantyMonths = 12;
   String _imageUrl = '';
 
-  static const _warrantyOptions = [3, 6, 12, 24];
+  int _warrantyMonths = 0;
+  int _warrantyDays = 0;
+  String? _warrantyDropdownValue;
+  bool _isCustomWarranty = false;
+  bool _warrantyUnitIsMonths = true;
+  final _customWarrantyController = TextEditingController();
+
+  static const _warrantyOptions = <String>[
+    'None',
+    'd7', 'd14', 'd30',
+    'm3', 'm6', 'm12', 'm24',
+    'custom',
+  ];
+
+  String _warrantyLabel(String key) {
+    return switch (key) {
+      'None' => 'None (no warranty)',
+      'd7' => '7 days',
+      'd14' => '14 days',
+      'd30' => '30 days',
+      'm3' => '3 months',
+      'm6' => '6 months',
+      'm12' => '12 months',
+      'm24' => '24 months',
+      'custom' => 'Custom',
+      _ => key,
+    };
+  }
 
   @override
   void initState() {
@@ -54,9 +81,31 @@ class _ProductFormState extends State<ProductForm> {
       _selectedCategoryId = p.categoryId;
       _selectedCategoryName = p.categoryName;
       _warrantyMonths = p.warrantyMonths;
+      _warrantyDays = p.warrantyDays;
       _imageUrl = p.imageUrl;
+      _warrantyDropdownValue = _resolveDropdown(p.warrantyMonths, p.warrantyDays);
+      if (_warrantyDropdownValue == null) {
+        _isCustomWarranty = true;
+        _warrantyUnitIsMonths = p.warrantyMonths > 0;
+        _customWarrantyController.text = _warrantyUnitIsMonths
+            ? p.warrantyMonths.toString()
+            : p.warrantyDays.toString();
+        _warrantyDropdownValue = 'custom';
+      }
     }
     _addSerialField();
+  }
+
+  String? _resolveDropdown(int months, int days) {
+    if (months == 0 && days == 0) return 'None';
+    if (days == 7 && months == 0) return 'd7';
+    if (days == 14 && months == 0) return 'd14';
+    if (days == 30 && months == 0) return 'd30';
+    if (months == 3 && days == 0) return 'm3';
+    if (months == 6 && days == 0) return 'm6';
+    if (months == 12 && days == 0) return 'm12';
+    if (months == 24 && days == 0) return 'm24';
+    return null;
   }
 
   void _addSerialField() {
@@ -72,6 +121,16 @@ class _ProductFormState extends State<ProductForm> {
     });
   }
 
+  void _handleScan(int index) async {
+    final result = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const BarcodeScannerScreen()),
+    );
+    if (result != null && index < _serialControllers.length) {
+      _serialControllers[index].text = result;
+    }
+  }
+
   @override
   void dispose() {
     _brandController.dispose();
@@ -80,10 +139,31 @@ class _ProductFormState extends State<ProductForm> {
     _purchasePriceController.dispose();
     _sellingPriceController.dispose();
     _descriptionController.dispose();
+    _customWarrantyController.dispose();
     for (final c in _serialControllers) {
       c.dispose();
     }
     super.dispose();
+  }
+
+  int get _resolvedWarrantyMonths {
+    if (_isCustomWarranty) {
+      if (_warrantyUnitIsMonths) {
+        return int.tryParse(_customWarrantyController.text) ?? 0;
+      }
+      return 0;
+    }
+    return _warrantyMonths;
+  }
+
+  int get _resolvedWarrantyDays {
+    if (_isCustomWarranty) {
+      if (!_warrantyUnitIsMonths) {
+        return int.tryParse(_customWarrantyController.text) ?? 0;
+      }
+      return 0;
+    }
+    return _warrantyDays;
   }
 
   Future<void> _submit() async {
@@ -112,7 +192,8 @@ class _ProductFormState extends State<ProductForm> {
         description: _descriptionController.text.trim(),
         purchasePrice: double.tryParse(_purchasePriceController.text) ?? 0,
         sellingPrice: double.tryParse(_sellingPriceController.text) ?? 0,
-        warrantyMonths: _warrantyMonths,
+        warrantyMonths: _resolvedWarrantyMonths,
+        warrantyDays: _resolvedWarrantyDays,
       );
 
       await widget.onSave(product, serialNumbers);
@@ -199,7 +280,7 @@ class _ProductFormState extends State<ProductForm> {
             ],
           ),
           const SizedBox(height: 14),
-          _buildWarrantyDropdown(),
+          _buildWarrantySection(),
           const SizedBox(height: 14),
           _buildTextField(
             controller: _descriptionController,
@@ -212,6 +293,7 @@ class _ProductFormState extends State<ProductForm> {
             controllers: _serialControllers,
             onAdd: _addSerialField,
             onRemove: _removeSerialField,
+            onScan: _handleScan,
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -362,55 +444,160 @@ class _ProductFormState extends State<ProductForm> {
     );
   }
 
-  Widget _buildWarrantyDropdown() {
-    return DropdownButtonFormField<int>(
-      initialValue: _warrantyMonths,
-      items: _warrantyOptions.map((months) {
-        return DropdownMenuItem(
-          value: months,
-          child: Text(
-            '$months months',
-            style: const TextStyle(
+  Widget _buildWarrantySection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        DropdownButtonFormField<String>(
+          initialValue: _warrantyDropdownValue,
+          items: _warrantyOptions.map((key) {
+            return DropdownMenuItem(
+              value: key,
+              child: Text(
+                _warrantyLabel(key),
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  color: AppColors.onSurface,
+                ),
+              ),
+            );
+          }).toList(),
+          onChanged: (value) {
+            if (value == null) return;
+            if (value == 'custom') {
+              setState(() {
+                _isCustomWarranty = true;
+                _warrantyDropdownValue = value;
+              });
+            } else if (value == 'None') {
+              setState(() {
+                _isCustomWarranty = false;
+                _warrantyMonths = 0;
+                _warrantyDays = 0;
+                _warrantyDropdownValue = value;
+              });
+            } else {
+              setState(() {
+                _isCustomWarranty = false;
+                _warrantyDropdownValue = value;
+                if (value.startsWith('d')) {
+                  _warrantyDays = int.parse(value.substring(1));
+                  _warrantyMonths = 0;
+                } else {
+                  _warrantyMonths = int.parse(value.substring(1));
+                  _warrantyDays = 0;
+                }
+              });
+            }
+          },
+          decoration: InputDecoration(
+            labelText: 'Warranty Duration',
+            labelStyle: const TextStyle(
               fontFamily: 'Inter',
-              fontSize: 14,
-              color: AppColors.onSurface,
+              fontSize: 13,
+              color: AppColors.onSurfaceVariant,
+            ),
+            filled: true,
+            fillColor: AppColors.surfaceContainerLow,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(
+                color: AppColors.primaryContainer,
+                width: 1,
+              ),
             ),
           ),
-        );
-      }).toList(),
-      onChanged: (value) {
-        if (value != null) setState(() => _warrantyMonths = value);
-      },
-      decoration: InputDecoration(
-        labelText: 'Warranty Duration',
-        labelStyle: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 13,
-          color: AppColors.onSurfaceVariant,
-        ),
-        filled: true,
-        fillColor: AppColors.surfaceContainerLow,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 10,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(
-            color: AppColors.primaryContainer,
-            width: 1,
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
+            color: AppColors.onSurface,
           ),
         ),
-      ),
-      style: const TextStyle(
-        fontFamily: 'Inter',
-        fontSize: 14,
-        color: AppColors.onSurface,
-      ),
+        if (_isCustomWarranty) ...[
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _customWarrantyController,
+                  keyboardType: TextInputType.number,
+                  validator: (v) {
+                    if (!_isCustomWarranty) return null;
+                    if (v == null || v.trim().isEmpty) return 'Required';
+                    final n = int.tryParse(v);
+                    if (n == null || n <= 0) return 'Enter valid number';
+                    return null;
+                  },
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    color: AppColors.onSurface,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: 'Custom Duration',
+                    hintText: 'Enter value',
+                    hintStyle: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                    labelStyle: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.surfaceContainerLow,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(
+                        color: AppColors.primaryContainer,
+                        width: 1,
+                      ),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: AppColors.error),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(value: true, label: Text('Months', style: TextStyle(fontFamily: 'Inter', fontSize: 12))),
+                  ButtonSegment(value: false, label: Text('Days', style: TextStyle(fontFamily: 'Inter', fontSize: 12))),
+                ],
+                selected: {_warrantyUnitIsMonths},
+                onSelectionChanged: (v) {
+                  setState(() => _warrantyUnitIsMonths = v.first);
+                },
+                style: SegmentedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 }

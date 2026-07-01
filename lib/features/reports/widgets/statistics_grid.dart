@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:smartstock/core/constants/color_constants.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/utils/formatters.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class StatisticsGrid extends StatelessWidget {
   final double totalSales;
@@ -19,6 +21,7 @@ class StatisticsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -29,13 +32,13 @@ class StatisticsGrid extends StatelessWidget {
       children: [
         _statCard(
           'Total Sales',
-          AppFormatters.formatCurrency(totalSales),
+          AppFormatters.formatCurrency(totalSales, symbol: symbol),
           Icons.trending_up_rounded,
           ColorConstants.primary,
         ),
         _statCard(
           'Total Profit',
-          AppFormatters.formatCurrency(totalProfit),
+          AppFormatters.formatCurrency(totalProfit, symbol: symbol),
           Icons.account_balance_wallet_rounded,
           ColorConstants.success,
         ),

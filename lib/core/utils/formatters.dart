@@ -1,7 +1,7 @@
 class AppFormatters {
   AppFormatters._();
 
-  static String formatCurrency(double amount) {
+  static String formatCurrency(double amount, {String symbol = r'$'}) {
     final isNegative = amount < 0;
     final absAmount = isNegative ? -amount : amount;
     final parts = absAmount.toStringAsFixed(2).split('.');
@@ -19,7 +19,7 @@ class AppFormatters {
     }
 
     final formatted =
-        '\$${buffer.toString().split('').reversed.join()}.$decimalPart';
+        '$symbol${buffer.toString().split('').reversed.join()}.$decimalPart';
     return isNegative ? '-$formatted' : formatted;
   }
 

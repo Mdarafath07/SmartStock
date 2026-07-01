@@ -119,18 +119,6 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
                 arguments: warranty.id,
               );
             },
-            onClaim: warranty.isClaimable
-                ? () async {
-                    final result = await Navigator.pushNamed(
-                      context,
-                      '/warranty/claim',
-                      arguments: warranty,
-                    );
-                    if (result == true) {
-                      provider.loadAll();
-                    }
-                  }
-                : null,
           );
         },
       ),

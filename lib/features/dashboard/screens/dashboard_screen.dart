@@ -8,6 +8,7 @@ import 'package:smartstock/features/dashboard/providers/dashboard_provider.dart'
 import 'package:smartstock/features/dashboard/widgets/quick_search.dart';
 import 'package:smartstock/features/dashboard/widgets/recent_products_section.dart';
 import 'package:smartstock/features/dashboard/widgets/stats_grid.dart';
+import 'package:smartstock/features/dashboard/widgets/todays_additions_section.dart';
 import 'package:smartstock/features/dashboard/widgets/top_selling_section.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
 
@@ -110,7 +111,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   TopSellingSection(
                       topSelling: provider.stats!.topSellingProducts),
                   const SizedBox(height: 24),
-                  const DailyAddedProductsSection(),
+                  const TodaysAdditionsSection(),
                   const SizedBox(height: 24),
                   RecentProductsSection(
                       title: 'Recently Sold',
@@ -139,8 +140,20 @@ class _DashboardScreenState extends State<DashboardScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                const Icon(Icons.inventory_2,
-                    color: AppColors.onPrimary, size: 40),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.asset(
+                    'assets/logo/SmartStock logo.jpg',
+                    width: 48,
+                    height: 48,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stack) => const Icon(
+                      Icons.inventory_2,
+                      color: AppColors.onPrimary,
+                      size: 40,
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Text(
                   'SmartStock',
@@ -168,6 +181,14 @@ class _DashboardScreenState extends State<DashboardScreen>
             onTap: () {
               Navigator.pop(context);
               Navigator.pushNamed(context, AppRoutes.categories);
+            },
+          ),
+          _DrawerItem(
+            icon: Icons.post_add,
+            title: 'Daily Additions',
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, AppRoutes.dailyAdditions);
             },
           ),
           _DrawerItem(
@@ -251,14 +272,6 @@ class _DashboardScreenState extends State<DashboardScreen>
             onTap: () {
               Navigator.pop(context);
               Navigator.pushNamed(context, AppRoutes.productIssues);
-            },
-          ),
-          _DrawerItem(
-            icon: Icons.swap_horiz,
-            title: 'Replacements',
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, AppRoutes.replacements);
             },
           ),
           const Divider(),

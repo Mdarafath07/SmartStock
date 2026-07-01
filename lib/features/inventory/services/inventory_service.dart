@@ -76,10 +76,19 @@ class InventoryService {
     final available =
         serialNumbers.where((s) => s['status'] == 'available').length;
     final sold = serialNumbers.where((s) => s['status'] == 'sold').length;
+    final defective =
+        serialNumbers.where((s) => s['status'] == 'defective').length;
 
     final productDoc =
         await _firestore.collection('products').doc(productId).get();
     final productData = productDoc.data() ?? {};
+
+    final issuesSnapshot = await _firestore
+        .collection('product_issues')
+        .where('productId', isEqualTo: productId)
+        .where('status', isEqualTo: 'open')
+        .get();
+    final openIssuesCount = issuesSnapshot.docs.length;
 
     return <String, dynamic>{
       'productId': productId,
@@ -92,6 +101,8 @@ class InventoryService {
       'sellingPrice': productData['sellingPrice'] as num? ?? 0,
       'available': available,
       'sold': sold,
+      'defective': defective,
+      'openIssuesCount': openIssuesCount,
       'total': serialNumbers.length,
       'serialNumbers': serialNumbers,
     };

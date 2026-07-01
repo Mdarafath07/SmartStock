@@ -158,10 +158,11 @@ class ProductProvider extends ChangeNotifier {
 
       final batch = _firestore.batch();
       final productRef = _firestore.collection('products').doc();
+      final now = FieldValue.serverTimestamp();
 
       batch.set(productRef, {
         ...product.toMap(),
-        'createdAt': FieldValue.serverTimestamp(),
+        'createdAt': now,
         'availableQuantity': serialNumbers.length,
       });
 
@@ -171,9 +172,23 @@ class ProductProvider extends ChangeNotifier {
           'productId': productRef.id,
           'serialNumber': serial,
           'status': 'available',
-          'createdAt': FieldValue.serverTimestamp(),
+          'createdAt': now,
         });
       }
+
+      final qty = serialNumbers.length;
+      batch.set(_firestore.collection('daily_additions').doc(), {
+        'productName': product.productName,
+        'categoryName': product.categoryName,
+        'quantity': qty,
+        'unitPrice': product.purchasePrice,
+        'totalPrice': qty * product.purchasePrice,
+        'notes': '',
+        'dateAdded': now,
+        'createdAt': now,
+        'reminderEnabled': false,
+        'reminderTime': null,
+      });
 
       await batch.commit();
     } on DuplicateSerialException {
@@ -277,10 +292,47 @@ class ProductProvider extends ChangeNotifier {
           'id': doc.id,
           'serialNumber': data['serialNumber'] as String? ?? '',
           'status': data['status'] as String? ?? 'available',
+          'saleId': data['saleId'] as String?,
         };
       }).toList();
     } catch (e) {
       return [];
+    }
+  }
+
+  /// Finds a product by scanning a serial number barcode.
+  /// Returns the product and the matching serial number doc, or null.
+  Future<(Product, Map<String, dynamic>)?> findProductBySerialNumber(
+      String serial) async {
+    try {
+      final snapshot = await _firestore
+          .collection('serial_numbers')
+          .where('serialNumber', isEqualTo: serial.trim())
+          .limit(1)
+          .get();
+      if (snapshot.docs.isEmpty) return null;
+      final serialData = snapshot.docs.first.data();
+      final productId = serialData['productId'] as String? ?? '';
+      if (productId.isEmpty) return null;
+
+      final productDoc =
+          await _firestore.collection('products').doc(productId).get();
+      if (!productDoc.exists) return null;
+      final product = Product.fromMap(
+          productDoc.data() as Map<String, dynamic>, productDoc.id);
+      final availableCount = await _countSerialNumbers(productId, 'available');
+      final soldCount = await _countSerialNumbers(productId, 'sold');
+      return (
+        product.copyWith(
+            availableQuantity: availableCount, soldQuantity: soldCount),
+        {
+          'id': snapshot.docs.first.id,
+          'serialNumber': serialData['serialNumber'] as String? ?? '',
+          'status': serialData['status'] as String? ?? 'available',
+        },
+      );
+    } catch (_) {
+      return null;
     }
   }
 

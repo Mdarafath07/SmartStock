@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/sales/models/sale_model.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class PurchaseHistoryTable extends StatelessWidget {
   final List<Sale> purchases;
@@ -13,7 +15,8 @@ class PurchaseHistoryTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dateFormatter = DateFormat('MMM dd, yyyy');
-    final priceFormatter = NumberFormat.currency(symbol: '\$');
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
+    final priceFormatter = NumberFormat.currency(symbol: symbol);
 
     if (purchases.isEmpty) {
       return Center(

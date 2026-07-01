@@ -8,6 +8,7 @@ import 'package:smartstock/features/products/providers/product_provider.dart';
 import 'package:smartstock/features/products/screens/product_details_screen.dart';
 import 'package:smartstock/features/products/widgets/product_form.dart';
 import 'package:smartstock/features/sales/screens/sale_details_screen.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class EditProductScreen extends StatefulWidget {
   final String productId;
@@ -29,6 +30,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
@@ -67,7 +69,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
             product: provider.selectedProduct,
             isEdit: true,
             onSave: (Product product, List<String> serialNumbers) {
-              return _handleSave(context, product, serialNumbers);
+              return _handleSave(context, product, serialNumbers, symbol);
             },
           );
         },
@@ -76,7 +78,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
   }
 
   Future<void> _handleSave(
-      BuildContext context, Product product, List<String> serialNumbers) async {
+      BuildContext context, Product product, List<String> serialNumbers, String symbol) async {
     try {
       final provider = context.read<ProductProvider>();
       await provider.updateProduct(product);
@@ -91,7 +93,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
       }
     } on DuplicateSerialException catch (e) {
       if (context.mounted) {
-        _showDuplicateDialog(context, e.duplicates);
+        _showDuplicateDialog(context, e.duplicates, symbol);
       }
     } catch (e) {
       if (context.mounted) {
@@ -103,8 +105,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
   }
 
   void _showDuplicateDialog(
-      BuildContext context, List<DuplicateSerialInfo> duplicates) {
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+      BuildContext context, List<DuplicateSerialInfo> duplicates, String symbol) {
+    final currencyFormat = NumberFormat.currency(symbol: symbol);
     final dateFormat = DateFormat('MMM dd, yyyy');
     showDialog(
       context: context,

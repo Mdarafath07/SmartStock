@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/dashboard/models/dashboard_stats_model.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class StatsGrid extends StatelessWidget {
   final DashboardStats stats;
@@ -10,6 +12,7 @@ class StatsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
     return LayoutBuilder(
       builder: (context, constraints) {
         final crossAxisCount = constraints.maxWidth > 600 ? 4 : 2;
@@ -41,7 +44,7 @@ class StatsGrid extends StatelessWidget {
               icon: Icons.payments,
               label: "Today's Sales",
               value: NumberFormat.compactCurrency(
-                      symbol: '\$', decimalDigits: 0)
+                      symbol: symbol, decimalDigits: 0)
                   .format(stats.todaySalesAmount),
               subtitle: '${stats.todaySoldProducts} items',
               gradientColors: [const Color(0xFF2979FF), const Color(0xFF82B1FF)],

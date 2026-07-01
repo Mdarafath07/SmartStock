@@ -5,12 +5,14 @@ class SerialNumberList extends StatelessWidget {
   final List<TextEditingController> controllers;
   final VoidCallback onAdd;
   final void Function(int index) onRemove;
+  final void Function(int index) onScan;
 
   const SerialNumberList({
     super.key,
     required this.controllers,
     required this.onAdd,
     required this.onRemove,
+    required this.onScan,
   });
 
   @override
@@ -68,8 +70,19 @@ class SerialNumberList extends StatelessWidget {
                     ),
                   ),
                 ),
+                const SizedBox(width: 4),
+                IconButton(
+                  onPressed: () => onScan(index),
+                  icon: const Icon(
+                    Icons.qr_code_scanner,
+                    color: AppColors.primaryContainer,
+                    size: 20,
+                  ),
+                  visualDensity: VisualDensity.compact,
+                  tooltip: 'Scan barcode',
+                ),
                 if (controllers.length > 1) ...[
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 2),
                   IconButton(
                     onPressed: () => onRemove(index),
                     icon: const Icon(

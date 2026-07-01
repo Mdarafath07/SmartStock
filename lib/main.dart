@@ -16,6 +16,7 @@ import 'package:smartstock/features/replacements/providers/replacement_provider.
 import 'package:smartstock/features/reports/providers/report_provider.dart';
 import 'package:smartstock/features/sales/providers/sale_provider.dart';
 import 'package:smartstock/features/settings/providers/settings_provider.dart';
+import 'package:smartstock/features/daily_additions/providers/daily_addition_provider.dart';
 import 'package:smartstock/features/warranty/providers/warranty_provider.dart';
 import 'package:smartstock/firebase_options.dart';
 
@@ -49,6 +50,7 @@ class SmartStockApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SaleProvider()),
         ChangeNotifierProvider(create: (_) => CustomerProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => DailyAdditionProvider()),
         ChangeNotifierProvider(create: (_) => WarrantyProvider()),
         ChangeNotifierProvider(create: (_) => ReportProvider()),
         ChangeNotifierProvider(create: (_) => ProductIssueProvider()),

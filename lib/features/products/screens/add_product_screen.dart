@@ -8,12 +8,14 @@ import 'package:smartstock/features/products/providers/product_provider.dart';
 import 'package:smartstock/features/products/screens/product_details_screen.dart';
 import 'package:smartstock/features/products/widgets/product_form.dart';
 import 'package:smartstock/features/sales/screens/sale_details_screen.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class AddProductScreen extends StatelessWidget {
   const AddProductScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
@@ -31,14 +33,14 @@ class AddProductScreen extends StatelessWidget {
       ),
       body: ProductForm(
         onSave: (Product product, List<String> serialNumbers) {
-          return _handleSave(context, product, serialNumbers);
+          return _handleSave(context, product, serialNumbers, symbol);
         },
       ),
     );
   }
 
   Future<void> _handleSave(
-      BuildContext context, Product product, List<String> serialNumbers) async {
+      BuildContext context, Product product, List<String> serialNumbers, String symbol) async {
     try {
       await context.read<ProductProvider>().addProduct(product, serialNumbers);
       if (context.mounted) {
@@ -49,7 +51,7 @@ class AddProductScreen extends StatelessWidget {
       }
     } on DuplicateSerialException catch (e) {
       if (context.mounted) {
-        _showDuplicateDialog(context, e.duplicates);
+        _showDuplicateDialog(context, e.duplicates, symbol);
       }
     } catch (e) {
       if (context.mounted) {
@@ -61,8 +63,8 @@ class AddProductScreen extends StatelessWidget {
   }
 
   void _showDuplicateDialog(
-      BuildContext context, List<DuplicateSerialInfo> duplicates) {
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+      BuildContext context, List<DuplicateSerialInfo> duplicates, String symbol) {
+    final currencyFormat = NumberFormat.currency(symbol: symbol);
     final dateFormat = DateFormat('MMM dd, yyyy');
     showDialog(
       context: context,

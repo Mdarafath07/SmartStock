@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:smartstock/features/inventory/models/inventory_model.dart';
 import 'package:smartstock/features/inventory/repositories/inventory_repository.dart';
 
@@ -85,6 +86,21 @@ class InventoryProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<String?> findProductIdBySerial(String serial) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('serial_numbers')
+          .where('serialNumber', isEqualTo: serial)
+          .where('status', isEqualTo: 'available')
+          .limit(1)
+          .get();
+      if (snapshot.docs.isEmpty) return null;
+      return snapshot.docs.first.data()['productId'] as String?;
+    } catch (e) {
+      return null;
     }
   }
 

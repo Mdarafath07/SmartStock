@@ -16,6 +16,7 @@ class AppRoutes {
   static const String salesDetails = '/sales/details';
   static const String customers = '/customers';
   static const String customersDetails = '/customers/details';
+  static const String dailyAdditions = '/daily-additions';
   static const String warranty = '/warranty';
   static const String warrantyDetails = '/warranty/details';
   static const String reports = '/reports';

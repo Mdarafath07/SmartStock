@@ -10,6 +10,7 @@ import 'package:smartstock/core/widgets/error_widget.dart';
 import 'package:smartstock/features/warranty/models/warranty_model.dart';
 import 'package:smartstock/features/sales/screens/sale_details_screen.dart';
 import 'package:smartstock/features/warranty/providers/warranty_provider.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 import 'package:smartstock/features/warranty/widgets/serial_number_picker_dialog.dart';
 
 class WarrantyDetailsScreen extends StatefulWidget {
@@ -411,7 +412,8 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
   }
 
   Widget _buildSaleSection(Warranty warranty) {
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
+    final currencyFormat = NumberFormat.currency(symbol: symbol);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),

@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:smartstock/core/routes/app_routes.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
+import 'package:smartstock/features/product_issues/models/product_issue_model.dart';
+import 'package:smartstock/features/product_issues/services/product_issue_service.dart';
 import 'package:smartstock/features/products/models/product_model.dart';
 import 'package:smartstock/features/products/providers/product_provider.dart';
 import 'package:smartstock/features/products/screens/edit_product_screen.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   final String productId;
@@ -143,7 +147,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   }
 
   Widget _buildContent(Product product) {
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
+    final currencyFormat = NumberFormat.currency(symbol: symbol);
     final dateFormat = DateFormat('MMM dd, yyyy');
 
     return SingleChildScrollView(
@@ -234,12 +239,30 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         color: AppColors.statusInStock,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: _buildInfoCard(
                         label: 'Sold',
                         value: '${product.soldQuantity}',
                         color: AppColors.secondary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: FutureBuilder<List<ProductIssue>>(
+                        future: ProductIssueService()
+                            .getIssuesByProduct(product.id),
+                        builder: (context, snapshot) {
+                          final count = snapshot.data
+                                  ?.where((i) => i.status != 'resolved')
+                                  .length ??
+                              0;
+                          return _buildInfoCard(
+                            label: 'Issues',
+                            value: '$count',
+                            color: AppColors.error,
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -270,6 +293,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 _buildSectionTitle('Serial Numbers'),
                 const SizedBox(height: 8),
                 _buildSerialNumbers(),
+                const SizedBox(height: 20),
+                _buildIssuesSection(product.id),
                 const SizedBox(height: 32),
               ],
             ),
@@ -446,6 +471,93 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 
+  Widget _buildIssuesSection(String productId) {
+    return FutureBuilder<List<ProductIssue>>(
+      future: ProductIssueService().getIssuesByProduct(productId),
+      builder: (context, snapshot) {
+        final all = snapshot.data ?? [];
+        final issues = all.where((i) => i.status != 'resolved').toList();
+        if (issues.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Issues (${issues.length})',
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.error,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...issues.map((issue) => GestureDetector(
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRoutes.productIssuesDetails,
+                    arguments: issue.id,
+                  ),
+                  child: Container(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.error.withAlpha(60)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.bug_report,
+                          size: 16, color: AppColors.error),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              issue.issueType.toUpperCase(),
+                              style: const TextStyle(
+                                fontFamily: 'Geist',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.error,
+                              ),
+                            ),
+                            Text(
+                              issue.issueDescription,
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 12,
+                                color: AppColors.onSurface,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              'Serial: ${issue.serialNumber}',
+                              style: const TextStyle(
+                                fontFamily: 'Geist',
+                                fontSize: 10,
+                                color: AppColors.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right,
+                          size: 18, color: AppColors.onSurfaceVariant),
+                    ],
+                  ),
+                ),
+                )),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildSerialNumbers() {
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: context.read<ProductProvider>().getSerialNumbers(
@@ -465,9 +577,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           );
         }
 
-        final serials = snapshot.data ?? [];
+        final allSerials = snapshot.data ?? [];
+        final available =
+            allSerials.where((s) => s['status'] == 'available').toList();
+        final sold =
+            allSerials.where((s) => s['status'] == 'sold').toList();
 
-        if (serials.isEmpty) {
+        if (allSerials.isEmpty) {
           return const Text(
             'No serial numbers registered',
             style: TextStyle(
@@ -480,88 +596,163 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
         final dateFormat = DateFormat('MMM dd, yyyy');
         return Column(
-          children: serials.map((serial) {
-            final status = serial['status'] as String;
-            final isAvailable = status == 'available';
-            final created = serial['createdAt'] as dynamic;
-            final createdDate = created != null
-                ? (created is Timestamp
-                    ? created.toDate()
-                    : DateTime.tryParse(created.toString()))
-                : null;
-            return Container(
-              margin: const EdgeInsets.only(bottom: 6),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (available.isNotEmpty) ...[
+              Text(
+                'Available Stock (${available.length})',
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.statusInStock,
+                ),
               ),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(8),
+              const SizedBox(height: 8),
+              ...available.map((serial) => _SerialTile(
+                    serial: serial,
+                    dateFormat: dateFormat,
+                    onTap: null,
+                  )),
+              const SizedBox(height: 16),
+            ],
+            if (sold.isNotEmpty) ...[
+              Text(
+                'Sold History (${sold.length})',
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.statusOutOfStock,
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        isAvailable ? Icons.check_circle : Icons.cancel,
-                        size: 16,
-                        color: isAvailable
-                            ? AppColors.statusInStock
-                            : AppColors.statusOutOfStock,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: GestureDetector(
-                          onLongPress: () {
-                            final sn = serial['serialNumber'] as String;
-                            Clipboard.setData(ClipboardData(text: sn));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Serial number copied')),
-                            );
-                          },
-                          child: Text(
-                            serial['serialNumber'] as String,
-                            style: const TextStyle(
-                              fontFamily: 'Geist',
-                              fontSize: 13,
-                              color: AppColors.onSurface,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Text(
-                        status.toUpperCase(),
-                        style: TextStyle(
-                          fontFamily: 'Geist',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: isAvailable
-                              ? AppColors.statusInStock
-                              : AppColors.statusOutOfStock,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (createdDate != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4, left: 24),
-                      child: Text(
-                        'Added: ${dateFormat.format(createdDate)}',
-                        style: const TextStyle(
-                          fontFamily: 'Geist',
-                          fontSize: 11,
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            );
-          }).toList(),
+              const SizedBox(height: 8),
+              ...sold.map((serial) => _SerialTile(
+                    serial: serial,
+                    dateFormat: dateFormat,
+                    onTap: () {
+                      final saleId = serial['saleId'] as String?;
+                      if (saleId != null && saleId.isNotEmpty) {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.salesDetails,
+                          arguments: saleId,
+                        );
+                      }
+                    },
+                  )),
+            ],
+          ],
         );
       },
+    );
+  }
+}
+
+class _SerialTile extends StatelessWidget {
+  final Map<String, dynamic> serial;
+  final DateFormat dateFormat;
+  final VoidCallback? onTap;
+
+  const _SerialTile({
+    required this.serial,
+    required this.dateFormat,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final status = serial['status'] as String;
+    final isAvailable = status == 'available';
+    final created = serial['createdAt'] as dynamic;
+    final hasSale = onTap != null;
+
+    return GestureDetector(
+      onTap: hasSale ? onTap : null,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  isAvailable ? Icons.check_circle : Icons.cancel,
+                  size: 16,
+                  color: isAvailable
+                      ? AppColors.statusInStock
+                      : AppColors.statusOutOfStock,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: GestureDetector(
+                    onLongPress: () {
+                      final sn = serial['serialNumber'] as String;
+                      Clipboard.setData(ClipboardData(text: sn));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Serial number copied')),
+                      );
+                    },
+                    child: Text(
+                      serial['serialNumber'] as String,
+                      style: TextStyle(
+                        fontFamily: 'Geist',
+                        fontSize: 13,
+                        color: AppColors.onSurface,
+                      ),
+                    ),
+                  ),
+                ),
+                if (hasSale)
+                  const Icon(Icons.chevron_right, size: 18,
+                      color: AppColors.onSurfaceVariant),
+              ],
+            ),
+            Row(
+              children: [
+                Text(
+                  status.toUpperCase(),
+                  style: TextStyle(
+                    fontFamily: 'Geist',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isAvailable
+                        ? AppColors.statusInStock
+                        : AppColors.statusOutOfStock,
+                  ),
+                ),
+                if (hasSale) ...[
+                  const Spacer(),
+                  Text('View Sale',
+                      style: TextStyle(
+                        fontFamily: 'Geist',
+                        fontSize: 11,
+                        color: AppColors.primary,
+                      )),
+                ],
+              ],
+            ),
+            if (created != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'Added: ${dateFormat.format(created is Timestamp ? created.toDate() : DateTime.tryParse(created.toString()) ?? DateTime.now())}',
+                  style: const TextStyle(
+                    fontFamily: 'Geist',
+                    fontSize: 11,
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

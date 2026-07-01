@@ -6,6 +6,7 @@ import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/sales/models/sale_model.dart';
 import 'package:smartstock/features/sales/providers/sale_provider.dart';
 import 'package:smartstock/features/sales/screens/sale_details_screen.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class SalesHistoryScreen extends StatefulWidget {
   const SalesHistoryScreen({super.key});
@@ -84,7 +85,8 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     final totalRevenue = sales.fold(0.0, (s, e) => s + e.salePrice);
     final totalProfit = sales.fold(0.0, (s, e) => s + e.profit);
 
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
+    final currencyFormat = NumberFormat.currency(symbol: symbol);
     final dateFormat = DateFormat('MMM dd, yyyy');
 
     final grouped = <String, List<Sale>>{};

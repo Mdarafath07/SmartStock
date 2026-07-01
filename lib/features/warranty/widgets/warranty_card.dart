@@ -10,13 +10,11 @@ import 'package:smartstock/features/warranty/widgets/warranty_status_badge.dart'
 class WarrantyCard extends StatelessWidget {
   final Warranty warranty;
   final VoidCallback? onTap;
-  final VoidCallback? onClaim;
 
   const WarrantyCard({
     super.key,
     required this.warranty,
     this.onTap,
-    this.onClaim,
   });
 
   @override
@@ -133,17 +131,7 @@ class WarrantyCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (warranty.isClaimable && onClaim != null) ...[
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: onClaim,
-                      icon: const Icon(Icons.assignment, size: 18),
-                      label: const Text('Claim Warranty'),
-                    ),
-                  ),
-                ],
+
               ],
             ),
           ),

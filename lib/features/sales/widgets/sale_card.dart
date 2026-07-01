@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/sales/models/sale_model.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class SaleCard extends StatelessWidget {
   final Sale sale;
@@ -14,7 +16,8 @@ class SaleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final timeFormatter = DateFormat('hh:mm a');
-    final priceFormatter = NumberFormat.currency(symbol: '\$');
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
+    final priceFormatter = NumberFormat.currency(symbol: symbol);
     final profitColor = sale.profit >= 0 ? Colors.green : Colors.red;
 
     return Card(

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/features/inventory/providers/inventory_provider.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class StockDetailsScreen extends StatefulWidget {
   final String productId;
@@ -52,9 +53,12 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
   }
 
   Widget _buildContent(Map<String, dynamic> details) {
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
+    final currencyFormat = NumberFormat.currency(symbol: symbol);
     final available = details['available'] as int? ?? 0;
     final sold = details['sold'] as int? ?? 0;
+    final defective = details['defective'] as int? ?? 0;
+    final openIssuesCount = details['openIssuesCount'] as int? ?? 0;
     final total = details['total'] as int? ?? 0;
     final serialNumbers =
         details['serialNumbers'] as List<dynamic>? ?? [];
@@ -66,7 +70,7 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
         children: [
           _buildProductHeader(details, imageUrl, currencyFormat),
           const SizedBox(height: 16),
-          _buildSummaryCards(available, sold, total),
+          _buildSummaryCards(available, sold, defective, openIssuesCount, total),
           const SizedBox(height: 16),
           _buildStatusDistribution(serialNumbers),
           const SizedBox(height: 16),
@@ -159,25 +163,39 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
     );
   }
 
-  Widget _buildSummaryCards(int available, int sold, int total) {
+  Widget _buildSummaryCards(
+      int available, int sold, int defective, int openIssuesCount, int total) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 12,
         children: [
-          Expanded(
+          SizedBox(
+            width: (MediaQuery.of(context).size.width - 56) / 3,
             child: _buildStatCard(
-              'Available',
-              '$available',
-              AppColors.statusInStock,
-              Icons.check_circle,
+              'Available', '$available', AppColors.statusInStock, Icons.check_circle,
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
+          SizedBox(
+            width: (MediaQuery.of(context).size.width - 56) / 3,
             child: _buildStatCard('Sold', '$sold', AppColors.secondary, Icons.sell),
           ),
-          const SizedBox(width: 12),
-          Expanded(
+          SizedBox(
+            width: (MediaQuery.of(context).size.width - 56) / 3,
+            child: _buildStatCard(
+              'Defective', '$defective', AppColors.error, Icons.bug_report,
+            ),
+          ),
+          if (openIssuesCount > 0)
+            SizedBox(
+              width: (MediaQuery.of(context).size.width - 56) / 3,
+              child: _buildStatCard(
+                'Open Issues', '$openIssuesCount', AppColors.error, Icons.report_problem,
+              ),
+            ),
+          SizedBox(
+            width: (MediaQuery.of(context).size.width - 56) / 3,
             child: _buildStatCard('Total', '$total', AppColors.primaryContainer, Icons.inventory_2),
           ),
         ],
@@ -228,6 +246,7 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
     final available =
         serialNumbers.where((s) => s['status'] == 'available').length;
     final sold = serialNumbers.where((s) => s['status'] == 'sold').length;
+    final defective = serialNumbers.where((s) => s['status'] == 'defective').length;
     final total = serialNumbers.length;
     final availablePercent = total > 0 ? (available / total * 100) : 0.0;
     final soldPercent = total > 0 ? (sold / total * 100) : 0.0;
@@ -262,6 +281,11 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
                       flex: sold,
                       child: Container(color: AppColors.statusOutOfStock),
                     ),
+                  if (defective > 0)
+                    Flexible(
+                      flex: defective,
+                      child: Container(color: AppColors.error),
+                    ),
                 ],
               ),
             ),
@@ -269,15 +293,13 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
           const SizedBox(height: 8),
           Row(
             children: [
-              _buildLegend(
-                AppColors.statusInStock,
-                'Available ($available)',
-              ),
+              _buildLegend(AppColors.statusInStock, 'Available ($available)'),
               const SizedBox(width: 16),
-              _buildLegend(
-                AppColors.statusOutOfStock,
-                'Sold ($sold)',
-              ),
+              _buildLegend(AppColors.statusOutOfStock, 'Sold ($sold)'),
+              if (defective > 0) ...[
+                const SizedBox(width: 16),
+                _buildLegend(AppColors.error, 'Defective ($defective)'),
+              ],
             ],
           ),
           if (total > 0) ...[

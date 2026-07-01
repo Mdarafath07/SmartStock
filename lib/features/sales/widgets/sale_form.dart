@@ -9,6 +9,7 @@ import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/categories/providers/category_provider.dart';
 import 'package:smartstock/features/products/models/product_model.dart';
 import 'package:smartstock/features/products/providers/product_provider.dart';
+import 'package:smartstock/features/products/widgets/barcode_scanner_screen.dart';
 import 'package:smartstock/features/sales/providers/sale_provider.dart';
 import 'package:smartstock/features/sales/models/serial_number_model.dart';
 
@@ -31,6 +32,7 @@ class _SaleFormState extends State<SaleForm> {
   bool _isSubmitting = false;
 
   final List<_CartItem> _cartItems = [];
+  final Set<String> _scannedSerialNumbers = {};
 
   @override
   void initState() {
@@ -111,6 +113,107 @@ class _SaleFormState extends State<SaleForm> {
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  Future<void> _handleBarcodeScan() async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final provider = context.read<ProductProvider>();
+
+    final code = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const BarcodeScannerScreen()),
+    );
+    if (code == null || code.isEmpty) return;
+    if (!mounted) return;
+
+    final result = await provider.findProductBySerialNumber(code);
+    if (result == null) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('No product found for "$code"')),
+        );
+      }
+      return;
+    }
+
+    final (product, serialData) = result;
+    final serialId = serialData['id'] as String;
+    final serialNumber = serialData['serialNumber'] as String;
+
+    if (serialData['status'] != 'available') {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(content: Text('This serial number is already sold')),
+        );
+      }
+      return;
+    }
+
+    if (_scannedSerialNumbers.contains(serialNumber)) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('$serialNumber is already in cart')),
+        );
+      }
+      return;
+    }
+
+    final cartCount = _cartItems
+        .where((item) => item.product.id == product.id)
+        .fold<int>(0, (sum, item) => sum + item.serials.length);
+    final remaining = product.availableQuantity - cartCount;
+    if (remaining <= 0) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text('No more stock available for ${product.productName}'),
+          ),
+        );
+      }
+      return;
+    }
+
+    if (!mounted) return;
+
+    var salePriceText = product.sellingPrice.toStringAsFixed(2);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => _PriceDialog(
+        productName: product.productName,
+        serialNumber: serialNumber,
+        modelNumber: product.modelNumber,
+        initialPrice: product.sellingPrice.toStringAsFixed(2),
+        onPriceChanged: (v) => salePriceText = v,
+      ),
+    );
+    if (confirmed != true) return;
+    if (!mounted) return;
+
+    final salePrice = double.tryParse(salePriceText) ?? product.sellingPrice;
+
+    _scannedSerialNumbers.add(serialNumber);
+    setState(() {
+      final existingIndex =
+          _cartItems.indexWhere((i) => i.product.id == product.id);
+      final serial = SerialNumber(
+        id: serialId,
+        productId: product.id,
+        serialNumber: serialNumber,
+        status: 'available',
+      );
+      final cartProduct = product.copyWith(sellingPrice: salePrice);
+      if (existingIndex >= 0) {
+        _cartItems[existingIndex].serials.add(serial);
+      } else {
+        _cartItems.add(_CartItem(product: cartProduct, serials: [serial]));
+      }
+    });
+
+    if (mounted) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Added ${product.productName} - $serialNumber')),
+      );
     }
   }
 
@@ -232,7 +335,8 @@ class _SaleFormState extends State<SaleForm> {
             title: const Text('Cart Items'),
             isActive: _currentStep >= 1,
             state: _currentStep > 1 ? StepState.complete : StepState.indexed,
-            content: Column(
+            content: SingleChildScrollView(
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (_cartItems.isEmpty)
@@ -263,10 +367,26 @@ class _SaleFormState extends State<SaleForm> {
                     );
                   }),
                 const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: _showAddItemSheet,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Item'),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _showAddItemSheet,
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Item', overflow: TextOverflow.ellipsis),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton.filled(
+                      onPressed: _handleBarcodeScan,
+                      icon: const Icon(Icons.qr_code_scanner),
+                      style: IconButton.styleFrom(
+                        backgroundColor: ColorConstants.primaryContainer,
+                        foregroundColor: ColorConstants.onPrimaryContainer,
+                      ),
+                      tooltip: 'Scan barcode',
+                    ),
+                  ],
                 ),
                 if (_cartItems.isNotEmpty) ...[
                   const Divider(height: 24),
@@ -282,8 +402,89 @@ class _SaleFormState extends State<SaleForm> {
               ],
             ),
           ),
-        ],
+        ),
+      ],
       ),
+    );
+  }
+}
+
+class _PriceDialog extends StatefulWidget {
+  final String productName;
+  final String serialNumber;
+  final String modelNumber;
+  final String initialPrice;
+  final ValueChanged<String> onPriceChanged;
+
+  const _PriceDialog({
+    required this.productName,
+    required this.serialNumber,
+    required this.modelNumber,
+    required this.initialPrice,
+    required this.onPriceChanged,
+  });
+
+  @override
+  State<_PriceDialog> createState() => _PriceDialogState();
+}
+
+class _PriceDialogState extends State<_PriceDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialPrice);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.productName),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Serial: ${widget.serialNumber}',
+                style: const TextStyle(fontSize: 13)),
+            const SizedBox(height: 4),
+            Text('Model: ${widget.modelNumber}',
+                style: const TextStyle(fontSize: 13)),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _controller,
+              decoration: const InputDecoration(
+                labelText: 'Sale Price',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              onChanged: widget.onPriceChanged,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => {
+            widget.onPriceChanged(_controller.text),
+            Navigator.pop(context, true),
+          },
+          child: const Text('Add to Cart'),
+        ),
+      ],
     );
   }
 }
@@ -312,7 +513,8 @@ class _AddItemSheetState extends State<_AddItemSheet> {
   List<SerialNumber> _serialNumbers = [];
   final _salePriceController = TextEditingController();
   final _warrantyValueController = TextEditingController(text: '1');
-  String _warrantyUnit = 'year';
+  String _warrantyUnit = 'month';
+  bool _noWarranty = false;
 
   @override
   void initState() {
@@ -353,11 +555,13 @@ class _AddItemSheetState extends State<_AddItemSheet> {
               Container(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Add Item to Cart',
-                         style: AppTextStyles.titleMd.copyWith(
-                             color: ColorConstants.onSurface)),
+                    Flexible(
+                      child: Text('Add Item to Cart',
+                           style: AppTextStyles.titleMd.copyWith(
+                               color: ColorConstants.onSurface),
+                           overflow: TextOverflow.ellipsis),
+                    ),
                     IconButton(
                       icon: const Icon(Icons.close),
                       onPressed: () => Navigator.pop(context),
@@ -393,7 +597,8 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                               _serialNumbers = [];
                               _salePriceController.clear();
                               _warrantyValueController.text = '1';
-                              _warrantyUnit = 'year';
+                              _warrantyUnit = 'month';
+                              _noWarranty = false;
                             });
                             context
                                 .read<ProductProvider>()
@@ -409,7 +614,8 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                 _serialNumbers = [];
                                 _salePriceController.clear();
                                 _warrantyValueController.text = '1';
-                                _warrantyUnit = 'year';
+                                _warrantyUnit = 'month';
+                                _noWarranty = false;
                               });
                               context
                                   .read<ProductProvider>()
@@ -486,28 +692,30 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                   DateTime.now().difference(p.createdAt).inDays;
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
-                                child: Debounced(
-                                  onPressed: () {
-                                    setState(() {
-                                      _productId = p.id;
-                                      _product = p;
-                                      _selectedSerialIds.clear();
-                                      _salePriceController.text =
-                                          p.sellingPrice.toStringAsFixed(2);
-                                    });
-                                    context
-                                        .read<SaleProvider>()
-                                        .loadAvailableSerialNumbers(p.id);
-                                  },
-                                  builder: (context, isDisabled) => GestureDetector(
-                                    onTap: isDisabled ? null : () {
+                                  child: Debounced(
+                                    onPressed: () {
                                       setState(() {
                                         _productId = p.id;
                                         _product = p;
                                         _selectedSerialIds.clear();
                                         _salePriceController.text =
                                             p.sellingPrice.toStringAsFixed(2);
+                                        _setWarrantyFromProduct(p);
                                       });
+                                      context
+                                          .read<SaleProvider>()
+                                          .loadAvailableSerialNumbers(p.id);
+                                    },
+                                    builder: (context, isDisabled) => GestureDetector(
+                                      onTap: isDisabled ? null : () {
+                                        setState(() {
+                                          _productId = p.id;
+                                          _product = p;
+                                          _selectedSerialIds.clear();
+                                          _salePriceController.text =
+                                              p.sellingPrice.toStringAsFixed(2);
+                                          _setWarrantyFromProduct(p);
+                                        });
                                       context
                                           .read<SaleProvider>()
                                           .loadAvailableSerialNumbers(p.id);
@@ -575,11 +783,14 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                                 const SizedBox(height: 2),
                                                 Row(
                                                   children: [
-                                                    Text(
-                                                      '\$${p.sellingPrice.toStringAsFixed(2)}',
-                                                      style: AppTextStyles.labelMd.copyWith(
-                                                        color: ColorConstants.primary,
-                                                        fontWeight: FontWeight.w600,
+                                                    Flexible(
+                                                      child: Text(
+                                                        '\$${p.sellingPrice.toStringAsFixed(2)}',
+                                                        style: AppTextStyles.labelMd.copyWith(
+                                                          color: ColorConstants.primary,
+                                                          fontWeight: FontWeight.w600,
+                                                        ),
+                                                        overflow: TextOverflow.ellipsis,
                                                       ),
                                                     ),
                                                     const SizedBox(width: 8),
@@ -644,19 +855,23 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                           child: TextFormField(
                                             controller:
                                                 _warrantyValueController,
+                                            readOnly: _noWarranty,
                                             decoration:
-                                                const InputDecoration(
-                                              labelText: 'Warranty',
+                                                InputDecoration(
+                                              labelText: _noWarranty
+                                                  ? 'No Warranty'
+                                                  : 'Warranty',
                                               border:
-                                                  OutlineInputBorder(),
+                                                  const OutlineInputBorder(),
                                               isDense: true,
                                               contentPadding:
-                                                  EdgeInsets.symmetric(
+                                                  const EdgeInsets.symmetric(
                                                       horizontal: 8,
                                                       vertical: 12),
                                             ),
-                                            keyboardType:
-                                                TextInputType.number,
+                                            keyboardType: _noWarranty
+                                                ? TextInputType.none
+                                                : TextInputType.number,
                                           ),
                                         ),
                                         const SizedBox(width: 12),
@@ -666,6 +881,15 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                               DropdownButtonFormField<
                                                   String>(
                                             initialValue: _warrantyUnit,
+                                            isExpanded: true,
+                                            onChanged: _noWarranty
+                                                ? null
+                                                : (v) {
+                                                    if (v != null) {
+                                                      setState(() =>
+                                                          _warrantyUnit = v);
+                                                    }
+                                                  },
                                             decoration:
                                                 const InputDecoration(
                                               labelText: 'Unit',
@@ -691,12 +915,6 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                                   child:
                                                       Text('Year(s)')),
                                             ],
-                                            onChanged: (v) {
-                                              if (v != null) {
-                                                setState(() =>
-                                                    _warrantyUnit = v);
-                                              }
-                                            },
                                           ),
                                         ),
                                       ],
@@ -732,23 +950,10 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                                                   .text) ??
                                                           _product!
                                                               .sellingPrice;
-                                                  final warrantyValue =
-                                                      int.tryParse(
-                                                              _warrantyValueController
-                                                                  .text) ??
-                                                          1;
                                                   final warrantyMonths =
-                                                      switch (
-                                                          _warrantyUnit) {
-                                                    'day' =>
-                                                      (warrantyValue /
-                                                              30)
-                                                          .ceil(),
-                                                    'year' =>
-                                                      warrantyValue *
-                                                          12,
-                                                    _ => warrantyValue,
-                                                  };
+                                                      _noWarranty
+                                                          ? 0
+                                                          : _parseWarrantyMonths();
                                                   final product = _product!
                                                       .copyWith(
                                                     sellingPrice:
@@ -778,23 +983,10 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                                                     .text) ??
                                                             _product!
                                                                 .sellingPrice;
-                                                    final warrantyValue =
-                                                        int.tryParse(
-                                                                _warrantyValueController
-                                                                    .text) ??
-                                                            1;
                                                     final warrantyMonths =
-                                                        switch (
-                                                            _warrantyUnit) {
-                                                      'day' =>
-                                                        (warrantyValue /
-                                                                30)
-                                                            .ceil(),
-                                                      'year' =>
-                                                        warrantyValue *
-                                                            12,
-                                                      _ => warrantyValue,
-                                                    };
+                                                        _noWarranty
+                                                            ? 0
+                                                            : _parseWarrantyMonths();
                                                     final product = _product!
                                                         .copyWith(
                                                       sellingPrice:
@@ -834,6 +1026,31 @@ class _AddItemSheetState extends State<_AddItemSheet> {
         },
       ),
     );
+  }
+
+  int _parseWarrantyMonths() {
+    final value = int.tryParse(_warrantyValueController.text) ?? 0;
+    return switch (_warrantyUnit) {
+      'day' => (value / 30).ceil(),
+      'year' => value * 12,
+      _ => value,
+    };
+  }
+
+  void _setWarrantyFromProduct(Product p) {
+    if (p.warrantyMonths > 0) {
+      _warrantyValueController.text = p.warrantyMonths.toString();
+      _warrantyUnit = 'month';
+      _noWarranty = false;
+    } else if (p.warrantyDays > 0) {
+      _warrantyValueController.text = p.warrantyDays.toString();
+      _warrantyUnit = 'day';
+      _noWarranty = false;
+    } else {
+      _warrantyValueController.text = '0';
+      _warrantyUnit = 'month';
+      _noWarranty = true;
+    }
   }
 
   Widget _productPlaceholder() {

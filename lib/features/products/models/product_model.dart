@@ -10,6 +10,7 @@ class Product {
   final double purchasePrice;
   final double sellingPrice;
   final int warrantyMonths;
+  final int warrantyDays;
   final int availableQuantity;
   final int soldQuantity;
   final DateTime createdAt;
@@ -26,6 +27,7 @@ class Product {
     this.purchasePrice = 0.0,
     this.sellingPrice = 0.0,
     this.warrantyMonths = 0,
+    this.warrantyDays = 0,
     this.availableQuantity = 0,
     this.soldQuantity = 0,
     DateTime? createdAt,
@@ -44,6 +46,7 @@ class Product {
       purchasePrice: (json['purchasePrice'] as num?)?.toDouble() ?? 0.0,
       sellingPrice: (json['sellingPrice'] as num?)?.toDouble() ?? 0.0,
       warrantyMonths: (json['warrantyMonths'] as num?)?.toInt() ?? 0,
+      warrantyDays: (json['warrantyDays'] as num?)?.toInt() ?? 0,
       availableQuantity: (json['availableQuantity'] as num?)?.toInt() ?? 0,
       soldQuantity: (json['soldQuantity'] as num?)?.toInt() ?? 0,
       createdAt: (json['createdAt'] as dynamic)?.toDate() ?? DateTime.now(),
@@ -63,6 +66,7 @@ class Product {
       purchasePrice: (map['purchasePrice'] as num?)?.toDouble() ?? 0.0,
       sellingPrice: (map['sellingPrice'] as num?)?.toDouble() ?? 0.0,
       warrantyMonths: (map['warrantyMonths'] as num?)?.toInt() ?? 0,
+      warrantyDays: (map['warrantyDays'] as num?)?.toInt() ?? 0,
       availableQuantity: (map['availableQuantity'] as num?)?.toInt() ?? 0,
       soldQuantity: (map['soldQuantity'] as num?)?.toInt() ?? 0,
       createdAt: (map['createdAt'] as dynamic)?.toDate() ?? DateTime.now(),
@@ -81,6 +85,7 @@ class Product {
       'purchasePrice': purchasePrice,
       'sellingPrice': sellingPrice,
       'warrantyMonths': warrantyMonths,
+      'warrantyDays': warrantyDays,
       'availableQuantity': availableQuantity,
       'soldQuantity': soldQuantity,
       'createdAt': createdAt,
@@ -101,6 +106,7 @@ class Product {
     double? purchasePrice,
     double? sellingPrice,
     int? warrantyMonths,
+    int? warrantyDays,
     int? availableQuantity,
     int? soldQuantity,
     DateTime? createdAt,
@@ -117,6 +123,7 @@ class Product {
       purchasePrice: purchasePrice ?? this.purchasePrice,
       sellingPrice: sellingPrice ?? this.sellingPrice,
       warrantyMonths: warrantyMonths ?? this.warrantyMonths,
+      warrantyDays: warrantyDays ?? this.warrantyDays,
       availableQuantity: availableQuantity ?? this.availableQuantity,
       soldQuantity: soldQuantity ?? this.soldQuantity,
       createdAt: createdAt ?? this.createdAt,

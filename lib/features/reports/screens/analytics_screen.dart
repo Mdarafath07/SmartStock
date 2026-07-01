@@ -5,6 +5,7 @@ import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/utils/formatters.dart';
 import 'package:smartstock/core/widgets/error_widget.dart';
 import 'package:smartstock/features/reports/providers/report_provider.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 import 'package:smartstock/features/reports/widgets/download_report_button.dart';
 import 'package:smartstock/features/reports/widgets/sales_chart.dart';
 import 'package:smartstock/features/reports/widgets/statistics_grid.dart';
@@ -27,6 +28,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Analytics'),
@@ -61,22 +63,22 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     totalProducts: provider.dailyReport?.totalProductsSold ?? 0,
                   ),
                   const SizedBox(height: 12),
-                  _buildDailySummary(provider),
+                  _buildDailySummary(provider, symbol),
                   const SizedBox(height: 24),
-                  _buildAllTimeSummary(provider),
+                  _buildAllTimeSummary(provider, symbol),
                   const SizedBox(height: 24),
-                  _buildYearlyReport(provider),
+                  _buildYearlyReport(provider, symbol),
                   const SizedBox(height: 24),
                   if (provider.categorySales.isNotEmpty) ...[
                     _buildSectionTitle('Sales by Category'),
                     const SizedBox(height: 12),
-                    _buildCategoryChart(provider),
+                    _buildCategoryChart(provider, symbol),
                   ],
                   const SizedBox(height: 24),
                   if (provider.topSellingProducts.isNotEmpty) ...[
                     _buildSectionTitle('Top Selling Products'),
                     const SizedBox(height: 12),
-                    _buildTopProducts(provider),
+                    _buildTopProducts(provider, symbol),
                   ],
                   const SizedBox(height: 24),
                   if (provider.yearlyReports.length >= 2) ...[
@@ -114,7 +116,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  Widget _buildDailySummary(ReportProvider provider) {
+  Widget _buildDailySummary(ReportProvider provider, String symbol) {
     final daily = provider.dailyReport;
     if (daily == null) return const SizedBox.shrink();
 
@@ -127,7 +129,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               child: _summaryItem(
                 Icons.trending_up_rounded,
                 'Today Sales',
-                AppFormatters.formatCurrency(daily.totalSales),
+                AppFormatters.formatCurrency(daily.totalSales, symbol: symbol),
                 ColorConstants.primary,
               ),
             ),
@@ -140,7 +142,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               child: _summaryItem(
                 Icons.account_balance_wallet_rounded,
                 'Today Profit',
-                AppFormatters.formatCurrency(daily.totalProfit),
+                AppFormatters.formatCurrency(daily.totalProfit, symbol: symbol),
                 ColorConstants.success,
               ),
             ),
@@ -163,7 +165,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  Widget _buildAllTimeSummary(ReportProvider provider) {
+  Widget _buildAllTimeSummary(ReportProvider provider, String symbol) {
     final allTime = provider.allTimeSummary;
     if (allTime == null || allTime.totalTransactions == 0) {
       return const SizedBox.shrink();
@@ -185,7 +187,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       child: _summaryItem(
                         Icons.trending_up_rounded,
                         'Total Sales',
-                        AppFormatters.formatCurrency(allTime.totalSales),
+                        AppFormatters.formatCurrency(allTime.totalSales, symbol: symbol),
                         ColorConstants.primary,
                       ),
                     ),
@@ -198,7 +200,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       child: _summaryItem(
                         Icons.account_balance_wallet_rounded,
                         'Total Profit',
-                        AppFormatters.formatCurrency(allTime.totalProfit),
+                        AppFormatters.formatCurrency(allTime.totalProfit, symbol: symbol),
                         ColorConstants.success,
                       ),
                     ),
@@ -238,7 +240,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  Widget _buildYearlyReport(ReportProvider provider) {
+  Widget _buildYearlyReport(ReportProvider provider, String symbol) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -273,12 +275,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        _buildYearlyStats(provider),
+        _buildYearlyStats(provider, symbol),
       ],
     );
   }
 
-  Widget _buildYearlyStats(ReportProvider provider) {
+  Widget _buildYearlyStats(ReportProvider provider, String symbol) {
     final reports = provider.yearlyReports;
     if (reports.isEmpty) {
       return Card(
@@ -311,7 +313,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   child: _summaryItem(
                     Icons.trending_up_rounded,
                     'Year Sales',
-                    AppFormatters.formatCurrency(totalYearSales),
+                    AppFormatters.formatCurrency(totalYearSales, symbol: symbol),
                     ColorConstants.primary,
                   ),
                 ),
@@ -324,7 +326,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   child: _summaryItem(
                     Icons.account_balance_wallet_rounded,
                     'Year Profit',
-                    AppFormatters.formatCurrency(totalYearProfit),
+                    AppFormatters.formatCurrency(totalYearProfit, symbol: symbol),
                     ColorConstants.success,
                   ),
                 ),
@@ -386,7 +388,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  Widget _buildCategoryChart(ReportProvider provider) {
+  Widget _buildCategoryChart(ReportProvider provider, String symbol) {
     final maxSales = provider.categorySales.fold<double>(
       0,
       (max, c) => c.totalSales > max ? c.totalSales : max,
@@ -404,7 +406,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 value: cat.totalSales,
                 maxValue: maxSales,
                 color: ColorConstants.primary,
-                formatValue: (v) => AppFormatters.formatCurrency(v),
+                formatValue: (v) => AppFormatters.formatCurrency(v, symbol: symbol),
               ),
             );
           }).toList(),
@@ -413,7 +415,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  Widget _buildTopProducts(ReportProvider provider) {
+  Widget _buildTopProducts(ReportProvider provider, String symbol) {
     return Card(
       child: Column(
         children: provider.topSellingProducts.take(5).map((product) {
@@ -466,7 +468,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   ),
                 ),
                 Text(
-                  AppFormatters.formatCurrency(product.totalRevenue),
+                  AppFormatters.formatCurrency(product.totalRevenue, symbol: symbol),
                   style: AppTextStyles.labelSm.copyWith(
                     color: ColorConstants.onSurfaceVariant,
                   ),

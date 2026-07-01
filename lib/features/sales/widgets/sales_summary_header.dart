@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class SalesSummaryHeader extends StatelessWidget {
   final double totalAmount;
@@ -16,7 +18,8 @@ class SalesSummaryHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final formatter = NumberFormat.currency(symbol: '\$');
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
+    final formatter = NumberFormat.currency(symbol: symbol);
 
     return Card(
       child: Container(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:smartstock/features/customers/models/customer_model.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class CustomerInfoCard extends StatelessWidget {
   final Customer customer;
@@ -11,7 +13,8 @@ class CustomerInfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dateFormatter = DateFormat('MMM dd, yyyy');
-    final priceFormatter = NumberFormat.currency(symbol: '\$');
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
+    final priceFormatter = NumberFormat.currency(symbol: symbol);
 
     return Card(
       child: Padding(

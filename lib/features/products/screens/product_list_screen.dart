@@ -7,6 +7,7 @@ import 'package:smartstock/features/products/models/product_model.dart';
 import 'package:smartstock/features/products/providers/product_provider.dart';
 import 'package:smartstock/features/products/screens/add_product_screen.dart';
 import 'package:smartstock/features/products/screens/product_details_screen.dart';
+import 'package:smartstock/features/products/widgets/barcode_scanner_screen.dart';
 import 'package:smartstock/features/products/widgets/product_card.dart';
 
 class ProductListScreen extends StatefulWidget {
@@ -49,6 +50,32 @@ class _ProductListScreenState extends State<ProductListScreen> {
     context
         .read<ProductProvider>()
         .loadProducts(categoryId: categoryId);
+  }
+
+  Future<void> _handleBarcodeScan() async {
+    final code = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const BarcodeScannerScreen()),
+    );
+    if (code == null || code.isEmpty) return;
+    if (!mounted) return;
+
+    final provider = context.read<ProductProvider>();
+    final result = await provider.findProductBySerialNumber(code);
+    if (result == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No product found for "$code"')),
+      );
+      return;
+    }
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProductDetailsScreen(productId: result.$1.id),
+      ),
+    );
   }
 
   @override
@@ -110,43 +137,66 @@ class _ProductListScreenState extends State<ProductListScreen> {
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: TextField(
-        controller: _searchController,
-        onChanged: _onSearch,
-        decoration: InputDecoration(
-          hintText: 'Search products...',
-          hintStyle: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 14,
-            color: AppColors.onSurfaceVariant,
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              onChanged: _onSearch,
+              decoration: InputDecoration(
+                hintText: 'Search products...',
+                hintStyle: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  color: AppColors.onSurfaceVariant,
+                ),
+                prefixIcon:
+                    const Icon(Icons.search, color: AppColors.onSurfaceVariant),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        onPressed: () {
+                          _searchController.clear();
+                          _onSearch('');
+                        },
+                        icon: const Icon(Icons.clear,
+                            color: AppColors.onSurfaceVariant),
+                      )
+                    : null,
+                filled: true,
+                fillColor: AppColors.surfaceContainerLow,
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      const BorderSide(color: AppColors.primaryContainer),
+                ),
+              ),
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                color: AppColors.onSurface,
+              ),
+            ),
           ),
-          prefixIcon: const Icon(Icons.search, color: AppColors.onSurfaceVariant),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-                  onPressed: () {
-                    _searchController.clear();
-                    _onSearch('');
-                  },
-                  icon: const Icon(Icons.clear, color: AppColors.onSurfaceVariant),
-                )
-              : null,
-          filled: true,
-          fillColor: AppColors.surfaceContainerLow,
-          contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+          const SizedBox(width: 8),
+          IconButton.filled(
+            onPressed: _handleBarcodeScan,
+            icon: const Icon(Icons.qr_code_scanner),
+            style: IconButton.styleFrom(
+              backgroundColor: AppColors.primaryContainer,
+              foregroundColor: AppColors.onPrimaryContainer,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            tooltip: 'Scan barcode',
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.primaryContainer),
-          ),
-        ),
-        style: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 14,
-          color: AppColors.onSurface,
-        ),
+        ],
       ),
     );
   }

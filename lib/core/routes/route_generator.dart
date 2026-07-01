@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'app_routes.dart';
+import '../../features/daily_additions/screens/daily_additions_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/products/screens/product_list_screen.dart';
 import '../../features/products/screens/add_product_screen.dart';
@@ -106,6 +107,11 @@ class RouteGenerator {
       case AppRoutes.customersDetails:
         return _materialPageRoute(
           CustomerDetailsScreen(customerId: args as String),
+          settings,
+        );
+      case AppRoutes.dailyAdditions:
+        return _materialPageRoute(
+          const DailyAdditionsScreen(),
           settings,
         );
       case AppRoutes.warranty:

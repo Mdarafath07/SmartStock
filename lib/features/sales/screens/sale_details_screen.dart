@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/sales/models/sale_model.dart';
 import 'package:smartstock/features/sales/providers/sale_provider.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 import 'package:smartstock/features/warranty/screens/warranty_details_screen.dart';
 
 class SaleDetailsScreen extends StatefulWidget {
@@ -30,7 +31,8 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
     final theme = Theme.of(context);
     final saleProvider = context.watch<SaleProvider>();
     final sale = saleProvider.selectedSale;
-    final priceFormatter = NumberFormat.currency(symbol: '\$');
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
+    final priceFormatter = NumberFormat.currency(symbol: symbol);
     final dateFormatter = DateFormat('MMM dd, yyyy');
     final timeFormatter = DateFormat('hh:mm a');
 

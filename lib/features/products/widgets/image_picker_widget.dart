@@ -109,7 +109,7 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
           child: _isUploading
               ? const Center(
                   child: CircularProgressIndicator(
-                    color: AppColors.primaryContainer,
+                    color: AppColors.primary,
                   ),
                 )
               : _imageUrl != null && _imageUrl!.isNotEmpty
@@ -154,8 +154,8 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
                   style: TextStyle(fontFamily: 'Inter', fontSize: 13),
                 ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primaryContainer,
-                  side: const BorderSide(color: AppColors.primaryContainer),
+                  foregroundColor: AppColors.primary,
+                  side: const BorderSide(color: AppColors.primary),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -172,8 +172,8 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
                   style: TextStyle(fontFamily: 'Inter', fontSize: 13),
                 ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primaryContainer,
-                  side: const BorderSide(color: AppColors.primaryContainer),
+                  foregroundColor: AppColors.primary,
+                  side: const BorderSide(color: AppColors.primary),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),

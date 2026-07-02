@@ -175,11 +175,22 @@ class _ProductFormState extends State<ProductForm> {
       return;
     }
 
+    final serialNumbers = _serialControllers
+        .map((c) => c.text.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+
+    if (!widget.isEdit && serialNumbers.isEmpty) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('At least one serial number is required')),
+        );
+      }
+      return;
+    }
+
     try {
-      final serialNumbers = _serialControllers
-          .map((c) => c.text.trim())
-          .where((s) => s.isNotEmpty)
-          .toList();
 
       final product = Product(
         id: widget.product?.id ?? '',
@@ -194,6 +205,8 @@ class _ProductFormState extends State<ProductForm> {
         sellingPrice: double.tryParse(_sellingPriceController.text) ?? 0,
         warrantyMonths: _resolvedWarrantyMonths,
         warrantyDays: _resolvedWarrantyDays,
+        availableQuantity: widget.product?.availableQuantity ?? 0,
+        soldQuantity: widget.product?.soldQuantity ?? 0,
       );
 
       await widget.onSave(product, serialNumbers);
@@ -296,13 +309,13 @@ class _ProductFormState extends State<ProductForm> {
             onScan: _handleScan,
           ),
           const SizedBox(height: 20),
-          SizedBox(
+            SizedBox(
             width: double.infinity,
             height: 48,
             child: FilledButton(
               onPressed: _isSubmitting ? null : _submit,
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primaryContainer,
+                backgroundColor: AppColors.primary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -376,7 +389,7 @@ class _ProductFormState extends State<ProductForm> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(
-            color: AppColors.primaryContainer,
+            color: AppColors.primary,
             width: 1,
           ),
         ),
@@ -394,8 +407,9 @@ class _ProductFormState extends State<ProductForm> {
     required List items,
     required ValueChanged<String?> onChanged,
   }) {
+    final validValue = items.any((i) => i.id == value) ? value : null;
     return DropdownButtonFormField<String>(
-      initialValue: value,
+      initialValue: validValue,
       items: items.map<DropdownMenuItem<String>>((item) {
         return DropdownMenuItem(
           value: item.id,
@@ -430,7 +444,7 @@ class _ProductFormState extends State<ProductForm> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(
-            color: AppColors.primaryContainer,
+            color: AppColors.primary,
             width: 1,
           ),
         ),
@@ -511,7 +525,7 @@ class _ProductFormState extends State<ProductForm> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(
-                color: AppColors.primaryContainer,
+                color: AppColors.primary,
                 width: 1,
               ),
             ),
@@ -568,7 +582,7 @@ class _ProductFormState extends State<ProductForm> {
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: const BorderSide(
-                        color: AppColors.primaryContainer,
+                        color: AppColors.primary,
                         width: 1,
                       ),
                     ),

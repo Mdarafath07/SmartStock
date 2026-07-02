@@ -58,7 +58,7 @@ class SerialNumberList extends StatelessWidget {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: const BorderSide(
-                          color: AppColors.primaryContainer,
+                          color: AppColors.primary,
                           width: 1,
                         ),
                       ),
@@ -75,7 +75,7 @@ class SerialNumberList extends StatelessWidget {
                   onPressed: () => onScan(index),
                   icon: const Icon(
                     Icons.qr_code_scanner,
-                    color: AppColors.primaryContainer,
+                    color: AppColors.primary,
                     size: 20,
                   ),
                   visualDensity: VisualDensity.compact,
@@ -108,7 +108,7 @@ class SerialNumberList extends StatelessWidget {
             ),
           ),
           style: TextButton.styleFrom(
-            foregroundColor: AppColors.primaryContainer,
+            foregroundColor: AppColors.primary,
           ),
         ),
       ],

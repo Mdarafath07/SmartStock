@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
+import 'package:smartstock/core/theme/app_colors.dart';
+import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/features/customers/providers/customer_provider.dart';
 import 'package:smartstock/features/customers/widgets/customer_info_card.dart';
 import 'package:smartstock/features/customers/widgets/purchase_history_table.dart';
@@ -25,7 +27,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final customerProvider = context.watch<CustomerProvider>();
     final customer = customerProvider.selectedCustomer;
     final purchases = customerProvider.purchaseHistory;
@@ -42,12 +44,19 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
         appBar: AppBar(title: const Text('Customer Details')),
         body: Center(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline,
-                  size: 64, color: theme.colorScheme.error),
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.surfaceLighter : AppColors.whiteMuted,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Icon(Icons.error_outline, size: 32, color: AppColors.textMuted),
+              ),
               const SizedBox(height: 16),
-              Text('Customer not found', style: theme.textTheme.bodyLarge),
+              Text('Customer not found', style: AppTextStyles.bodyMd),
             ],
           ),
         ),
@@ -73,13 +82,36 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
               child: CustomerInfoCard(customer: customer),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text(
-                'Purchase History',
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: AppColors.blue.withAlpha(25),
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    child: Icon(Icons.receipt_long, size: 14, color: AppColors.blue),
+                  ),
+                  const SizedBox(width: 10),
+                  Text('Purchase History', style: AppTextStyles.titleSm),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.surfaceLighter : AppColors.whiteMuted,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '${purchases.length}',
+                      style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+                    ),
+                  ),
+                ],
               ),
             ),
+            const SizedBox(height: 12),
             PurchaseHistoryTable(purchases: purchases),
             const SizedBox(height: 80),
           ],
@@ -102,26 +134,50 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
           children: [
             TextField(
               controller: nameController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Name',
-                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.surfaceLighter
+                    : AppColors.whiteSoft,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.all(16),
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: phoneController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Phone',
-                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.surfaceLighter
+                    : AppColors.whiteSoft,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.all(16),
               ),
               keyboardType: TextInputType.phone,
             ),
             const SizedBox(height: 12),
             TextField(
               controller: addressController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Address',
-                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.surfaceLighter
+                    : AppColors.whiteSoft,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.all(16),
               ),
               maxLines: 2,
             ),
@@ -148,17 +204,19 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
               Navigator.of(ctx).pop();
             },
             builder: (context, isDisabled) => FilledButton(
-              onPressed: isDisabled ? null : () {
-                final updated = customer.copyWith(
-                  name: nameController.text.trim(),
-                  phone: phoneController.text.trim(),
-                  address: addressController.text.trim(),
-                );
-                context
-                    .read<CustomerProvider>()
-                    .updateCustomer(updated);
-                Navigator.of(ctx).pop();
-              },
+              onPressed: isDisabled
+                  ? null
+                  : () {
+                      final updated = customer.copyWith(
+                        name: nameController.text.trim(),
+                        phone: phoneController.text.trim(),
+                        address: addressController.text.trim(),
+                      );
+                      context
+                          .read<CustomerProvider>()
+                          .updateCustomer(updated);
+                      Navigator.of(ctx).pop();
+                    },
               child: const Text('Save'),
             ),
           ),

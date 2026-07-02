@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:smartstock/core/constants/color_constants.dart';
+import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/features/dashboard/models/dashboard_stats_model.dart';
 import 'package:smartstock/features/dashboard/providers/dashboard_provider.dart';
@@ -41,6 +41,7 @@ class _DailyAddedProductsSectionState extends State<DailyAddedProductsSection> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Consumer<DashboardProvider>(
       builder: (context, provider, _) {
         final products = provider.dailyAddedProducts;
@@ -59,7 +60,7 @@ class _DailyAddedProductsSectionState extends State<DailyAddedProductsSection> {
                 Text(
                   isToday ? "Today's Additions" : 'Added Products',
                   style: AppTextStyles.titleMd.copyWith(
-                    color: ColorConstants.onSurface,
+                    color: isDark ? AppColors.textPrimary : const Color(0xFF1B1B21),
                   ),
                 ),
                 TextButton.icon(
@@ -77,8 +78,10 @@ class _DailyAddedProductsSectionState extends State<DailyAddedProductsSection> {
                 isToday
                     ? 'Products added today (${products.length})'
                     : 'Products added on ${DateFormat('EEEE, MMMM dd, yyyy').format(selectedDate)} (${products.length})',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.labelMd.copyWith(
-                  color: ColorConstants.onSurfaceVariant,
+                  color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
                 ),
               ),
             ),
@@ -100,13 +103,13 @@ class _DailyAddedProductsSectionState extends State<DailyAddedProductsSection> {
                         Icon(
                           Icons.inbox_rounded,
                           size: 48,
-                          color: ColorConstants.onSurfaceVariant,
+                          color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
                         ),
                         const SizedBox(height: 12),
                         Text(
                           'No products added on this date',
                           style: AppTextStyles.bodyLg.copyWith(
-                            color: ColorConstants.onSurfaceVariant,
+                            color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
                           ),
                         ),
                       ],
@@ -131,6 +134,7 @@ class _ProductAddedTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
@@ -146,22 +150,22 @@ class _ProductAddedTile extends StatelessWidget {
                       height: 52,
                       fit: BoxFit.cover,
                       placeholder: (_, _) => Container(
-                        color: ColorConstants.surfaceContainerHigh,
+                        color: isDark ? AppColors.surfaceLighter : const Color(0xFFEAE7EF),
                         child: const Icon(Icons.image, size: 24,
-                            color: ColorConstants.onSurfaceVariant),
+                            color: Color(0xFF454652)),
                       ),
                       errorWidget: (_, _, _) => Container(
-                        color: ColorConstants.surfaceContainerHigh,
+                        color: isDark ? AppColors.surfaceLighter : const Color(0xFFEAE7EF),
                         child: const Icon(Icons.image, size: 24,
-                            color: ColorConstants.onSurfaceVariant),
+                            color: Color(0xFF454652)),
                       ),
                     )
                   : Container(
                       width: 52,
                       height: 52,
-                      color: ColorConstants.surfaceContainerHigh,
+                      color: isDark ? AppColors.surfaceLighter : const Color(0xFFEAE7EF),
                       child: const Icon(Icons.image, size: 24,
-                          color: ColorConstants.onSurfaceVariant),
+                          color: Color(0xFF454652)),
                     ),
             ),
             const SizedBox(width: 12),
@@ -173,7 +177,7 @@ class _ProductAddedTile extends StatelessWidget {
                     product.productName,
                     style: AppTextStyles.bodyMd.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: ColorConstants.onSurface,
+                      color: isDark ? AppColors.textPrimary : const Color(0xFF1B1B21),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -181,8 +185,10 @@ class _ProductAddedTile extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     'Model: ${product.modelNumber}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.labelMd.copyWith(
-                      color: ColorConstants.onSurfaceVariant,
+                      color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
                     ),
                   ),
                   if (product.categoryName.isNotEmpty) ...[
@@ -193,13 +199,15 @@ class _ProductAddedTile extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: ColorConstants.primaryFixed,
+                            color: AppColors.greenBg,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             product.categoryName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: AppTextStyles.labelSm.copyWith(
-                              color: ColorConstants.primary,
+                              color: AppColors.primary,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -209,8 +217,8 @@ class _ProductAddedTile extends StatelessWidget {
                           'Stock: ${product.availableQuantity}',
                           style: AppTextStyles.labelSm.copyWith(
                             color: product.availableQuantity == 0
-                                ? ColorConstants.error
-                                : ColorConstants.onSurfaceVariant,
+                                ? AppColors.error
+                                : isDark ? AppColors.textSecondary : const Color(0xFF454652),
                           ),
                         ),
                       ],
@@ -227,14 +235,14 @@ class _ProductAddedTile extends StatelessWidget {
                   Text(
                     DateFormat('hh:mm a').format(product.createdAt!),
                     style: AppTextStyles.labelSm.copyWith(
-                      color: ColorConstants.onSurfaceVariant,
+                      color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     DateFormat('MMM dd').format(product.createdAt!),
                     style: AppTextStyles.labelSm.copyWith(
-                      color: ColorConstants.onSurfaceVariant,
+                      color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
                       fontSize: 10,
                     ),
                   ),
@@ -261,13 +269,16 @@ class RecentProductsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: AppTextStyles.titleMd.copyWith(
-            color: ColorConstants.onSurface,
+            color: isDark ? AppColors.textPrimary : const Color(0xFF1B1B21),
           ),
         ),
         const SizedBox(height: 12),
@@ -279,7 +290,7 @@ class RecentProductsSection extends StatelessWidget {
                 child: Text(
                   'No $title data available',
                   style: AppTextStyles.bodyLg.copyWith(
-                    color: ColorConstants.onSurfaceVariant,
+                    color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
                   ),
                 ),
               ),
@@ -303,6 +314,7 @@ class _RecentProductTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -315,34 +327,38 @@ class _RecentProductTile extends StatelessWidget {
                   height: 48,
                   fit: BoxFit.cover,
                   placeholder: (_, _) => Container(
-                    color: ColorConstants.surfaceContainerHigh,
+                    color: isDark ? AppColors.surfaceLighter : const Color(0xFFEAE7EF),
                     child: const Icon(Icons.image, size: 24),
                   ),
                   errorWidget: (_, _, _) => Container(
-                    color: ColorConstants.surfaceContainerHigh,
+                    color: isDark ? AppColors.surfaceLighter : const Color(0xFFEAE7EF),
                     child: const Icon(Icons.image, size: 24),
                   ),
                 )
               : Container(
                   width: 48,
                   height: 48,
-                  color: ColorConstants.surfaceContainerHigh,
+                  color: isDark ? AppColors.surfaceLighter : const Color(0xFFEAE7EF),
                   child: const Icon(Icons.image, size: 24),
                 ),
         ),
         title: Text(
           product.productName,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: AppTextStyles.bodyMd.copyWith(
             fontWeight: FontWeight.w600,
-            color: ColorConstants.onSurface,
+            color: isDark ? AppColors.textPrimary : const Color(0xFF1B1B21),
           ),
         ),
         subtitle: Row(
           children: [
             Text(
               product.modelNumber,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: AppTextStyles.labelMd.copyWith(
-                color: ColorConstants.onSurfaceVariant,
+                color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
               ),
             ),
             if (product.categoryName.isNotEmpty) ...[
@@ -350,13 +366,13 @@ class _RecentProductTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: ColorConstants.primaryFixed,
+                  color: AppColors.greenBg,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   product.categoryName,
                   style: AppTextStyles.labelSm.copyWith(
-                    color: ColorConstants.primary,
+                    color: AppColors.primary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -370,23 +386,23 @@ class _RecentProductTile extends StatelessWidget {
                 style: AppTextStyles.bodyMd.copyWith(
                   fontWeight: FontWeight.w600,
                   color: product.availableQuantity == 0
-                      ? ColorConstants.error
-                      : ColorConstants.primary,
+                      ? AppColors.error
+                      : AppColors.primary,
                 ),
               )
             : Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.sell_outlined,
-                      color: ColorConstants.primaryContainer, size: 16),
+                      color: AppColors.primary.withAlpha(30), size: 16),
                   const SizedBox(width: 4),
                   Text(
                     '${product.soldCount}',
                     style: AppTextStyles.bodyMd.copyWith(
                       fontWeight: FontWeight.w600,
                       color: product.soldCount == 0
-                          ? ColorConstants.error
-                          : ColorConstants.primary,
+                          ? AppColors.error
+                          : AppColors.primary,
                     ),
                   ),
                 ],

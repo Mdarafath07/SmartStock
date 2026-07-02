@@ -169,6 +169,8 @@ errorWidget: (_, _, _) => Container(
       ),
       title: Text(
         product['name'] as String? ?? '',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: const TextStyle(
           fontFamily: 'Inter',
           fontSize: 14,
@@ -177,6 +179,8 @@ errorWidget: (_, _, _) => Container(
       ),
       subtitle: Text(
         product['modelNumber'] as String? ?? '',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: const TextStyle(
           fontFamily: 'Geist',
           fontSize: 12,

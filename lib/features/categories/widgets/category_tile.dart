@@ -1,102 +1,119 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
+import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/features/categories/models/category_model.dart';
+import 'package:smartstock/features/categories/widgets/category_icons.dart';
 
 class CategoryTile extends StatelessWidget {
   final Category category;
   final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  final int index;
+
+  static const _colors = [
+    AppColors.primary,
+    AppColors.purple,
+    AppColors.orange,
+    AppColors.green,
+    AppColors.red,
+    AppColors.teal,
+    AppColors.pink,
+    AppColors.blue,
+  ];
 
   const CategoryTile({
     super.key,
     required this.category,
     required this.onEdit,
-    required this.onDelete,
+    this.index = 0,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: AppColors.primaryFixed,
-            borderRadius: BorderRadius.circular(12),
+    final color = _colors[index % _colors.length];
+    final icon = iconFromName(category.icon);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.greyLight, width: 0.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(8),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
           ),
-          child: const Icon(
-            Icons.category,
-            color: AppColors.primaryContainer,
-          ),
-        ),
-        title: Text(
-          category.name,
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        subtitle: Row(
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 4, 12),
+        child: Row(
           children: [
-            const Icon(Icons.inventory_2,
-                size: 14, color: AppColors.onSurfaceVariant),
-            const SizedBox(width: 4),
-            FutureBuilder<AggregateQuerySnapshot>(
-              future: FirebaseFirestore.instance
-                  .collection('products')
-                  .where('categoryId', isEqualTo: category.id)
-                  .count()
-                  .get(),
-              builder: (context, snapshot) {
-                final count = snapshot.data?.count ?? 0;
-                return Text(
-                  '$count product${count == 1 ? '' : 's'}',
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 12,
-                    color: AppColors.onSurfaceVariant,
+            Container(
+              width: 44, height: 44,
+              decoration: BoxDecoration(
+                color: color.withAlpha(20),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(category.name,
+                      style: AppTextStyles.titleSm.copyWith(
+                          color: AppColors.textPrimary)),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      FutureBuilder<AggregateQuerySnapshot>(
+                        future: FirebaseFirestore.instance
+                            .collection('products')
+                            .where('categoryId', isEqualTo: category.id)
+                            .count()
+                            .get(),
+                        builder: (context, snapshot) {
+                          final count = snapshot.data?.count ?? 0;
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: color.withAlpha(15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text('$count product${count == 1 ? '' : 's'}',
+                                style: AppTextStyles.caption.copyWith(
+                                    color: color,
+                                    fontWeight: FontWeight.w600)),
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(Icons.access_time_rounded,
+                          size: 12, color: AppColors.textMuted),
+                      const SizedBox(width: 4),
+                      Text(_formatDate(category.createdAt),
+                          style: AppTextStyles.caption.copyWith(
+                              color: AppColors.textMuted)),
+                    ],
                   ),
-                );
-              },
-            ),
-            const SizedBox(width: 12),
-            Text(
-              _formatDate(category.createdAt),
-              style: const TextStyle(
-                fontFamily: 'Geist',
-                fontSize: 11,
-                color: AppColors.onSurfaceVariant,
+                ],
               ),
             ),
-          ],
-        ),
-        trailing: PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert),
-          onSelected: (value) {
-            if (value == 'edit') onEdit();
-            if (value == 'delete') onDelete();
-          },
-          itemBuilder: (_) => [
-            const PopupMenuItem(
-              value: 'edit',
-              child: ListTile(
-                leading: Icon(Icons.edit, color: AppColors.primaryContainer),
-                title: Text('Edit'),
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'delete',
-              child: ListTile(
-                leading: Icon(Icons.delete, color: AppColors.error),
-                title: Text('Delete', style: TextStyle(color: AppColors.error)),
-                dense: true,
-                contentPadding: EdgeInsets.zero,
+            GestureDetector(
+              onTap: onEdit,
+              child: Container(
+                width: 32, height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryBg,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.edit_outlined,
+                    color: AppColors.primary, size: 16),
               ),
             ),
           ],

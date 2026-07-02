@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../constants/color_constants.dart';
+import '../theme/app_colors.dart';
 import '../theme/text_styles.dart';
 
 class AppErrorWidget extends StatelessWidget {
@@ -16,28 +16,28 @@ class AppErrorWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 48),
+        padding: const EdgeInsets.all(32),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 80,
-              height: 80,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
-                color: ColorConstants.errorContainer,
-                borderRadius: BorderRadius.circular(20),
+                color: AppColors.redBg,
+                borderRadius: BorderRadius.circular(18),
               ),
               child: const Icon(
-                Icons.error_outline_rounded,
-                size: 40,
-                color: ColorConstants.error,
+                Icons.cloud_off_rounded,
+                size: 32,
+                color: AppColors.red,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             Text(
               'Something went wrong',
-              style: AppTextStyles.titleMd.copyWith(
-                color: ColorConstants.onSurface,
+              style: AppTextStyles.headlineSm.copyWith(
+                color: AppColors.textPrimary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -45,15 +45,15 @@ class AppErrorWidget extends StatelessWidget {
             Text(
               message,
               style: AppTextStyles.bodyMd.copyWith(
-                color: ColorConstants.onSurfaceVariant,
+                color: AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 24),
-              OutlinedButton.icon(
+              FilledButton.icon(
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh_rounded),
+                icon: const Icon(Icons.refresh_rounded, size: 18),
                 label: const Text('Retry'),
               ),
             ],

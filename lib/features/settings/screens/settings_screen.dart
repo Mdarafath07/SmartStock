@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:smartstock/core/widgets/debounced.dart';
-import 'package:smartstock/core/constants/color_constants.dart';
+import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
+import 'package:smartstock/core/widgets/glass_card.dart';
 import 'package:smartstock/features/settings/providers/settings_provider.dart';
 import 'package:smartstock/features/settings/services/settings_service.dart';
-import 'package:smartstock/features/settings/widgets/settings_tile.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -25,113 +24,201 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final settings = context.watch<SettingsProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-      ),
       body: settings.isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? _buildLoading(isDark)
           : ListView(
-              padding: const EdgeInsets.only(bottom: 32),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
               children: [
-                const SizedBox(height: 8),
-                _buildSectionHeader('Profile'),
-                SettingsTile(
-                  leadingIcon: Icons.person_rounded,
-                  title: settings.ownerName,
-                  subtitle: settings.ownerEmail,
-                  onTap: () => _showEditProfileDialog(settings),
-                ),
+                Text('Settings', style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+                const SizedBox(height: 4),
+                Text('Manage your shop preferences', style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+                const SizedBox(height: 20),
+                _buildProfileCard(settings, isDark),
                 const SizedBox(height: 16),
-                _buildSectionHeader('Shop Information'),
-                SettingsTile(
-                  leadingIcon: Icons.store_rounded,
-                  title: 'Store Name',
-                  subtitle: settings.storeName,
-                  onTap: () => _showEditStoreNameDialog(settings),
-                  trailing: Text(settings.storeName,
-                      style: AppTextStyles.labelMd
-                          .copyWith(color: ColorConstants.onSurfaceVariant)),
-                ),
-                SettingsTile(
-                  leadingIcon: Icons.attach_money_rounded,
-                  title: 'Currency',
-                  subtitle: '${settings.currency} (${settings.currencySymbol})',
-                  onTap: () => _showCurrencySelector(settings),
-                  trailing: Text(settings.currency,
-                      style: AppTextStyles.labelMd
-                          .copyWith(color: ColorConstants.onSurfaceVariant)),
-                ),
-                SettingsTile(
-                  leadingIcon: Icons.access_time_rounded,
-                  title: 'Timezone',
-                  subtitle: settings.timezone,
-                  onTap: () => _showTimezoneSelector(settings),
-                  trailing: Text(settings.timezone,
-                      style: AppTextStyles.labelMd
-                          .copyWith(color: ColorConstants.onSurfaceVariant)),
-                ),
+                _buildShopSection(settings, isDark),
                 const SizedBox(height: 16),
-                _buildSectionHeader('Inventory Settings'),
-                SettingsTile(
-                  leadingIcon: Icons.inventory_2_rounded,
-                  title: 'Low Stock Threshold',
-                  subtitle: 'Alert when stock ≤ ${settings.lowStockThreshold}',
-                  onTap: () => _showThresholdDialog(settings, 'low'),
-                ),
-                SettingsTile(
-                  leadingIcon: Icons.inventory_rounded,
-                  title: 'Overstock Threshold',
-                  subtitle: 'Alert when stock ≥ ${settings.overstockThreshold}',
-                  onTap: () => _showThresholdDialog(settings, 'over'),
-                ),
+                _buildInventorySection(settings, isDark),
                 const SizedBox(height: 16),
-                _buildSectionHeader('Data & Backup'),
-                SettingsTile(
-                  leadingIcon: Icons.backup_rounded,
-                  title: 'Export Data',
-                  subtitle: 'Download all data as CSV',
-                  onTap: () => _showSnackBar('Export started'),
-                  iconColor: ColorConstants.info,
-                ),
-                SettingsTile(
-                  leadingIcon: Icons.restore_rounded,
-                  title: 'Import Data',
-                  subtitle: 'Restore data from backup',
-                  onTap: () => _showSnackBar('Import started'),
-                  iconColor: ColorConstants.warning,
-                ),
+                _buildAppearanceSection(isDark),
                 const SizedBox(height: 16),
-                _buildSectionHeader('About'),
-                SettingsTile(
-                  leadingIcon: Icons.info_outline_rounded,
-                  title: 'Version',
-                  subtitle: '1.0.0',
-                  trailing: Text('1.0.0',
-                      style: AppTextStyles.labelMd
-                          .copyWith(color: ColorConstants.onSurfaceVariant)),
-                ),
-                SettingsTile(
-                  leadingIcon: Icons.code_rounded,
-                  title: 'Developer',
-                  subtitle: 'SmartStock Team',
-                ),
+                _buildDataSection(isDark),
+                const SizedBox(height: 16),
+                _buildAboutSection(isDark),
+                const SizedBox(height: 32),
               ],
             ),
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      child: Text(
-        title,
-        style: AppTextStyles.labelMd.copyWith(
-          fontWeight: FontWeight.w600,
-          color: ColorConstants.onSurfaceVariant,
-          letterSpacing: 0.5,
+  Widget _buildProfileCard(SettingsProvider settings, bool isDark) {
+    return ModernCard(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          Container(
+            width: 56, height: 56,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [AppColors.primary, AppColors.primaryDark]),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Center(
+              child: Text(
+                (settings.ownerName.isNotEmpty ? settings.ownerName[0] : 'S').toUpperCase(),
+                style: AppTextStyles.headlineMd.copyWith(color: Colors.black, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(settings.ownerName.isNotEmpty ? settings.ownerName : 'Shop Owner',
+                    style: AppTextStyles.titleMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+                if (settings.ownerEmail.isNotEmpty)
+                  Text(settings.ownerEmail, style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () => _showEditProfileDialog(settings),
+            child: Container(width: 36, height: 36,
+              decoration: BoxDecoration(color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200), borderRadius: BorderRadius.circular(10)),
+              child: Icon(Icons.edit_rounded, size: 18, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShopSection(SettingsProvider settings, bool isDark) {
+    return ModernCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Shop Information', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          const SizedBox(height: 12),
+          _settingRow(icon: Icons.store_rounded, label: 'Store Name', value: settings.storeName, isDark: isDark, onTap: () => _showEditStoreNameDialog(settings)),
+          const Divider(height: 1),
+          _settingRow(icon: Icons.attach_money_rounded, label: 'Currency', value: '${settings.currency} (${settings.currencySymbol})', isDark: isDark, onTap: () => _showCurrencySelector(settings)),
+          const Divider(height: 1),
+          _settingRow(icon: Icons.access_time_rounded, label: 'Timezone', value: settings.timezone, isDark: isDark, onTap: () => _showTimezoneSelector(settings)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInventorySection(SettingsProvider settings, bool isDark) {
+    return ModernCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Inventory Settings', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          const SizedBox(height: 12),
+          _settingRow(icon: Icons.inventory_2_rounded, label: 'Low Stock Threshold', value: '≤ ${settings.lowStockThreshold} units', isDark: isDark, onTap: () => _showThresholdDialog(settings, 'low')),
+          const Divider(height: 1),
+          _settingRow(icon: Icons.inventory_rounded, label: 'Overstock Threshold', value: '≥ ${settings.overstockThreshold} units', isDark: isDark, onTap: () => _showThresholdDialog(settings, 'over')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAppearanceSection(bool isDark) {
+    return ModernCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Appearance', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.dark_mode_rounded, size: 20, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
+                  const SizedBox(width: 12),
+                  Text('Dark Mode', style: AppTextStyles.bodyMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+                ],
+              ),
+              Switch(
+                value: isDark,
+                onChanged: (v) {
+                  // System theme mode - handled by settings
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDataSection(bool isDark) {
+    return ModernCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Data & Backup', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          const SizedBox(height: 12),
+          _settingRow(icon: Icons.backup_rounded, label: 'Export Data', value: 'Download all data as CSV', isDark: isDark, onTap: () => _showSnackBar('Export started')),
+          const Divider(height: 1),
+          _settingRow(icon: Icons.restore_rounded, label: 'Import Data', value: 'Restore data from backup', isDark: isDark, onTap: () => _showSnackBar('Import started')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAboutSection(bool isDark) {
+    return ModernCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('About', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          const SizedBox(height: 12),
+          _settingRow(icon: Icons.info_outline_rounded, label: 'Version', value: '1.0.0', isDark: isDark),
+          const Divider(height: 1),
+          _settingRow(icon: Icons.code_rounded, label: 'Developer', value: 'SmartStock Team', isDark: isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoading(bool isDark) {
+    return Center(child: CircularProgressIndicator(color: AppColors.primary));
+  }
+
+  Widget _settingRow({required IconData icon, required String label, required String value, required bool isDark, VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            Container(width: 36, height: 36,
+              decoration: BoxDecoration(color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200), borderRadius: BorderRadius.circular(10)),
+              child: Icon(icon, size: 18, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: AppTextStyles.bodyMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+                  Text(value, style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+                ],
+              ),
+            ),
+            if (onTap != null)
+              Icon(Icons.chevron_right_rounded, size: 18, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+          ],
         ),
       ),
     );
@@ -140,156 +227,117 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showEditProfileDialog(SettingsProvider settings) {
     final nameController = TextEditingController(text: settings.ownerName);
     final emailController = TextEditingController(text: settings.ownerEmail);
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Edit Profile'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Name'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
-            ),
-          ],
-        ),
-        actions: [
-          Debounced(
-            onPressed: () => Navigator.pop(ctx),
-            builder: (_, isDisabled) => TextButton(
-              onPressed: isDisabled ? null : () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-          ),
-          Debounced(
-            onPressed: () {
-              settings.updateProfile(
-                nameController.text.trim(),
-                emailController.text.trim(),
-              );
-              _showSnackBar('Profile updated');
-              Navigator.pop(ctx);
-            },
-            builder: (context, isDisabled) => FilledButton(
-              onPressed: isDisabled ? null : () {
-                settings.updateProfile(
-                  nameController.text.trim(),
-                  emailController.text.trim(),
-                );
-                _showSnackBar('Profile updated');
-                Navigator.pop(ctx);
-              },
-              child: const Text('Save'),
-            ),
-          ),
-        ],
+    showDialog(context: context, builder: (ctx) => Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? AppColors.cardDark : Colors.white, borderRadius: BorderRadius.circular(20)),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Edit Profile', style: AppTextStyles.titleMd.copyWith(color: _getTextColor(context))),
+          const SizedBox(height: 16),
+          TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Name'), style: TextStyle(color: _getTextColor(context))),
+          const SizedBox(height: 12),
+          TextField(controller: emailController, decoration: const InputDecoration(labelText: 'Email'), style: TextStyle(color: _getTextColor(context))),
+          const SizedBox(height: 20),
+          Row(children: [
+            Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel'))),
+            const SizedBox(width: 12),
+            Expanded(child: FilledButton(onPressed: () { settings.updateProfile(nameController.text.trim(), emailController.text.trim()); _showSnackBar('Profile updated'); Navigator.pop(ctx); }, child: const Text('Save'))),
+          ]),
+        ]),
       ),
-    );
+    ));
   }
 
   void _showEditStoreNameDialog(SettingsProvider settings) {
     final controller = TextEditingController(text: settings.storeName);
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Store Name'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(labelText: 'Store Name'),
-        ),
-        actions: [
-          Debounced(
-            onPressed: () => Navigator.pop(ctx),
-            builder: (_, isDisabled) => TextButton(
-              onPressed: isDisabled ? null : () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-          ),
-          Debounced(
-            onPressed: () {
-              settings.updateStoreName(controller.text.trim());
-              _showSnackBar('Store name updated');
-              Navigator.pop(ctx);
-            },
-            builder: (context, isDisabled) => FilledButton(
-              onPressed: isDisabled ? null : () {
-                settings.updateStoreName(controller.text.trim());
-                _showSnackBar('Store name updated');
-                Navigator.pop(ctx);
-              },
-              child: const Text('Save'),
-            ),
-          ),
-        ],
+    showDialog(context: context, builder: (ctx) => Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? AppColors.cardDark : Colors.white, borderRadius: BorderRadius.circular(20)),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Store Name', style: AppTextStyles.titleMd.copyWith(color: _getTextColor(context))),
+          const SizedBox(height: 16),
+          TextField(controller: controller, decoration: const InputDecoration(labelText: 'Store Name'), style: TextStyle(color: _getTextColor(context))),
+          const SizedBox(height: 20),
+          Row(children: [
+            Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel'))),
+            const SizedBox(width: 12),
+            Expanded(child: FilledButton(onPressed: () { settings.updateStoreName(controller.text.trim()); _showSnackBar('Store name updated'); Navigator.pop(ctx); }, child: const Text('Save'))),
+          ]),
+        ]),
       ),
-    );
+    ));
   }
 
   void _showCurrencySelector(SettingsProvider settings) {
-    showDialog(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: const Text('Select Currency'),
-        children: SettingsService.currencies.map((code) {
-          final symbol = SettingsService.currencySymbol(code);
-          return SimpleDialogOption(
-            onPressed: () {
-              settings.updateCurrency(code);
-              _showSnackBar('Currency set to $code ($symbol)');
-              Navigator.pop(ctx);
-            },
-            child: Row(
-              children: [
-                Text('$code  ', style: AppTextStyles.bodyMd),
-                Text('($symbol)',
-                    style: AppTextStyles.bodyMd
-                        .copyWith(color: ColorConstants.onSurfaceVariant)),
-                if (code == settings.currency)
-                  const Padding(
-                    padding: EdgeInsets.only(left: 8),
-                    child: Icon(Icons.check, size: 18, color: Colors.green),
-                  ),
-              ],
-            ),
-          );
-        }).toList(),
+    showDialog(context: context, builder: (ctx) => Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? AppColors.cardDark : Colors.white, borderRadius: BorderRadius.circular(20)),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Select Currency', style: AppTextStyles.titleMd.copyWith(color: _getTextColor(context))),
+          const SizedBox(height: 12),
+          ...SettingsService.currencies.map((code) {
+            final symbol = SettingsService.currencySymbol(code);
+            final selected = code == settings.currency;
+            return InkWell(
+              onTap: () { settings.updateCurrency(code); _showSnackBar('Currency set to $code ($symbol)'); Navigator.pop(ctx); },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: selected ? AppColors.primary.withAlpha(12) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(children: [
+                  Text('$code ($symbol)', style: AppTextStyles.bodyMd.copyWith(color: _getTextColor(context), fontWeight: selected ? FontWeight.w600 : FontWeight.w400)),
+                  const Spacer(),
+                  if (selected) Container(width: 20, height: 20,
+                    decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(5)),
+                    child: const Icon(Icons.check_rounded, size: 14, color: Colors.black)),
+                ]),
+              ),
+            );
+          }),
+        ]),
       ),
-    );
+    ));
   }
 
   void _showTimezoneSelector(SettingsProvider settings) {
-    showDialog(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: const Text('Select Timezone'),
-        children: SettingsService.timezones.map((tz) {
-          return SimpleDialogOption(
-            onPressed: () {
-              settings.updateTimezone(tz);
-              _showSnackBar('Timezone set to $tz');
-              Navigator.pop(ctx);
-            },
-            child: Row(
-              children: [
-                Text(tz, style: AppTextStyles.bodyMd),
-                if (tz == settings.timezone)
-                  const Padding(
-                    padding: EdgeInsets.only(left: 8),
-                    child: Icon(Icons.check, size: 18, color: Colors.green),
-                  ),
-              ],
-            ),
-          );
-        }).toList(),
+    showDialog(context: context, builder: (ctx) => Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        constraints: const BoxConstraints(maxHeight: 400),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? AppColors.cardDark : Colors.white, borderRadius: BorderRadius.circular(20)),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Select Timezone', style: AppTextStyles.titleMd.copyWith(color: _getTextColor(context))),
+          const SizedBox(height: 12),
+          Flexible(child: ListView(
+            shrinkWrap: true,
+            children: SettingsService.timezones.map((tz) {
+              final selected = tz == settings.timezone;
+              return InkWell(
+                onTap: () { settings.updateTimezone(tz); _showSnackBar('Timezone set to $tz'); Navigator.pop(ctx); },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                  decoration: BoxDecoration(color: selected ? AppColors.primary.withAlpha(12) : Colors.transparent, borderRadius: BorderRadius.circular(8)),
+                  child: Row(children: [
+                    Expanded(child: Text(tz, style: AppTextStyles.bodySm.copyWith(color: _getTextColor(context), fontWeight: selected ? FontWeight.w600 : FontWeight.w400))),
+                    if (selected) Container(width: 20, height: 20,
+                      decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(5)),
+                      child: const Icon(Icons.check_rounded, size: 14, color: Colors.black)),
+                  ]),
+                ),
+              );
+            }).toList(),
+          )),
+        ]),
       ),
-    );
+    ));
   }
 
   void _showThresholdDialog(SettingsProvider settings, String type) {
@@ -297,71 +345,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final current = isLow ? settings.lowStockThreshold : settings.overstockThreshold;
     final controller = TextEditingController(text: current.toString());
     final formKey = GlobalKey<FormState>();
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(isLow ? 'Low Stock Threshold' : 'Overstock Threshold'),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: isLow ? 'Low stock count' : 'Overstock count',
-            ),
-            validator: (v) {
-              final n = int.tryParse(v ?? '');
-              if (n == null || n < 0) return 'Enter a valid number';
-              return null;
-            },
-          ),
-        ),
-        actions: [
-          Debounced(
-            onPressed: () => Navigator.pop(ctx),
-            builder: (_, isDisabled) => TextButton(
-              onPressed: isDisabled ? null : () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-          ),
-          Debounced(
-            onPressed: () {
+    showDialog(context: context, builder: (ctx) => Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? AppColors.cardDark : Colors.white, borderRadius: BorderRadius.circular(20)),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(isLow ? 'Low Stock Threshold' : 'Overstock Threshold', style: AppTextStyles.titleMd.copyWith(color: _getTextColor(context))),
+          const SizedBox(height: 16),
+          Form(key: formKey, child: TextFormField(
+            controller: controller, keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: isLow ? 'Low stock count' : 'Overstock count'),
+            validator: (v) { final n = int.tryParse(v ?? ''); if (n == null || n < 0) return 'Enter a valid number'; return null; },
+            style: TextStyle(color: _getTextColor(context)),
+          )),
+          const SizedBox(height: 20),
+          Row(children: [
+            Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel'))),
+            const SizedBox(width: 12),
+            Expanded(child: FilledButton(onPressed: () {
               if (formKey.currentState?.validate() != true) return;
               final value = int.tryParse(controller.text) ?? current;
-              if (isLow) {
-                settings.updateLowStockThreshold(value);
-              } else {
-                settings.updateOverstockThreshold(value);
-              }
-              _showSnackBar(
-                  '${isLow ? "Low stock" : "Overstock"} threshold updated to $value');
+              if (isLow) settings.updateLowStockThreshold(value); else settings.updateOverstockThreshold(value);
+              _showSnackBar('${isLow ? "Low stock" : "Overstock"} threshold updated to $value');
               Navigator.pop(ctx);
-            },
-            builder: (context, isDisabled) => FilledButton(
-              onPressed: isDisabled ? null : () {
-                if (formKey.currentState?.validate() != true) return;
-                final value = int.tryParse(controller.text) ?? current;
-                if (isLow) {
-                  settings.updateLowStockThreshold(value);
-                } else {
-                  settings.updateOverstockThreshold(value);
-                }
-                _showSnackBar(
-                    '${isLow ? "Low stock" : "Overstock"} threshold updated to $value');
-                Navigator.pop(ctx);
-              },
-              child: const Text('Save'),
-            ),
-          ),
-        ],
+            }, child: const Text('Save'))),
+          ]),
+        ]),
       ),
-    );
+    ));
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Color _getTextColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark ? AppColors.textPrimary : const Color(0xFF1A1A2E);
   }
 }

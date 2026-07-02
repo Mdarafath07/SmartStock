@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:smartstock/core/constants/color_constants.dart';
+import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
 
@@ -21,6 +21,7 @@ class ReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Debounced(
@@ -69,7 +70,7 @@ class ReportCard extends StatelessWidget {
                     Text(
                       subtitle,
                       style: AppTextStyles.bodyMd.copyWith(
-                        color: ColorConstants.onSurfaceVariant,
+                        color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

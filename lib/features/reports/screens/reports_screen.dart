@@ -1,55 +1,119 @@
 import 'package:flutter/material.dart';
-import 'package:smartstock/core/constants/color_constants.dart';
-import 'package:smartstock/features/reports/widgets/report_card.dart';
+import 'package:smartstock/core/routes/app_routes.dart';
+import 'package:smartstock/core/theme/app_colors.dart';
+import 'package:smartstock/core/theme/text_styles.dart';
 
 class ReportsScreen extends StatelessWidget {
   const ReportsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reports'),
-      ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: GridView.count(
-          crossAxisCount: 2,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 0.9,
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ReportCard(
-              icon: Icons.trending_up_rounded,
-              title: 'Sales Report',
-              subtitle: 'Daily and monthly sales analysis',
-              color: ColorConstants.primary,
-              onTap: () =>
-                  Navigator.pushNamed(context, '/sales/history'),
+            Text('Reports', style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+            const SizedBox(height: 4),
+            Text('Generate and view business reports', style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+            const SizedBox(height: 20),
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 0.95,
+                children: [
+                  _ReportCard(
+                    icon: Icons.trending_up_rounded,
+                    title: 'Sales Report',
+                    subtitle: 'Daily & monthly sales analysis',
+                    color: AppColors.primary,
+                    isDark: isDark,
+                    onTap: () => Navigator.pushNamed(context, AppRoutes.salesHistory),
+                  ),
+                  _ReportCard(
+                    icon: Icons.account_balance_wallet_rounded,
+                    title: 'Profit Report',
+                    subtitle: 'Revenue & profit breakdown',
+                    color: AppColors.green,
+                    isDark: isDark,
+                    onTap: () => Navigator.pushNamed(context, AppRoutes.reportsAnalytics),
+                  ),
+                  _ReportCard(
+                    icon: Icons.inventory_2_rounded,
+                    title: 'Inventory Report',
+                    subtitle: 'Stock levels & movement',
+                    color: AppColors.blue,
+                    isDark: isDark,
+                    onTap: () => Navigator.pushNamed(context, AppRoutes.inventory),
+                  ),
+                  _ReportCard(
+                    icon: Icons.verified_rounded,
+                    title: 'Warranty Report',
+                    subtitle: 'Active & expired warranties',
+                    color: AppColors.orange,
+                    isDark: isDark,
+                    onTap: () => Navigator.pushNamed(context, AppRoutes.warranty),
+                  ),
+                ],
+              ),
             ),
-            ReportCard(
-              icon: Icons.account_balance_wallet_rounded,
-              title: 'Profit Report',
-              subtitle: 'Revenue and profit breakdown',
-              color: ColorConstants.success,
-              onTap: () =>
-                  Navigator.pushNamed(context, '/reports/analytics'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReportCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _ReportCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: (isDark ? AppColors.cardDark : Colors.white).withAlpha(220),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(60), width: 0.5),
+          boxShadow: [BoxShadow(color: Colors.black.withAlpha(isDark ? 30 : 8), blurRadius: 12, offset: const Offset(0, 3))],
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              width: 44, height: 44,
+              decoration: BoxDecoration(color: color.withAlpha(25), borderRadius: BorderRadius.circular(12)),
+              child: Icon(icon, size: 22, color: color),
             ),
-            ReportCard(
-              icon: Icons.inventory_2_rounded,
-              title: 'Inventory Report',
-              subtitle: 'Stock levels and movement',
-              color: ColorConstants.info,
-              onTap: () =>
-                  Navigator.pushNamed(context, '/inventory'),
-            ),
-            ReportCard(
-              icon: Icons.verified_user_rounded,
-              title: 'Warranty Report',
-              subtitle: 'Active and expired warranties',
-              color: ColorConstants.warning,
-              onTap: () =>
-                  Navigator.pushNamed(context, '/warranty'),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+                const SizedBox(height: 2),
+                Text(subtitle, style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+              ],
             ),
           ],
         ),

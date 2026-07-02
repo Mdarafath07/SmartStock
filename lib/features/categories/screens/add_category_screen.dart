@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/features/categories/providers/category_provider.dart';
+import 'package:smartstock/features/categories/widgets/icon_picker.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
 
 class AddCategoryScreen extends StatefulWidget {
@@ -14,6 +15,7 @@ class AddCategoryScreen extends StatefulWidget {
 class _AddCategoryScreenState extends State<AddCategoryScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  String _selectedIcon = 'inventory_2_rounded';
   bool _isSaving = false;
 
   @override
@@ -29,7 +31,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
     try {
       await context
           .read<CategoryProvider>()
-          .addCategory(_nameController.text.trim());
+          .addCategory(_nameController.text.trim(), icon: _selectedIcon);
       if (mounted) Navigator.pop(context);
     } catch (_) {
       setState(() => _isSaving = false);
@@ -64,7 +66,16 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: IconPicker(
+                    selectedIcon: _selectedIcon,
+                    onSelected: (name) => setState(() => _selectedIcon = name),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
               Debounced(
                 onPressed: _isSaving ? null : _save,
                 builder: (context, isDisabled) => FilledButton(

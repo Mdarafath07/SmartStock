@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smartstock/core/widgets/modern_app_shell.dart';
 import 'app_routes.dart';
 import '../../features/daily_additions/screens/daily_additions_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
@@ -35,150 +36,84 @@ class RouteGenerator {
 
     switch (settings.name) {
       case AppRoutes.home:
-        return _materialPageRoute(
-          const DashboardScreen(),
-          settings,
-        );
+        return _page(ModernAppShell(
+          currentIndex: 0,
+          child: const DashboardScreen(),
+        ), settings);
       case AppRoutes.products:
-        return _materialPageRoute(
-          const ProductListScreen(),
-          settings,
-        );
+        return _page(ModernAppShell(
+          currentIndex: 1,
+          child: const ProductListScreen(),
+        ), settings);
       case AppRoutes.productsAdd:
-        return _materialPageRoute(
-          const AddProductScreen(),
-          settings,
-        );
+        return _page(const AddProductScreen(), settings);
       case AppRoutes.productsEdit:
-        return _materialPageRoute(
-          EditProductScreen(productId: args as String),
-          settings,
-        );
+        return _page(EditProductScreen(productId: args as String), settings);
       case AppRoutes.productsDetails:
-        return _materialPageRoute(
-          ProductDetailsScreen(productId: args as String),
-          settings,
-        );
+        return _page(ProductDetailsScreen(productId: args as String), settings);
       case AppRoutes.categories:
-        return _materialPageRoute(
-          const CategoryManagementScreen(),
-          settings,
-        );
+        return _page(const CategoryManagementScreen(), settings);
       case AppRoutes.categoriesAdd:
-        return _materialPageRoute(
-          const AddCategoryScreen(),
-          settings,
-        );
+        return _page(const AddCategoryScreen(), settings);
       case AppRoutes.inventory:
-        return _materialPageRoute(
-          const InventoryScreen(),
-          settings,
-        );
+        return _page(ModernAppShell(
+          currentIndex: 1,
+          child: const InventoryScreen(),
+        ), settings);
       case AppRoutes.inventoryStockDetails:
-        return _materialPageRoute(
-          StockDetailsScreen(productId: args as String),
-          settings,
-        );
+        return _page(StockDetailsScreen(productId: args as String), settings);
       case AppRoutes.salesNew:
-        return _materialPageRoute(
-          const NewSaleScreen(),
-          settings,
-        );
+        return _page(ModernAppShell(
+          currentIndex: 2,
+          child: const NewSaleScreen(),
+        ), settings);
       case AppRoutes.salesToday:
-        return _materialPageRoute(
-          const TodaysSalesScreen(),
-          settings,
-        );
+        return _page(const TodaysSalesScreen(), settings);
       case AppRoutes.salesHistory:
-        return _materialPageRoute(
-          const SalesHistoryScreen(),
-          settings,
-        );
+        return _page(const SalesHistoryScreen(), settings);
       case AppRoutes.salesDetails:
-        return _materialPageRoute(
-          SaleDetailsScreen(saleId: args as String),
-          settings,
-        );
+        return _page(SaleDetailsScreen(saleId: args as String), settings);
       case AppRoutes.customers:
-        return _materialPageRoute(
-          const CustomerListScreen(),
-          settings,
-        );
+        return _page(const CustomerListScreen(), settings);
       case AppRoutes.customersDetails:
-        return _materialPageRoute(
-          CustomerDetailsScreen(customerId: args as String),
-          settings,
-        );
+        return _page(CustomerDetailsScreen(customerId: args as String), settings);
       case AppRoutes.dailyAdditions:
-        return _materialPageRoute(
-          const DailyAdditionsScreen(),
-          settings,
-        );
+        return _page(const DailyAdditionsScreen(), settings);
       case AppRoutes.warranty:
-        return _materialPageRoute(
-          const WarrantyCheckScreen(),
-          settings,
-        );
+        return _page(const WarrantyCheckScreen(), settings);
       case AppRoutes.warrantyDetails:
-        return _materialPageRoute(
-          WarrantyDetailsScreen(warrantyId: args as String),
-          settings,
-        );
+        return _page(WarrantyDetailsScreen(warrantyId: args as String), settings);
       case AppRoutes.reports:
-        return _materialPageRoute(
-          const ReportsScreen(),
-          settings,
-        );
+        return _page(const ReportsScreen(), settings);
       case AppRoutes.reportsAnalytics:
-        return _materialPageRoute(
-          const AnalyticsScreen(),
-          settings,
-        );
+        return _page(ModernAppShell(
+          currentIndex: 3,
+          child: const AnalyticsScreen(),
+        ), settings);
       case AppRoutes.productIssues:
-        return _materialPageRoute(
-          const ProductIssueListScreen(),
-          settings,
-        );
+        return _page(const ProductIssueListScreen(), settings);
       case AppRoutes.productIssuesDetails:
-        return _materialPageRoute(
-          ProductIssueDetailsScreen(issueId: args as String),
-          settings,
-        );
+        return _page(ProductIssueDetailsScreen(issueId: args as String), settings);
       case AppRoutes.replacements:
-        return _materialPageRoute(
-          const ReplacementListScreen(),
-          settings,
-        );
+        return _page(const ReplacementListScreen(), settings);
       case AppRoutes.replacementsDetails:
-        return _materialPageRoute(
-          ReplacementDetailsScreen(replacementId: args as String),
-          settings,
-        );
+        return _page(ReplacementDetailsScreen(replacementId: args as String), settings);
       case AppRoutes.settings:
-        return _materialPageRoute(
-          const SettingsScreen(),
-          settings,
-        );
+        return _page(ModernAppShell(
+          currentIndex: 4,
+          child: const SettingsScreen(),
+        ), settings);
       case AppRoutes.search:
-        return _materialPageRoute(
-          const SearchScreen(),
-          settings,
-        );
+        return _page(const SearchScreen(), settings);
       default:
-        return _materialPageRoute(
-          const DashboardScreen(),
-          settings,
-        );
+        return _page(ModernAppShell(
+          currentIndex: 0,
+          child: const DashboardScreen(),
+        ), settings);
     }
   }
 
-  static MaterialPageRoute _materialPageRoute(
-    Widget page,
-    RouteSettings settings,
-  ) {
-    return MaterialPageRoute(
-      builder: (_) => page,
-      settings: settings,
-    );
+  static MaterialPageRoute _page(Widget child, RouteSettings settings) {
+    return MaterialPageRoute(builder: (_) => child, settings: settings);
   }
 }

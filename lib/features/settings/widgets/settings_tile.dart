@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:smartstock/core/constants/color_constants.dart';
+import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
 
@@ -23,6 +23,7 @@ class SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       clipBehavior: Clip.antiAlias,
@@ -38,13 +39,13 @@ class SettingsTile extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: (iconColor ?? ColorConstants.primary)
+                  color: (iconColor ?? AppColors.primary)
                       .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   leadingIcon,
-                  color: iconColor ?? ColorConstants.primary,
+                  color: iconColor ?? AppColors.primary,
                   size: 22,
                 ),
               ),
@@ -57,7 +58,7 @@ class SettingsTile extends StatelessWidget {
                       title,
                       style: AppTextStyles.bodyMd.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: ColorConstants.onSurface,
+                        color: isDark ? AppColors.textPrimary : const Color(0xFF1B1B21),
                       ),
                     ),
                     if (subtitle != null && subtitle!.isNotEmpty) ...[
@@ -65,7 +66,7 @@ class SettingsTile extends StatelessWidget {
                       Text(
                         subtitle!,
                         style: AppTextStyles.labelMd.copyWith(
-                          color: ColorConstants.onSurfaceVariant,
+                          color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
                         ),
                       ),
                     ],
@@ -76,7 +77,7 @@ class SettingsTile extends StatelessWidget {
               if (onTap != null && trailing == null)
                 Icon(
                   Icons.chevron_right_rounded,
-                  color: ColorConstants.onSurfaceVariant,
+                  color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
                   size: 20,
                 ),
             ],

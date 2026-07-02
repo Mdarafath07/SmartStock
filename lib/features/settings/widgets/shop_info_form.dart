@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:smartstock/core/constants/color_constants.dart';
+import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/utils/validators.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
@@ -52,6 +52,7 @@ class _ShopInfoFormState extends State<ShopInfoForm> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Form(
       key: _formKey,
       child: Column(
@@ -60,7 +61,7 @@ class _ShopInfoFormState extends State<ShopInfoForm> {
           Text(
             'Shop Information',
             style: AppTextStyles.titleMd.copyWith(
-              color: ColorConstants.onSurface,
+              color: isDark ? AppColors.textPrimary : const Color(0xFF1B1B21),
             ),
           ),
           const SizedBox(height: 16),

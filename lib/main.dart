@@ -60,6 +60,8 @@ class SmartStockApp extends StatelessWidget {
         title: 'SmartStock',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: ThemeMode.light,
         initialRoute: AppRoutes.home,
         onGenerateRoute: RouteGenerator.onGenerateRoute,
       ),

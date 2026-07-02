@@ -14,19 +14,17 @@ class NewSaleScreen extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CategoryProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
       ],
-      child: _NewSaleScreenContent(),
+      child: const _NewSaleScreenContent(),
     );
   }
 }
 
 class _NewSaleScreenContent extends StatelessWidget {
+  const _NewSaleScreenContent();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('New Sale'),
-        centerTitle: true,
-      ),
       body: SaleForm(
         onSaleComplete: () {
           Navigator.of(context).pop(true);

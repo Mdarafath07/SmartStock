@@ -3,9 +3,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:smartstock/core/constants/color_constants.dart';
+import 'package:smartstock/core/routes/app_routes.dart';
+import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
-import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/categories/providers/category_provider.dart';
 import 'package:smartstock/features/products/models/product_model.dart';
 import 'package:smartstock/features/products/providers/product_provider.dart';
@@ -15,7 +15,6 @@ import 'package:smartstock/features/sales/models/serial_number_model.dart';
 
 class SaleForm extends StatefulWidget {
   final VoidCallback onSaleComplete;
-
   const SaleForm({super.key, required this.onSaleComplete});
 
   @override
@@ -28,8 +27,8 @@ class _SaleFormState extends State<SaleForm> {
   final _customerPhoneController = TextEditingController();
   final _customerNameFocus = FocusNode();
   final _customerPhoneFocus = FocusNode();
-  int _currentStep = 0;
   bool _isSubmitting = false;
+  int _currentPage = 0;
 
   final List<_CartItem> _cartItems = [];
   final Set<String> _scannedSerialNumbers = {};
@@ -52,8 +51,11 @@ class _SaleFormState extends State<SaleForm> {
   }
 
   double get _cartTotal {
-    return _cartItems.fold(
-        0.0, (sum, item) => sum + item.product.sellingPrice * item.serials.length);
+    return _cartItems.fold(0.0, (sum, item) => sum + item.product.sellingPrice * item.serials.length);
+  }
+
+  int get _totalItems {
+    return _cartItems.fold(0, (sum, item) => sum + item.serials.length);
   }
 
   Future<void> _submitSale() async {
@@ -81,8 +83,7 @@ class _SaleFormState extends State<SaleForm> {
         'categoryName': item.product.categoryName,
         'salePrice': item.product.sellingPrice,
         'purchasePrice': item.product.purchasePrice,
-        'warrantyExpiryDate':
-            DateTime.now().add(Duration(days: item.product.warrantyMonths * 30)),
+        'warrantyExpiryDate': DateTime.now().add(Duration(days: item.product.warrantyMonths * 30)),
         'warrantyMonths': item.product.warrantyMonths,
       }).toList();
       return serialNumbers;
@@ -94,9 +95,7 @@ class _SaleFormState extends State<SaleForm> {
       await saleProvider.bulkCreateSales(
         items: items,
         customerId: '',
-        customerName: customerName.isEmpty
-            ? 'Customer${Random().nextInt(900000) + 100000}'
-            : customerName,
+        customerName: customerName.isEmpty ? 'Customer${Random().nextInt(900000) + 100000}' : customerName,
         customerPhone: customerPhone.isEmpty ? 'N/A' : customerPhone,
       );
       if (mounted) {
@@ -119,21 +118,15 @@ class _SaleFormState extends State<SaleForm> {
   Future<void> _handleBarcodeScan() async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final provider = context.read<ProductProvider>();
-
     final code = await Navigator.push<String>(
-      context,
-      MaterialPageRoute(builder: (_) => const BarcodeScannerScreen()),
+      context, MaterialPageRoute(builder: (_) => const BarcodeScannerScreen()),
     );
     if (code == null || code.isEmpty) return;
     if (!mounted) return;
 
     final result = await provider.findProductBySerialNumber(code);
     if (result == null) {
-      if (mounted) {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text('No product found for "$code"')),
-        );
-      }
+      if (mounted) scaffoldMessenger.showSnackBar(SnackBar(content: Text('No product found for "$code"')));
       return;
     }
 
@@ -142,38 +135,20 @@ class _SaleFormState extends State<SaleForm> {
     final serialNumber = serialData['serialNumber'] as String;
 
     if (serialData['status'] != 'available') {
-      if (mounted) {
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(content: Text('This serial number is already sold')),
-        );
-      }
+      if (mounted) scaffoldMessenger.showSnackBar(const SnackBar(content: Text('This serial number is already sold')));
       return;
     }
-
     if (_scannedSerialNumbers.contains(serialNumber)) {
-      if (mounted) {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text('$serialNumber is already in cart')),
-        );
-      }
+      if (mounted) scaffoldMessenger.showSnackBar(SnackBar(content: Text('$serialNumber is already in cart')));
       return;
     }
 
-    final cartCount = _cartItems
-        .where((item) => item.product.id == product.id)
-        .fold<int>(0, (sum, item) => sum + item.serials.length);
+    final cartCount = _cartItems.where((item) => item.product.id == product.id).fold<int>(0, (sum, item) => sum + item.serials.length);
     final remaining = product.availableQuantity - cartCount;
     if (remaining <= 0) {
-      if (mounted) {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(
-            content: Text('No more stock available for ${product.productName}'),
-          ),
-        );
-      }
+      if (mounted) scaffoldMessenger.showSnackBar(SnackBar(content: Text('No more stock available for ${product.productName}')));
       return;
     }
-
     if (!mounted) return;
 
     var salePriceText = product.sellingPrice.toStringAsFixed(2);
@@ -191,17 +166,10 @@ class _SaleFormState extends State<SaleForm> {
     if (!mounted) return;
 
     final salePrice = double.tryParse(salePriceText) ?? product.sellingPrice;
-
     _scannedSerialNumbers.add(serialNumber);
     setState(() {
-      final existingIndex =
-          _cartItems.indexWhere((i) => i.product.id == product.id);
-      final serial = SerialNumber(
-        id: serialId,
-        productId: product.id,
-        serialNumber: serialNumber,
-        status: 'available',
-      );
+      final existingIndex = _cartItems.indexWhere((i) => i.product.id == product.id);
+      final serial = SerialNumber(id: serialId, productId: product.id, serialNumber: serialNumber, status: 'available');
       final cartProduct = product.copyWith(sellingPrice: salePrice);
       if (existingIndex >= 0) {
         _cartItems[existingIndex].serials.add(serial);
@@ -209,38 +177,28 @@ class _SaleFormState extends State<SaleForm> {
         _cartItems.add(_CartItem(product: cartProduct, serials: [serial]));
       }
     });
-
-    if (mounted) {
-      scaffoldMessenger.showSnackBar(
-        SnackBar(content: Text('Added ${product.productName} - $serialNumber')),
-      );
-    }
+    if (mounted) scaffoldMessenger.showSnackBar(SnackBar(content: Text('Added ${product.productName} - $serialNumber')));
   }
 
   void _showAddItemSheet() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (ctx) => ChangeNotifierProvider.value(
         value: context.read<CategoryProvider>(),
         child: ChangeNotifierProvider.value(
           value: context.read<ProductProvider>(),
-          child: _AddItemSheet(
-            onAddToCart: (product, serials) {
-              setState(() {
-                final existingIndex =
-                    _cartItems.indexWhere((i) => i.product.id == product.id);
-                if (existingIndex >= 0) {
-                  _cartItems[existingIndex].serials.addAll(serials);
-                } else {
-                  _cartItems.add(_CartItem(product: product, serials: serials));
-                }
-              });
-            },
-          ),
+          child: _AddItemSheet(onAddToCart: (product, serials) {
+            setState(() {
+              final existingIndex = _cartItems.indexWhere((i) => i.product.id == product.id);
+              if (existingIndex >= 0) {
+                _cartItems[existingIndex].serials.addAll(serials);
+              } else {
+                _cartItems.add(_CartItem(product: product, serials: serials));
+              }
+            });
+          }),
         ),
       ),
     );
@@ -248,162 +206,309 @@ class _SaleFormState extends State<SaleForm> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Form(
       key: _formKey,
-      child: Stepper(
-        currentStep: _currentStep,
-        onStepContinue: () {
-          if (_currentStep == 0) {
-            if (_formKey.currentState!.validate()) {
-              setState(() => _currentStep = 1);
-            }
-          } else if (_currentStep == 1) {
-            _submitSale();
-          }
-        },
-        onStepCancel: () {
-          if (_currentStep > 0) {
-            setState(() => _currentStep--);
-          }
-        },
-        controlsBuilder: (context, details) {
-          return Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: Row(
+      child: Column(
+        children: [
+          _buildTopBar(isDark),
+          Expanded(
+            child: _currentPage == 0 ? _buildCustomerStep(isDark) : _buildCartStep(isDark),
+          ),
+          _buildBottomBar(isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopBar(bool isDark) {
+    return Container(
+      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 8, left: 16, right: 16, bottom: 8),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 40, height: 40,
+              decoration: BoxDecoration(
+                color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.close_rounded, size: 20),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Debounced(
-                  onPressed: _isSubmitting ? null : details.onStepContinue,
-                  builder: (context, isDisabled) => FilledButton(
-                    onPressed: (_isSubmitting || isDisabled) ? null : details.onStepContinue,
-                    child: _isSubmitting && _currentStep == 1
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(_currentStep == 1 ? 'Complete Sale' : 'Next'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                if (_currentStep > 0)
-                  Debounced(
-                    onPressed: details.onStepCancel,
-                    builder: (context, isDisabled) => OutlinedButton(
-                      onPressed: isDisabled ? null : details.onStepCancel,
-                      child: const Text('Back'),
-                    ),
-                  ),
+                Text('New Sale', style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+                Text(_currentPage == 0 ? 'Customer Information' : 'Cart Review',
+                    style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
               ],
             ),
-          );
-        },
-        steps: [
-          Step(
-            title: const Text('Customer Information'),
-            isActive: _currentStep >= 0,
-            state: _currentStep > 0 ? StepState.complete : StepState.indexed,
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(context, AppRoutes.salesHistory),
+            child: Container(
+              width: 40, height: 40,
+              decoration: BoxDecoration(
+                color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.history_rounded, size: 20),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCustomerStep(bool isDark) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Customer Details', style: AppTextStyles.titleMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          const SizedBox(height: 4),
+          Text('Enter customer information for the sale',
+              style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: (isDark ? AppColors.surfaceLight : const Color(0xFFF9FAFB)).withAlpha(200),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
               children: [
                 TextFormField(
                   controller: _customerNameController,
                   focusNode: _customerNameFocus,
-                  decoration: const InputDecoration(
-                    labelText: 'Customer Name',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.person),
+                  decoration: InputDecoration(
+                    hintText: 'Customer Name',
+                    prefixIcon: Icon(Icons.person_rounded, size: 20, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                    filled: false,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 15, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
                   textInputAction: TextInputAction.next,
-                  onFieldSubmitted: (_) =>
-                      _customerPhoneFocus.requestFocus(),
+                  onFieldSubmitted: (_) => _customerPhoneFocus.requestFocus(),
                 ),
-                const SizedBox(height: 16),
+                Divider(height: 1, color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(80)),
                 TextFormField(
                   controller: _customerPhoneController,
                   focusNode: _customerPhoneFocus,
-                  decoration: const InputDecoration(
-                    labelText: 'Customer Phone',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.phone),
+                  decoration: InputDecoration(
+                    hintText: 'Phone Number',
+                    prefixIcon: Icon(Icons.phone_rounded, size: 20, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                    filled: false,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 15, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
                   keyboardType: TextInputType.phone,
                 ),
               ],
             ),
           ),
-          Step(
-            title: const Text('Cart Items'),
-            isActive: _currentStep >= 1,
-            state: _currentStep > 1 ? StepState.complete : StepState.indexed,
-            content: SingleChildScrollView(
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCartStep(bool isDark) {
+    return Column(
+      children: [
+        if (_cartItems.isEmpty)
+          Expanded(
+            child: Center(
               child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (_cartItems.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Center(
-                      child: Text('No items added yet',
-                          style: TextStyle(color: ColorConstants.onSurfaceVariant)),
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 72, height: 72,
+                    decoration: BoxDecoration(
+                      color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
+                      borderRadius: BorderRadius.circular(18),
                     ),
-                  )
-                else
-                  ...List.generate(_cartItems.length, (index) {
-                    final item = _cartItems[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        title: Text(item.product.productName),
-                        subtitle: Text(
-                            '${item.serials.length} × \$${item.product.sellingPrice.toStringAsFixed(2)}'),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline,
-                              color: ColorConstants.error),
-                          onPressed: () {
-                            setState(() => _cartItems.removeAt(index));
-                          },
-                        ),
-                      ),
-                    );
-                  }),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _showAddItemSheet,
-                        icon: const Icon(Icons.add),
-                        label: const Text('Add Item', overflow: TextOverflow.ellipsis),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton.filled(
-                      onPressed: _handleBarcodeScan,
-                      icon: const Icon(Icons.qr_code_scanner),
-                      style: IconButton.styleFrom(
-                        backgroundColor: ColorConstants.primaryContainer,
-                        foregroundColor: ColorConstants.onPrimaryContainer,
-                      ),
-                      tooltip: 'Scan barcode',
-                    ),
-                  ],
-                ),
-                if (_cartItems.isNotEmpty) ...[
-                  const Divider(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Total:',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text('\$${_cartTotal.toStringAsFixed(2)}'),
-                    ],
+                    child: Icon(Icons.shopping_cart_rounded, size: 32, color: isDark ? AppColors.greyDarker : const Color(0xFFD1D5DB)),
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Cart is empty', style: AppTextStyles.headlineSm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+                  const SizedBox(height: 4),
+                  Text('Add items to start a sale', style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+                  const SizedBox(height: 20),
+                  FilledButton.icon(
+                    onPressed: _showAddItemSheet,
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: const Text('Add Item'),
                   ),
                 ],
+              ),
+            ),
+          )
+        else
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              itemCount: _cartItems.length,
+              itemBuilder: (context, index) {
+                final item = _cartItems[index];
+                return _CartItemTile(
+                  item: item,
+                  isDark: isDark,
+                  onRemove: () {
+                    setState(() {
+                      _scannedSerialNumbers.removeAll(item.serials.map((s) => s.serialNumber));
+                      _cartItems.removeAt(index);
+                    });
+                  },
+                );
+              },
+            ),
+          ),
+        if (_cartItems.isNotEmpty)
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(80))),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('$_totalItems items', style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+                      Text('\$${_cartTotal.toStringAsFixed(2)}',
+                          style: AppTextStyles.amountLg.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E), fontSize: 24)),
+                    ],
+                  ),
+                ),
+                FilledButton.icon(
+                  onPressed: _showAddItemSheet,
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text('Add'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6),
+                    foregroundColor: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  width: 44, height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withAlpha(25),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: IconButton(
+                    onPressed: _handleBarcodeScan,
+                    icon: const Icon(Icons.qr_code_scanner_rounded, size: 20, color: AppColors.primary),
+                  ),
+                ),
               ],
             ),
           ),
-        ),
       ],
+    );
+  }
+
+  Widget _buildBottomBar(bool isDark) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(80))),
+      ),
+      child: Row(
+        children: [
+          if (_currentPage > 0)
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => setState(() => _currentPage--),
+                child: const Text('Back'),
+              ),
+            ),
+          if (_currentPage > 0) const SizedBox(width: 12),
+          Expanded(
+            child: FilledButton(
+              onPressed: _isSubmitting ? null : () {
+                if (_currentPage == 0) {
+                  setState(() => _currentPage = 1);
+                } else {
+                  _submitSale();
+                }
+              },
+              child: _isSubmitting && _currentPage == 1
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  : Text(_currentPage == 1 ? 'Complete Sale' : 'Continue'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CartItemTile extends StatelessWidget {
+  final _CartItem item;
+  final bool isDark;
+  final VoidCallback onRemove;
+
+  const _CartItemTile({required this.item, required this.isDark, required this.onRemove});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: (isDark ? AppColors.cardDark : Colors.white).withAlpha(200),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(60), width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(item.product.productName, style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+              ),
+              GestureDetector(
+                onTap: onRemove,
+                child: Container(
+                  width: 32, height: 32,
+                  decoration: BoxDecoration(color: AppColors.redBg, borderRadius: BorderRadius.circular(8)),
+                  child: const Icon(Icons.delete_rounded, size: 16, color: AppColors.red),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ...item.serials.map((s) => Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              children: [
+                Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle)),
+                const SizedBox(width: 8),
+                Text(s.serialNumber, style: TextStyle(fontFamily: 'Geist', fontSize: 12, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
+                const Spacer(),
+                Text('\$${item.product.sellingPrice.toStringAsFixed(0)}',
+                    style: AppTextStyles.labelMd.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)),
+              ],
+            ),
+          )),
+          if (item.serials.length > 1)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text('${item.serials.length} items × \$${item.product.sellingPrice.toStringAsFixed(0)}',
+                  style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+            ),
+        ],
       ),
     );
   }
@@ -445,46 +550,60 @@ class _PriceDialogState extends State<_PriceDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.productName),
-      content: SingleChildScrollView(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.cardDark : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Serial: ${widget.serialNumber}',
-                style: const TextStyle(fontSize: 13)),
+            Text(widget.productName, style: AppTextStyles.titleMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
             const SizedBox(height: 4),
-            Text('Model: ${widget.modelNumber}',
-                style: const TextStyle(fontSize: 13)),
-            const SizedBox(height: 12),
-            TextFormField(
+            Text('Serial: ${widget.serialNumber} · Model: ${widget.modelNumber}',
+                style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+            const SizedBox(height: 16),
+            TextField(
               controller: _controller,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Sale Price',
-                border: OutlineInputBorder(),
-                isDense: true,
+                prefixText: '\$ ',
+                prefixStyle: TextStyle(fontFamily: 'Inter', fontSize: 16, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
               ),
               keyboardType: TextInputType.number,
               autofocus: true,
               onChanged: widget.onPriceChanged,
+              style: TextStyle(fontFamily: 'Inter', fontSize: 16, fontWeight: FontWeight.w600, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () {
+                      widget.onPriceChanged(_controller.text);
+                      Navigator.pop(context, true);
+                    },
+                    child: const Text('Add to Cart'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => {
-            widget.onPriceChanged(_controller.text),
-            Navigator.pop(context, true),
-          },
-          child: const Text('Add to Cart'),
-        ),
-      ],
     );
   }
 }
@@ -492,13 +611,11 @@ class _PriceDialogState extends State<_PriceDialog> {
 class _CartItem {
   final Product product;
   final List<SerialNumber> serials;
-
   _CartItem({required this.product, required this.serials});
 }
 
 class _AddItemSheet extends StatefulWidget {
   final void Function(Product product, List<SerialNumber> serials) onAddToCart;
-
   const _AddItemSheet({required this.onAddToCart});
 
   @override
@@ -531,503 +648,6 @@ class _AddItemSheetState extends State<_AddItemSheet> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final categoryProvider = context.watch<CategoryProvider>();
-    final productProvider = context.watch<ProductProvider>();
-    final products = productProvider.products;
-
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-        left: 0,
-        right: 0,
-        top: 0,
-      ),
-      child: DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) {
-          return Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Row(
-                  children: [
-                    Flexible(
-                      child: Text('Add Item to Cart',
-                           style: AppTextStyles.titleMd.copyWith(
-                               color: ColorConstants.onSurface),
-                           overflow: TextOverflow.ellipsis),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text('Select Category',
-                    style: AppTextStyles.labelMd.copyWith(
-                        color: ColorConstants.onSurfaceVariant)),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 48,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  children: [
-                    ...categoryProvider.categories.map((cat) {
-                      final selected = _categoryId == cat.id;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 10),
-                        child: Debounced(
-                          onPressed: () {
-                            setState(() {
-                              _categoryId = cat.id;
-                              _productId = null;
-                              _product = null;
-                              _selectedSerialIds.clear();
-                              _serialNumbers = [];
-                              _salePriceController.clear();
-                              _warrantyValueController.text = '1';
-                              _warrantyUnit = 'month';
-                              _noWarranty = false;
-                            });
-                            context
-                                .read<ProductProvider>()
-                                .loadProducts(categoryId: cat.id);
-                          },
-                          builder: (context, isDisabled) => GestureDetector(
-                            onTap: isDisabled ? null : () {
-                              setState(() {
-                                _categoryId = cat.id;
-                                _productId = null;
-                                _product = null;
-                                _selectedSerialIds.clear();
-                                _serialNumbers = [];
-                                _salePriceController.clear();
-                                _warrantyValueController.text = '1';
-                                _warrantyUnit = 'month';
-                                _noWarranty = false;
-                              });
-                              context
-                                  .read<ProductProvider>()
-                                  .loadProducts(categoryId: cat.id);
-                            },
-                            child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: selected
-                                  ? ColorConstants.primaryContainer
-                                  : ColorConstants.surfaceContainerHigh,
-                              borderRadius: BorderRadius.circular(24),
-                              border: selected
-                                  ? Border.all(
-                                      color: ColorConstants.primary,
-                                      width: 1.5)
-                                  : null,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.category,
-                                  size: 18,
-                                  color: selected
-                                      ? ColorConstants.onPrimaryContainer
-                                      : ColorConstants.onSurfaceVariant,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  cat.name,
-                                  style: TextStyle(
-                                    fontWeight: selected
-                                        ? FontWeight.w600
-                                        : FontWeight.w500,
-                                    color: selected
-                                        ? ColorConstants.onPrimaryContainer
-                                        : ColorConstants.onSurface,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            if (_categoryId != null) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text('Select Product',
-                      style: AppTextStyles.labelMd.copyWith(
-                          color: ColorConstants.onSurfaceVariant)),
-                ),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: products.isEmpty
-                      ? Center(
-                          child: Text('No products in this category',
-                              style: AppTextStyles.bodyMd.copyWith(
-                                  color: ColorConstants.onSurfaceVariant)))
-                      : ListView(
-                          controller: scrollController,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          children: [
-                            ...products.map((p) {
-                              final selected = _productId == p.id;
-                              final daysSince =
-                                  DateTime.now().difference(p.createdAt).inDays;
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                  child: Debounced(
-                                    onPressed: () {
-                                      setState(() {
-                                        _productId = p.id;
-                                        _product = p;
-                                        _selectedSerialIds.clear();
-                                        _salePriceController.text =
-                                            p.sellingPrice.toStringAsFixed(2);
-                                        _setWarrantyFromProduct(p);
-                                      });
-                                      context
-                                          .read<SaleProvider>()
-                                          .loadAvailableSerialNumbers(p.id);
-                                    },
-                                    builder: (context, isDisabled) => GestureDetector(
-                                      onTap: isDisabled ? null : () {
-                                        setState(() {
-                                          _productId = p.id;
-                                          _product = p;
-                                          _selectedSerialIds.clear();
-                                          _salePriceController.text =
-                                              p.sellingPrice.toStringAsFixed(2);
-                                          _setWarrantyFromProduct(p);
-                                        });
-                                      context
-                                          .read<SaleProvider>()
-                                          .loadAvailableSerialNumbers(p.id);
-                                    },
-                                    child: Container(
-                                    decoration: BoxDecoration(
-                                      color: selected
-                                          ? ColorConstants.primaryContainer
-                                          : ColorConstants.surface,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: selected
-                                            ? ColorConstants.primary
-                                            : ColorConstants.outlineVariant,
-                                        width: selected ? 2 : 1,
-                                      ),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(12),
-                                      child: Row(
-                                        children: [
-                                          ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            child: SizedBox(
-                                              width: 56,
-                                              height: 56,
-                                              child: p.imageUrl.isNotEmpty
-                                                  ? Image.network(
-                                                      p.imageUrl,
-                                                      fit: BoxFit.cover,
-                                                      loadingBuilder: (ctx, child, progress) {
-                                                        if (progress == null) return child;
-                                                        return _productPlaceholder();
-                                                      },
-                                                      errorBuilder: (_, _, _) =>
-                                                          _productPlaceholder(),
-                                                    )
-                                                  : _productPlaceholder(),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  p.productName,
-                                                  style: AppTextStyles.bodyMd.copyWith(
-                                                    fontWeight: FontWeight.w600,
-                                                    color: ColorConstants.onSurface,
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                                const SizedBox(height: 2),
-                                                Text(
-                                                  '${p.brandName} ${p.modelNumber}',
-                                                  style: AppTextStyles.labelMd.copyWith(
-                                                    color: ColorConstants.onSurfaceVariant,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 2),
-                                                Row(
-                                                  children: [
-                                                    Flexible(
-                                                      child: Text(
-                                                        '\$${p.sellingPrice.toStringAsFixed(2)}',
-                                                        style: AppTextStyles.labelMd.copyWith(
-                                                          color: ColorConstants.primary,
-                                                          fontWeight: FontWeight.w600,
-                                                        ),
-                                                        overflow: TextOverflow.ellipsis,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 8),
-                                                    Text(
-                                                      daysSince == 0
-                                                          ? 'today'
-                                                          : '${daysSince}d ago',
-                                                      style: AppTextStyles.labelSm.copyWith(
-                                                        color: ColorConstants.onSurfaceVariant,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          if (selected)
-                                            Icon(Icons.check_circle,
-                                                color: ColorConstants.primary,
-                                                size: 22),
-                                        ],
-                                      ),
-                                    ),
-                                ),
-                              ),
-                            ),
-                          );
-                          }),
-                            if (_productId != null && _product != null) ...[
-                              const SizedBox(height: 8),
-                              Container(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          flex: 1,
-                                          child: TextFormField(
-                                            controller:
-                                                _salePriceController,
-                                            decoration:
-                                                const InputDecoration(
-                                              labelText: 'Price',
-                                              border:
-                                                  OutlineInputBorder(),
-                                              isDense: true,
-                                              contentPadding:
-                                                  EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 12),
-                                            ),
-                                            keyboardType:
-                                                TextInputType.number,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          flex: 1,
-                                          child: TextFormField(
-                                            controller:
-                                                _warrantyValueController,
-                                            readOnly: _noWarranty,
-                                            decoration:
-                                                InputDecoration(
-                                              labelText: _noWarranty
-                                                  ? 'No Warranty'
-                                                  : 'Warranty',
-                                              border:
-                                                  const OutlineInputBorder(),
-                                              isDense: true,
-                                              contentPadding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 12),
-                                            ),
-                                            keyboardType: _noWarranty
-                                                ? TextInputType.none
-                                                : TextInputType.number,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          flex: 1,
-                                          child:
-                                              DropdownButtonFormField<
-                                                  String>(
-                                            initialValue: _warrantyUnit,
-                                            isExpanded: true,
-                                            onChanged: _noWarranty
-                                                ? null
-                                                : (v) {
-                                                    if (v != null) {
-                                                      setState(() =>
-                                                          _warrantyUnit = v);
-                                                    }
-                                                  },
-                                            decoration:
-                                                const InputDecoration(
-                                              labelText: 'Unit',
-                                              border:
-                                                  OutlineInputBorder(),
-                                              isDense: true,
-                                              contentPadding:
-                                                  EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 12),
-                                            ),
-                                            items: const [
-                                              DropdownMenuItem(
-                                                  value: 'day',
-                                                  child:
-                                                      Text('Day(s)')),
-                                              DropdownMenuItem(
-                                                  value: 'month',
-                                                  child:
-                                                      Text('Month(s)')),
-                                              DropdownMenuItem(
-                                                  value: 'year',
-                                                  child:
-                                                      Text('Year(s)')),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Text('Select Serial Numbers',
-                                        style: AppTextStyles.bodyMd.copyWith(
-                                            fontWeight: FontWeight.w600,
-                                            color: ColorConstants.onSurface)),
-                                    const SizedBox(height: 4),
-                                    SizedBox(
-                                      height: 100,
-                                      child:
-                                          _buildSerialCheckboxList(),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child:                                           Text(
-                                              '${_selectedSerialIds.length} selected',
-                                              style: AppTextStyles.labelMd.copyWith(
-                                                  color: ColorConstants.onSurfaceVariant)),
-                                        ),
-                                        Debounced(
-                                          onPressed: _selectedSerialIds
-                                                  .isEmpty
-                                              ? null
-                                              : () {
-                                                  final salePrice =
-                                                      double.tryParse(
-                                                              _salePriceController
-                                                                  .text) ??
-                                                          _product!
-                                                              .sellingPrice;
-                                                  final warrantyMonths =
-                                                      _noWarranty
-                                                          ? 0
-                                                          : _parseWarrantyMonths();
-                                                  final product = _product!
-                                                      .copyWith(
-                                                    sellingPrice:
-                                                        salePrice,
-                                                    warrantyMonths:
-                                                        warrantyMonths,
-                                                  );
-                                                  widget.onAddToCart(
-                                                    product,
-                                                    _serialNumbers
-                                                        .where((s) =>
-                                                            _selectedSerialIds
-                                                                .contains(
-                                                                    s.id))
-                                                        .toList(),
-                                                  );
-                                                  Navigator.pop(
-                                                      context);
-                                                },
-                                          builder: (context, isDisabled) => FilledButton(
-                                            onPressed: (_selectedSerialIds.isEmpty || isDisabled)
-                                                ? null
-                                                : () {
-                                                    final salePrice =
-                                                        double.tryParse(
-                                                                _salePriceController
-                                                                    .text) ??
-                                                            _product!
-                                                                .sellingPrice;
-                                                    final warrantyMonths =
-                                                        _noWarranty
-                                                            ? 0
-                                                            : _parseWarrantyMonths();
-                                                    final product = _product!
-                                                        .copyWith(
-                                                      sellingPrice:
-                                                          salePrice,
-                                                      warrantyMonths:
-                                                          warrantyMonths,
-                                                    );
-                                                    widget.onAddToCart(
-                                                      product,
-                                                      _serialNumbers
-                                                          .where((s) =>
-                                                              _selectedSerialIds
-                                                                  .contains(
-                                                                      s.id))
-                                                          .toList(),
-                                                    );
-                                                    Navigator.pop(
-                                                        context);
-                                                  },
-                                            child:
-                                                const Text('Add to Cart'),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                            ],
-                          ],
-                        ),
-                ),
-              ],
-            ],
-          );
-        },
-      ),
-    );
-  }
-
   int _parseWarrantyMonths() {
     final value = int.tryParse(_warrantyValueController.text) ?? 0;
     return switch (_warrantyUnit) {
@@ -1053,51 +673,310 @@ class _AddItemSheetState extends State<_AddItemSheet> {
     }
   }
 
-  Widget _productPlaceholder() {
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final categoryProvider = context.watch<CategoryProvider>();
+    final productProvider = context.watch<ProductProvider>();
+    final products = productProvider.products;
+
     return Container(
-      color: ColorConstants.surfaceContainerHigh,
-      child: Icon(Icons.inventory_2,
-          color: ColorConstants.onSurfaceVariant, size: 28),
+      height: MediaQuery.of(context).size.height * 0.8,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 12, bottom: 8),
+            child: Container(width: 40, height: 4,
+              decoration: BoxDecoration(color: isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB), borderRadius: BorderRadius.circular(2))),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Add Item to Cart', style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(width: 36, height: 36,
+                    decoration: BoxDecoration(color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200), borderRadius: BorderRadius.circular(10)),
+                    child: const Icon(Icons.close_rounded, size: 18)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 44,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                _CategoryChip(label: 'All', selected: _categoryId == null, isDark: isDark, onTap: () {
+                  setState(() { _categoryId = null; _productId = null; _product = null; _selectedSerialIds.clear(); _serialNumbers = []; });
+                }),
+                const SizedBox(width: 8),
+                ...categoryProvider.categories.map((cat) => Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: _CategoryChip(
+                    label: cat.name,
+                    selected: _categoryId == cat.id,
+                    isDark: isDark,
+                    onTap: () {
+                      setState(() { _categoryId = cat.id; _productId = null; _product = null; _selectedSerialIds.clear(); _serialNumbers = []; });
+                      context.read<ProductProvider>().loadProducts(categoryId: cat.id);
+                    },
+                  ),
+                )),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: products.isEmpty
+                ? Center(child: Text('No products in this category', style: AppTextStyles.bodyMd.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))))
+                : ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    children: [
+                      ...products.map((p) {
+                        final selected = _productId == p.id;
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: selected ? AppColors.primary.withAlpha(12) : (isDark ? AppColors.surfaceLight : const Color(0xFFF9FAFB)).withAlpha(180),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: selected ? AppColors.primary.withAlpha(80) : (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(60),
+                              width: selected ? 1.5 : 0.5,
+                            ),
+                          ),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () {
+                              setState(() {
+                                _productId = p.id;
+                                _product = p;
+                                _selectedSerialIds.clear();
+                                _salePriceController.text = p.sellingPrice.toStringAsFixed(2);
+                                _setWarrantyFromProduct(p);
+                              });
+                              context.read<SaleProvider>().loadAvailableSerialNumbers(p.id);
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 48, height: 48,
+                                    decoration: BoxDecoration(
+                                      color: isDark ? AppColors.greyDarker.withAlpha(100) : const Color(0xFFE5E7EB),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: p.imageUrl.isNotEmpty
+                                        ? ClipRRect(borderRadius: BorderRadius.circular(10),
+                                            child: Image.network(p.imageUrl, fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) => Icon(Icons.inventory_2_rounded, size: 22, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))))
+                                        : Icon(Icons.inventory_2_rounded, size: 22, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(p.productName, style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                                            maxLines: 1, overflow: TextOverflow.ellipsis),
+                                        Text('${p.brandName} ${p.modelNumber}',
+                                            style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+                                        const SizedBox(height: 4),
+                                        Text('\$${p.sellingPrice.toStringAsFixed(2)}',
+                                            style: AppTextStyles.labelMd.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)),
+                                      ],
+                                    ),
+                                  ),
+                                  if (selected)
+                                    Container(
+                                      width: 24, height: 24,
+                                      decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(6)),
+                                      child: const Icon(Icons.check_rounded, size: 16, color: Colors.black),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                      if (_productId != null && _product != null) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: (isDark ? AppColors.surfaceLight : const Color(0xFFF9FAFB)).withAlpha(180),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(60), width: 0.5),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _salePriceController,
+                                      decoration: InputDecoration(
+                                        labelText: 'Price',
+                                        prefixText: '\$ ',
+                                        prefixStyle: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                                        filled: true,
+                                        fillColor: isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6),
+                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                      style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _warrantyValueController,
+                                      readOnly: _noWarranty,
+                                      decoration: InputDecoration(
+                                        labelText: _noWarranty ? 'No Warranty' : 'Warranty',
+                                        filled: true,
+                                        fillColor: isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6),
+                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                      ),
+                                      keyboardType: _noWarranty ? TextInputType.none : TextInputType.number,
+                                      style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                                    decoration: BoxDecoration(
+                                      color: isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: DropdownButtonHideUnderline(
+                                      child: DropdownButton<String>(
+                                        value: _warrantyUnit,
+                                        isDense: true,
+                                        onChanged: _noWarranty ? null : (v) { if (v != null) setState(() => _warrantyUnit = v); },
+                                        items: const [
+                                          DropdownMenuItem(value: 'day', child: Text('Day(s)', style: TextStyle(fontFamily: 'Geist', fontSize: 12))),
+                                          DropdownMenuItem(value: 'month', child: Text('Month(s)', style: TextStyle(fontFamily: 'Geist', fontSize: 12))),
+                                          DropdownMenuItem(value: 'year', child: Text('Year(s)', style: TextStyle(fontFamily: 'Geist', fontSize: 12))),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Text('Select Serial Numbers', style: AppTextStyles.labelMd.copyWith(color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
+                              const SizedBox(height: 8),
+                              _buildSerialCheckboxList(isDark),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Text('${_selectedSerialIds.length} selected',
+                                      style: AppTextStyles.labelSm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+                                  const Spacer(),
+                                  FilledButton(
+                                    onPressed: _selectedSerialIds.isEmpty
+                                        ? null
+                                        : () {
+                                            final salePrice = double.tryParse(_salePriceController.text) ?? _product!.sellingPrice;
+                                            final warrantyMonths = _noWarranty ? 0 : _parseWarrantyMonths();
+                                            final product = _product!.copyWith(sellingPrice: salePrice, warrantyMonths: warrantyMonths);
+                                            widget.onAddToCart(product, _serialNumbers.where((s) => _selectedSerialIds.contains(s.id)).toList());
+                                            Navigator.pop(context);
+                                          },
+                                    child: const Text('Add to Cart'),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ],
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildSerialCheckboxList() {
+  Widget _buildSerialCheckboxList(bool isDark) {
     final saleProvider = context.watch<SaleProvider>();
     final serials = saleProvider.availableSerialNumbers;
 
     if (saleProvider.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()));
     }
 
     if (serials.isEmpty) {
-      return ListView(
-        children: const [
-          Center(child: Text('No available serial numbers')),
-        ],
+      return Container(
+        padding: const EdgeInsets.all(16),
+        child: Center(child: Text('No available serial numbers', style: AppTextStyles.bodySm.copyWith(color: AppColors.textMuted))),
       );
     }
 
     _serialNumbers = serials;
 
-    return ListView(
-      children: serials
-          .map((sn) => CheckboxListTile(
-                title: Text(sn.serialNumber,
-                    style: const TextStyle(fontSize: 14)),
-                value: _selectedSerialIds.contains(sn.id),
-                onChanged: (checked) {
-                  setState(() {
-                    if (checked == true) {
-                      _selectedSerialIds.add(sn.id);
-                    } else {
-                      _selectedSerialIds.remove(sn.id);
-                    }
-                  });
-                },
-                controlAffinity: ListTileControlAffinity.leading,
-                dense: true,
-              ))
-          .toList(),
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 100),
+      child: ListView(
+        children: serials.map((sn) => CheckboxListTile(
+          title: Text(sn.serialNumber, style: TextStyle(fontFamily: 'Geist', fontSize: 13, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          value: _selectedSerialIds.contains(sn.id),
+          onChanged: (checked) {
+            setState(() {
+              if (checked == true) { _selectedSerialIds.add(sn.id); }
+              else { _selectedSerialIds.remove(sn.id); }
+            });
+          },
+          controlAffinity: ListTileControlAffinity.leading,
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          activeColor: AppColors.primary,
+          checkColor: Colors.black,
+        )).toList(),
+      ),
+    );
+  }
+}
+
+class _CategoryChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _CategoryChip({required this.label, required this.selected, required this.isDark, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary.withAlpha(20) : (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(180),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? AppColors.primary.withAlpha(80) : (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(60),
+            width: 0.5,
+          ),
+        ),
+        child: Text(label, style: AppTextStyles.labelSm.copyWith(color: selected ? AppColors.primary : (isDark ? AppColors.textSecondary : const Color(0xFF6B7280)))),
+      ),
     );
   }
 }

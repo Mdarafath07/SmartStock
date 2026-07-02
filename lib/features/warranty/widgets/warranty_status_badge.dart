@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:smartstock/core/constants/color_constants.dart';
-import 'package:smartstock/core/theme/text_styles.dart';
+import 'package:smartstock/core/theme/app_colors.dart';
 
 class WarrantyStatusBadge extends StatelessWidget {
   final bool isActive;
@@ -16,24 +15,25 @@ class WarrantyStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final Color bgColor;
     final Color fgColor;
     final IconData icon;
     final String label;
 
     if (isClaimed) {
-      bgColor = ColorConstants.surfaceContainerHighest;
-      fgColor = ColorConstants.onSurfaceVariant;
+      bgColor = isDark ? AppColors.cardDark : const Color(0xFFE4E1EA);
+      fgColor = isDark ? AppColors.textSecondary : const Color(0xFF454652);
       icon = Icons.assignment_rounded;
       label = 'Claimed';
     } else if (isActive) {
-      bgColor = ColorConstants.successContainer;
-      fgColor = ColorConstants.success;
+      bgColor = AppColors.success.withAlpha(30);
+      fgColor = AppColors.success;
       icon = Icons.check_circle_rounded;
       label = 'Active';
     } else {
-      bgColor = ColorConstants.errorContainer;
-      fgColor = ColorConstants.error;
+      bgColor = AppColors.error.withAlpha(30);
+      fgColor = AppColors.error;
       icon = Icons.cancel_rounded;
       label = 'Expired';
     }
@@ -52,7 +52,7 @@ class WarrantyStatusBadge extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontFamily: AppTextStyles.labelFont,
+              fontFamily: 'Space Grotesk',
               fontSize: fontSize,
               fontWeight: FontWeight.w600,
               color: fgColor,

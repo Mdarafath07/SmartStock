@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 
-class SkeletonWidget extends StatefulWidget {
-  final double width;
-  final double height;
+class LoadingSkeleton extends StatefulWidget {
+  final int itemCount;
+  final double itemHeight;
   final double borderRadius;
+  final EdgeInsetsGeometry? padding;
 
-  const SkeletonWidget({
+  const LoadingSkeleton({
     super.key,
-    this.width = double.infinity,
-    required this.height,
-    this.borderRadius = 4,
+    this.itemCount = 5,
+    this.itemHeight = 80,
+    this.borderRadius = 12,
+    this.padding,
   });
 
   @override
-  State<SkeletonWidget> createState() => _SkeletonWidgetState();
+  State<LoadingSkeleton> createState() => _LoadingSkeletonState();
 }
 
-class _SkeletonWidgetState extends State<SkeletonWidget>
+class _LoadingSkeletonState extends State<LoadingSkeleton>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
@@ -27,10 +30,9 @@ class _SkeletonWidgetState extends State<SkeletonWidget>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-
-    _animation = Tween<double>(begin: 0.3, end: 0.6).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    )..repeat();
+    _animation = Tween<double>(begin: -1.0, end: 2.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOutSine),
     );
   }
 
@@ -42,138 +44,73 @@ class _SkeletonWidgetState extends State<SkeletonWidget>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Container(
-          width: widget.width,
-          height: widget.height,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-            color: Theme.of(context)
-                .colorScheme
-                .surfaceContainerHighest
-                .withValues(alpha: _animation.value),
-          ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDark ? AppColors.shimmerBase : const Color(0xFFE5E7EB);
+    final highlightColor = isDark ? AppColors.shimmerHighlight : const Color(0xFFF3F4F6);
+
+    return ListView.builder(
+      padding: widget.padding ?? const EdgeInsets.all(16),
+      itemCount: widget.itemCount,
+      itemBuilder: (context, index) {
+        return _ShimmerAnimation(
+          listenable: _animation,
+          builder: (context, child) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              height: widget.itemHeight,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(widget.borderRadius),
+                gradient: LinearGradient(
+                  colors: [baseColor, highlightColor, baseColor],
+                  stops: const [0.0, 0.5, 1.0],
+                  begin: Alignment(-1.0 + _animation.value, 0.0),
+                  end: Alignment(1.0 + _animation.value, 0.0),
+                ),
+              ),
+            );
+          },
         );
       },
     );
   }
 }
 
-class TableSkeleton extends StatelessWidget {
-  final int rows;
-  final int columns;
+class ShimmerBlock extends StatelessWidget {
+  final double height;
+  final double width;
+  final double borderRadius;
 
-  const TableSkeleton({
+  const ShimmerBlock({
     super.key,
-    this.rows = 5,
-    this.columns = 4,
+    this.height = 16,
+    this.width = double.infinity,
+    this.borderRadius = 8,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: List.generate(
-        rows,
-        (row) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-          child: Row(
-            children: List.generate(
-              columns,
-              (col) => Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    left: col > 0 ? 8 : 0,
-                    right: col < columns - 1 ? 8 : 0,
-                  ),
-                  child: SkeletonWidget(
-                    height: 16,
-                    borderRadius: 4,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      height: height,
+      width: width,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.shimmerBase : const Color(0xFFE5E7EB),
+        borderRadius: BorderRadius.circular(borderRadius),
       ),
     );
   }
 }
 
-class CardSkeleton extends StatelessWidget {
-  final bool hasImage;
+class _ShimmerAnimation extends AnimatedWidget {
+  final Widget Function(BuildContext context, Widget? child) builder;
 
-  const CardSkeleton({
-    super.key,
-    this.hasImage = false,
+  const _ShimmerAnimation({
+    required super.listenable,
+    required this.builder,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (hasImage) ...[
-              const SkeletonWidget(height: 120, borderRadius: 8),
-              const SizedBox(height: 12),
-            ],
-            const SkeletonWidget(width: 200, height: 18),
-            const SizedBox(height: 8),
-            const SkeletonWidget(width: 140, height: 14),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                SkeletonWidget(width: 80, height: 14),
-                SkeletonWidget(width: 60, height: 24, borderRadius: 12),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class StatsGridSkeleton extends StatelessWidget {
-  const StatsGridSkeleton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.4,
-        children: List.generate(
-          4,
-          (_) => Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SkeletonWidget(width: 32, height: 32, borderRadius: 8),
-                  const SizedBox(height: 12),
-                  const SkeletonWidget(width: 60, height: 24),
-                  const SizedBox(height: 4),
-                  const SkeletonWidget(width: 100, height: 14),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+    return builder(context, null);
   }
 }

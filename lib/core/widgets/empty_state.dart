@@ -1,65 +1,71 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 import '../theme/text_styles.dart';
-import '../constants/color_constants.dart';
 
 class EmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
-  final String subtitle;
+  final String? subtitle;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final double iconSize;
 
   const EmptyState({
     super.key,
     required this.icon,
     required this.title,
-    required this.subtitle,
+    this.subtitle,
     this.actionLabel,
     this.onAction,
+    this.iconSize = 48,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 48),
+        padding: const EdgeInsets.all(32),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 80,
-              height: 80,
+              width: 88,
+              height: 88,
               decoration: BoxDecoration(
-                color: ColorConstants.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(20),
+                color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
+                borderRadius: BorderRadius.circular(22),
               ),
               child: Icon(
                 icon,
-                size: 40,
-                color: ColorConstants.onSurfaceVariant,
+                size: iconSize,
+                color: isDark ? AppColors.greyDarker : const Color(0xFFD1D5DB),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             Text(
               title,
-              style: AppTextStyles.titleMd.copyWith(
-                color: ColorConstants.onSurface,
+              style: AppTextStyles.headlineSm.copyWith(
+                color: isDark ? AppColors.textMuted : const Color(0xFF6B7280),
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              style: AppTextStyles.bodyMd.copyWith(
-                color: ColorConstants.onSurfaceVariant,
+            if (subtitle != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                subtitle!,
+                style: AppTextStyles.bodySm.copyWith(
+                  color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
+            ],
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: 24),
-              ElevatedButton.icon(
+              FilledButton.icon(
                 onPressed: onAction,
-                icon: const Icon(Icons.add_rounded),
+                icon: const Icon(Icons.add_rounded, size: 18),
                 label: Text(actionLabel!),
               ),
             ],

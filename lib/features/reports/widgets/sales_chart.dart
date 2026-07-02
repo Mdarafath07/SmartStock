@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:smartstock/core/constants/color_constants.dart';
+import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/utils/date_utils.dart';
 import 'package:smartstock/features/reports/models/report_model.dart';
@@ -18,6 +18,7 @@ class SalesBarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (data.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -55,14 +56,14 @@ class SalesBarChart extends StatelessWidget {
                         '\$${report.totalSales.toStringAsFixed(0)}',
                         style: AppTextStyles.labelSm.copyWith(
                           fontSize: 9,
-                          color: ColorConstants.onSurfaceVariant,
+                          color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
                         ),
                       ),
                       const SizedBox(height: 4),
                       Container(
                         height: barHeight.clamp(4.0, maxBarHeight),
                         decoration: BoxDecoration(
-                          color: ColorConstants.primary.withValues(
+                          color: AppColors.primary.withValues(
                             alpha: 0.6 + (0.4 * (index / data.length)),
                           ),
                           borderRadius: const BorderRadius.vertical(
@@ -75,7 +76,7 @@ class SalesBarChart extends StatelessWidget {
                         _formatLabel(report.date),
                         style: AppTextStyles.labelSm.copyWith(
                           fontSize: 9,
-                          color: ColorConstants.onSurfaceVariant,
+                          color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -111,12 +112,13 @@ class SimpleBar extends StatelessWidget {
     required this.label,
     required this.value,
     required this.maxValue,
-    this.color = ColorConstants.primary,
+    this.color = AppColors.primary,
     this.formatValue,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final fraction = maxValue > 0 ? value / maxValue : 0.0;
 
     return Column(
@@ -149,7 +151,7 @@ class SimpleBar extends StatelessWidget {
           child: LinearProgressIndicator(
             value: fraction.clamp(0.0, 1.0),
             minHeight: 8,
-            backgroundColor: ColorConstants.surfaceContainerHighest,
+            backgroundColor: isDark ? AppColors.cardDark : const Color(0xFFE4E1EA),
             valueColor: AlwaysStoppedAnimation(color),
           ),
         ),

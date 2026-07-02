@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/dashboard/models/dashboard_stats_model.dart';
+import 'package:smartstock/core/routes/app_routes.dart';
 import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class StatsGrid extends StatelessWidget {
@@ -30,7 +31,7 @@ class StatsGrid extends StatelessWidget {
               value: NumberFormat.compact().format(stats.totalProducts),
               gradientColors: [const Color(0xFF7C4DFF), const Color(0xFFB388FF)],
               iconBgColor: Colors.white.withValues(alpha: 0.2),
-              route: '/products',
+              route: AppRoutes.products,
             ),
             _StatCard(
               icon: Icons.check_circle,
@@ -38,7 +39,7 @@ class StatsGrid extends StatelessWidget {
               value: NumberFormat.compact().format(stats.totalAvailableStock),
               gradientColors: [const Color(0xFF00C853), const Color(0xFF69F0AE)],
               iconBgColor: Colors.white.withValues(alpha: 0.2),
-              route: '/inventory',
+              route: AppRoutes.inventory,
             ),
             _StatCard(
               icon: Icons.payments,
@@ -49,7 +50,7 @@ class StatsGrid extends StatelessWidget {
               subtitle: '${stats.todaySoldProducts} items',
               gradientColors: [const Color(0xFF2979FF), const Color(0xFF82B1FF)],
               iconBgColor: Colors.white.withValues(alpha: 0.2),
-              route: '/sales/today',
+              route: AppRoutes.salesToday,
             ),
             _StatCard(
               icon: Icons.warning,
@@ -58,7 +59,7 @@ class StatsGrid extends StatelessWidget {
               subtitle: '${stats.outOfStockProducts} out of stock',
               gradientColors: [const Color(0xFFFF6D00), const Color(0xFFFFAB40)],
               iconBgColor: Colors.white.withValues(alpha: 0.2),
-              route: '/inventory',
+              route: AppRoutes.inventory,
             ),
           ],
         );

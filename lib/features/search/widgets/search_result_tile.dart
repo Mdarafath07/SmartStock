@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:smartstock/core/constants/color_constants.dart';
+import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
 
@@ -21,6 +21,7 @@ class SearchResultTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
       clipBehavior: Clip.antiAlias,
@@ -54,7 +55,7 @@ class SearchResultTile extends StatelessWidget {
                       title,
                       style: AppTextStyles.bodyMd.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: ColorConstants.onSurface,
+                        color: isDark ? AppColors.textPrimary : const Color(0xFF1B1B21),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -63,7 +64,7 @@ class SearchResultTile extends StatelessWidget {
                     Text(
                       subtitle,
                       style: AppTextStyles.labelMd.copyWith(
-                        color: ColorConstants.onSurfaceVariant,
+                        color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -92,7 +93,7 @@ class SearchResultTile extends StatelessWidget {
               Icon(
                 Icons.chevron_right_rounded,
                 size: 18,
-                color: ColorConstants.onSurfaceVariant,
+                color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
               ),
             ],
           ),
@@ -105,13 +106,13 @@ class SearchResultTile extends StatelessWidget {
   Color get _typeColor {
     switch (type.toLowerCase()) {
       case 'product':
-        return ColorConstants.primary;
+        return AppColors.primary;
       case 'customer':
-        return ColorConstants.success;
+        return AppColors.success;
       case 'sale':
-        return ColorConstants.info;
+        return AppColors.info;
       default:
-        return ColorConstants.onSurfaceVariant;
+        return const Color(0xFF454652);
     }
   }
 }

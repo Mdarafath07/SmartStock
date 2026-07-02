@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../constants/color_constants.dart';
+import '../theme/app_colors.dart';
 import '../theme/text_styles.dart';
 import '../widgets/debounced.dart';
 
@@ -21,6 +21,7 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
@@ -70,14 +71,14 @@ class StatCard extends StatelessWidget {
                       style: AppTextStyles.displayLg.copyWith(
                         fontSize: 28,
                         height: 32 / 28,
-                        color: ColorConstants.onSurface,
+                        color: isDark ? AppColors.textPrimary : const Color(0xFF1B1B21),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       title,
                       style: AppTextStyles.bodyMd.copyWith(
-                        color: ColorConstants.onSurfaceVariant,
+                        color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

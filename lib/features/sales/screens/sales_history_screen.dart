@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:smartstock/core/theme/app_colors.dart';
+import 'package:smartstock/core/theme/text_styles.dart';
+import 'package:smartstock/core/widgets/glass_card.dart';
+import 'package:smartstock/core/widgets/status_badge.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/sales/models/sale_model.dart';
 import 'package:smartstock/features/sales/providers/sale_provider.dart';
@@ -77,7 +81,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final saleProvider = context.watch<SaleProvider>();
     final sales = saleProvider.salesHistory;
 
@@ -99,65 +103,85 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sales History'),
-        centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          _buildDateBar(theme, dateFormat),
-          _buildSummaryCards(
-              theme, currencyFormat, totalSales, totalRevenue, totalProfit),
-          const Divider(height: 1),
-          Expanded(
-            child: sales.isEmpty
-                ? _buildEmptyState(theme)
-                : RefreshIndicator(
-                    onRefresh: () async => _load(),
-                    child: ListView.builder(
-                      padding: const EdgeInsets.only(
-                          top: 8, bottom: 24),
-                      itemCount: grouped.entries.length,
-                      itemBuilder: (context, index) {
-                        final entry =
-                            grouped.entries.elementAt(index);
-                        final customerSales = entry.value;
-                        final customerTotal = customerSales
-                            .fold(0.0, (s, e) => s + e.salePrice);
-                        return _buildCustomerGroup(
-                            theme, currencyFormat,
-                            entry.key, customerSales, customerTotal);
-                      },
+      backgroundColor: isDark ? AppColors.scaffoldBg : AppColors.whiteSoft,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                'Sales History',
+                style: AppTextStyles.headlineMd.copyWith(
+                  color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                ),
+              ),
+            ),
+            _buildDateBar(isDark, dateFormat),
+            if (sales.isNotEmpty)
+              _buildSummaryCards(isDark, currencyFormat, totalSales, totalRevenue, totalProfit),
+            const SizedBox(height: 4),
+            Expanded(
+              child: sales.isEmpty
+                  ? _buildEmptyState(isDark)
+                  : RefreshIndicator(
+                      onRefresh: () async => _load(),
+                      child: ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                        itemCount: grouped.entries.length,
+                        itemBuilder: (context, index) {
+                          final entry =
+                              grouped.entries.elementAt(index);
+                          final customerSales = entry.value;
+                          final customerTotal = customerSales
+                              .fold(0.0, (s, e) => s + e.salePrice);
+                          return _buildCustomerGroup(
+                              isDark, currencyFormat,
+                              entry.key, customerSales, customerTotal);
+                        },
+                      ),
                     ),
-                  ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildDateBar(ThemeData theme, DateFormat dateFormat) {
+  Widget _buildDateBar(bool isDark, DateFormat dateFormat) {
     final label = _selectedDay != null
         ? dateFormat.format(_selectedDay!)
         : 'Select date';
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            _dateChip(theme, 'Today', _setToday,
+            _dateChip(isDark, 'Today', _setToday,
                 _selectedDay == DateTime(DateTime.now().year,
                     DateTime.now().month, DateTime.now().day)),
-            const SizedBox(width: 8),
-            _dateChip(theme, 'Yesterday', _setYesterday, false),
-            const SizedBox(width: 8),
-            _dateChip(theme, 'This Week', _setThisWeek, false),
-            const SizedBox(width: 8),
-            ActionChip(
-              avatar: const Icon(Icons.calendar_month, size: 18),
-              label: Text(label, style: const TextStyle(fontSize: 12)),
-              onPressed: _pickDate,
+            const SizedBox(width: 6),
+            _dateChip(isDark, 'Yesterday', _setYesterday, false),
+            const SizedBox(width: 6),
+            _dateChip(isDark, 'This Week', _setThisWeek, false),
+            const SizedBox(width: 6),
+            ModernCard(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              hasShadow: false,
+              hasBorder: true,
+              onTap: _pickDate,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.calendar_month, size: 14,
+                      color: isDark ? AppColors.textMuted : const Color(0xFF6B7280)),
+                  const SizedBox(width: 4),
+                  Text(label,
+                      style: AppTextStyles.caption.copyWith(
+                        color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280),
+                      )),
+                ],
+              ),
             ),
           ],
         ),
@@ -166,108 +190,126 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   }
 
   Widget _dateChip(
-      ThemeData theme, String label, VoidCallback onTap, bool isActive) {
-    return FilterChip(
-      label: Text(label, style: const TextStyle(fontSize: 12)),
-      selected: isActive,
-      onSelected: (_) => onTap(),
-      selectedColor: theme.colorScheme.primaryContainer,
-      checkmarkColor: theme.colorScheme.onPrimaryContainer,
+      bool isDark, String label, VoidCallback onTap, bool isActive) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive
+              ? AppColors.greenBg
+              : (isDark ? AppColors.surface : Colors.white),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isActive
+                ? AppColors.green.withAlpha(60)
+                : (isDark ? AppColors.greyDarker.withAlpha(40) : const Color(0xFFE5E7EB)),
+            width: 0.5,
+          ),
+        ),
+        child: Text(
+          label,
+          style: AppTextStyles.labelSm.copyWith(
+            color: isActive ? AppColors.green : (isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildSummaryCards(ThemeData theme, NumberFormat currencyFormat,
+  Widget _buildSummaryCards(bool isDark, NumberFormat currencyFormat,
       int totalSales, double totalRevenue, double totalProfit) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
       child: Row(
         children: [
-          _summaryCard(theme, 'Sales', '$totalSales',
-              Icons.shopping_bag, Colors.blue, Colors.blue.shade50),
-          const SizedBox(width: 12),
-          _summaryCard(theme, 'Revenue', currencyFormat.format(totalRevenue),
-              Icons.monetization_on, Colors.green, Colors.green.shade50),
-          const SizedBox(width: 12),
-          _summaryCard(theme, 'Profit', currencyFormat.format(totalProfit),
-              Icons.trending_up, totalProfit >= 0 ? Colors.green : Colors.red,
-              (totalProfit >= 0 ? Colors.green : Colors.red).shade50),
+          Expanded(
+            child: StatCard(
+              label: 'Sales',
+              value: '$totalSales',
+              icon: Icons.shopping_bag_rounded,
+              iconColor: AppColors.info,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: StatCard(
+              label: 'Revenue',
+              value: currencyFormat.format(totalRevenue),
+              icon: Icons.monetization_on_rounded,
+              iconColor: AppColors.green,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: StatCard(
+              label: 'Profit',
+              value: currencyFormat.format(totalProfit),
+              icon: Icons.trending_up_rounded,
+              iconColor: totalProfit >= 0 ? AppColors.green : AppColors.red,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _summaryCard(ThemeData theme, String label, String value,
-      IconData icon, Color color, Color bgColor) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 22, color: color),
-            const SizedBox(height: 6),
-            Text(value,
-                style: theme.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.bold, color: color)),
-            const SizedBox(height: 2),
-            Text(label,
-                style: theme.textTheme.labelSmall
-                    ?.copyWith(color: color.withAlpha(180))),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(ThemeData theme) {
+  Widget _buildEmptyState(bool isDark) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.history, size: 64, color: theme.colorScheme.outline),
+          Icon(Icons.history_rounded,
+              size: 56, color: isDark ? AppColors.greyDarker : const Color(0xFFD1D5DB)),
           const SizedBox(height: 16),
           Text('No sales found',
-              style: theme.textTheme.bodyLarge),
+              style: AppTextStyles.titleSm.copyWith(
+                color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280),
+              )),
           const SizedBox(height: 4),
           Text('Select a date to view sales',
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+              style: AppTextStyles.bodySm.copyWith(
+                color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+              )),
         ],
       ),
     );
   }
 
-  Widget _buildCustomerGroup(ThemeData theme, NumberFormat currencyFormat,
+  Widget _buildCustomerGroup(bool isDark, NumberFormat currencyFormat,
       String customerName, List<Sale> sales, double customerTotal) {
     final timeFormat = DateFormat('hh:mm a');
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      clipBehavior: Clip.antiAlias,
+    return ModernCard(
+      margin: const EdgeInsets.only(top: 10),
+      padding: EdgeInsets.zero,
       child: Column(
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest
-                  .withAlpha(120),
+              color: isDark ? AppColors.surfaceLight : const Color(0xFFF9FAFB),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
             ),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: theme.colorScheme.primaryContainer,
-                  child: Text(
-                    customerName.isNotEmpty
-                        ? customerName[0].toUpperCase()
-                        : '?',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onPrimaryContainer,
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.greenBg,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Center(
+                    child: Text(
+                      customerName.isNotEmpty
+                          ? customerName[0].toUpperCase()
+                          : '?',
+                      style: AppTextStyles.titleSm.copyWith(color: AppColors.green),
                     ),
                   ),
                 ),
@@ -277,27 +319,35 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(customerName,
-                          style: theme.textTheme.titleSmall
-                              ?.copyWith(fontWeight: FontWeight.w600)),
+                          style: AppTextStyles.titleSm.copyWith(
+                            color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                          )),
                       if (sales.isNotEmpty && sales.first.customerPhone.isNotEmpty)
                         Text(sales.first.customerPhone,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant)),
+                            style: AppTextStyles.caption.copyWith(
+                              color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+                            )),
                     ],
                   ),
                 ),
-                Text(
-                  '${sales.length} item${sales.length > 1 ? 's' : ''}',
-                  style: theme.textTheme.labelSmall
-                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.greenBg,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${sales.length} item${sales.length > 1 ? 's' : ''}',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.green,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   currencyFormat.format(customerTotal),
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                  ),
+                  style: AppTextStyles.amountSm.copyWith(color: AppColors.green),
                 ),
               ],
             ),
@@ -316,7 +366,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                   ),
                   child: Padding(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   child: Row(
                     children: [
                       Container(
@@ -324,8 +374,8 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                         height: 40,
                         decoration: BoxDecoration(
                           color: sale.profit >= 0
-                              ? Colors.green
-                              : Colors.red,
+                              ? AppColors.green
+                              : AppColors.red,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -338,15 +388,23 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                               children: [
                                 Flexible(
                                   child: Text(sale.productName,
-                                      style: theme.textTheme.bodyMedium
-                                          ?.copyWith(fontWeight: FontWeight.w500)),
+                                      style: AppTextStyles.titleSm.copyWith(
+                                        color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                                      )),
                                 ),
                                 if (sale.isReplacement)
-                                  _saleBadge('Replacement', Colors.orange)
+                                  const Padding(
+                                    padding: EdgeInsets.only(left: 6),
+                                    child: StatusBadge(label: 'Replacement', color: AppColors.orange, fontSize: 9),
+                                  )
                                 else if (sale.isWarrantyClaim)
-                                  _saleBadge('Warranty', Colors.blue),
+                                  const Padding(
+                                    padding: EdgeInsets.only(left: 6),
+                                    child: StatusBadge(label: 'Warranty', color: AppColors.info, fontSize: 9),
+                                  ),
                               ],
                             ),
+                            const SizedBox(height: 2),
                             Debounced(
                               onPressed: () {
                                 Clipboard.setData(ClipboardData(text: sale.serialNumber));
@@ -362,25 +420,26 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                   );
                                 },
                                 child: Text('${sale.modelNumber} | S/N: ${sale.serialNumber}',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                      color:
-                                          theme.colorScheme.onSurfaceVariant)),
-                            ),
+                                  style: AppTextStyles.bodySm.copyWith(
+                                      color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
                               ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         timeFormat.format(sale.saleDate),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant),
+                        style: AppTextStyles.caption.copyWith(
+                            color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         currencyFormat.format(sale.salePrice),
-                        style: theme.textTheme.bodyMedium
-                            ?.copyWith(fontWeight: FontWeight.w600),
+                        style: AppTextStyles.titleSm.copyWith(
+                          color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                        ),
                       ),
                     ],
                   ),
@@ -388,25 +447,6 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
               ),
                 )),
         ],
-      ),
-    );
-  }
-
-  Widget _saleBadge(String label, Color color) {
-    return Container(
-      margin: const EdgeInsets.only(left: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(5),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 9,
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
       ),
     );
   }

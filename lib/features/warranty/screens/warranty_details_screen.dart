@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:smartstock/core/constants/color_constants.dart';
+import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/utils/date_utils.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/core/widgets/error_widget.dart';
+import 'package:smartstock/core/widgets/glass_card.dart';
+import 'package:smartstock/core/widgets/status_badge.dart';
 import 'package:smartstock/features/warranty/models/warranty_model.dart';
 import 'package:smartstock/features/sales/screens/sale_details_screen.dart';
 import 'package:smartstock/features/warranty/providers/warranty_provider.dart';
@@ -38,9 +40,23 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
+      backgroundColor:
+          isDark ? AppColors.scaffoldBg : const Color(0xFFF8F9FA),
       appBar: AppBar(
         title: const Text('Warranty Details'),
+        backgroundColor:
+            isDark ? AppColors.surface : Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0.5,
+        titleTextStyle: AppTextStyles.titleMd.copyWith(
+          color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+        ),
+        iconTheme: IconThemeData(
+          color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+        ),
       ),
       body: Consumer<WarrantyProvider>(
         builder: (context, provider, _) {
@@ -57,58 +73,66 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
 
           final warranty = provider.selectedWarranty;
           if (warranty == null) {
-            return const Center(child: Text('Warranty not found'));
+            return Center(
+              child: Text('Warranty not found',
+                  style: AppTextStyles.bodyMd.copyWith(
+                    color: isDark
+                        ? AppColors.textMuted
+                        : const Color(0xFF6B7280),
+                  )),
+            );
           }
 
-          return _buildDetails(context, warranty);
+          return _buildDetails(context, warranty, isDark);
         },
       ),
     );
   }
 
-  Widget _buildDetails(BuildContext context, Warranty warranty) {
+  Widget _buildDetails(BuildContext context, Warranty warranty, bool isDark) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildStatusBanner(warranty),
-          const SizedBox(height: 20),
-          _buildSectionTitle('Product Information'),
-          const SizedBox(height: 8),
-          _buildProductSection(warranty),
-          const SizedBox(height: 20),
-          _buildSectionTitle('Customer Information'),
-          const SizedBox(height: 8),
-          _buildCustomerSection(warranty),
-          const SizedBox(height: 20),
-          _buildSectionTitle('Sale Information'),
-          const SizedBox(height: 8),
-          _buildSaleSection(warranty),
-          const SizedBox(height: 20),
-          _buildSectionTitle('Warranty Timeline'),
-          const SizedBox(height: 8),
-          _buildTimeline(warranty),
+          _buildStatusBanner(warranty, isDark),
+          const SizedBox(height: 16),
+          _buildProductSection(warranty, isDark),
+          const SizedBox(height: 12),
+          _buildCustomerSection(warranty, isDark),
+          const SizedBox(height: 12),
+          _buildSaleSection(warranty, isDark),
+          const SizedBox(height: 12),
+          _buildTimeline(warranty, isDark),
           if (warranty.isClaimable) ...[
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
+              height: 48,
               child: FilledButton.icon(
                 onPressed: _isClaiming ? null : _claim,
+                style: FilledButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  backgroundColor: AppColors.primary,
+                ),
                 icon: _isClaiming
                     ? const SizedBox(
-                        width: 18, height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
                       )
-                    : const Icon(Icons.verified_user),
+                    : const Icon(Icons.verified_user, size: 20),
                 label: const Text('Claim Your Warranty'),
               ),
             ),
           ],
           if (warranty.warrantyClaimed) ...[
-            const SizedBox(height: 20),
-            _buildClaimSummary(warranty),
+            const SizedBox(height: 16),
+            _buildClaimSummary(warranty, isDark),
           ],
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -150,7 +174,7 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
     }
   }
 
-  Widget _buildClaimSummary(Warranty warranty) {
+  Widget _buildClaimSummary(Warranty warranty, bool isDark) {
     final isClaimSale = warranty.saleType == 'warranty_claim';
     final dateFormat = DateFormat('MMM dd, yyyy');
 
@@ -188,264 +212,349 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
       newDate = warranty.claimDate;
     }
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    final textMuted =
+        isDark ? AppColors.textMuted : const Color(0xFF6B7280);
+    final textPrimary =
+        isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E);
+
+    return ModernCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.orange.withAlpha(25),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.assignment_rounded,
+                    size: 16, color: AppColors.orange),
+              ),
+              const SizedBox(width: 10),
+              Text('Claim Summary',
+                  style: AppTextStyles.titleSm.copyWith(color: textPrimary)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.surfaceLight
+                  : const Color(0xFFFEF2F2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.assignment_rounded, color: ColorConstants.onSurfaceVariant),
-                const SizedBox(width: 8),
-                Text('Warranty Claim Summary',
-                    style: AppTextStyles.titleMd.copyWith(fontWeight: FontWeight.w600)),
+                Text('Original Product (Returned)',
+                    style: AppTextStyles.labelMd.copyWith(
+                        color: textMuted, letterSpacing: 0.06)),
+                const SizedBox(height: 8),
+                if (oldName != null)
+                  _infoRow(Icons.inventory_2_rounded, 'Product: $oldName',
+                      isDark: isDark),
+                if (oldModel != null)
+                  _infoRow(Icons.qr_code_rounded, 'Model: $oldModel',
+                      isDark: isDark),
+                _infoRow(Icons.confirmation_number_rounded,
+                    'Serial: $oldSerial',
+                    isDark: isDark),
+                if (oldDate != null)
+                  _infoRow(Icons.date_range_rounded,
+                      'Purchase: ${dateFormat.format(oldDate)}',
+                      isDark: isDark),
               ],
             ),
-            const Divider(height: 24),
-            Text('Original Product (Returned)',
-                style: AppTextStyles.titleMd.copyWith(fontSize: 14, color: ColorConstants.onSurfaceVariant)),
-            const SizedBox(height: 8),
-            if (oldName != null) _infoRow(Icons.inventory_2_rounded, 'Product: $oldName'),
-            if (oldModel != null) _infoRow(Icons.qr_code_rounded, 'Model: $oldModel'),
-            _infoRow(Icons.confirmation_number_rounded, 'Serial: $oldSerial'),
-            if (oldDate != null) _infoRow(Icons.date_range_rounded, 'Purchase: ${dateFormat.format(oldDate)}'),
-            const Divider(height: 24),
-            Text('Replacement Product (Warranty)',
-                style: AppTextStyles.titleMd.copyWith(fontSize: 14, color: ColorConstants.onSurfaceVariant)),
-            const SizedBox(height: 8),
-            if (newName != null) _infoRow(Icons.inventory_2_rounded, 'Product: $newName'),
-            if (newModel != null) _infoRow(Icons.qr_code_rounded, 'Model: $newModel'),
-            _infoRow(Icons.qr_code_rounded, 'Serial: $newSerial',
-                customColor: ColorConstants.primary),
-            if (newDate != null) _infoRow(Icons.date_range_rounded, 'Claim Date: ${dateFormat.format(newDate)}',
-                customColor: ColorConstants.primary),
-            if (warranty.relatedSaleId != null) ...[
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            SaleDetailsScreen(saleId: warranty.relatedSaleId!),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.receipt, size: 18),
-                  label: Text(isClaimSale ? 'View Original Sale' : 'View Claim Sale'),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.surfaceLight
+                  : const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Replacement Product (Warranty)',
+                    style: AppTextStyles.labelMd.copyWith(
+                        color: textMuted, letterSpacing: 0.06)),
+                const SizedBox(height: 8),
+                if (newName != null)
+                  _infoRow(Icons.inventory_2_rounded, 'Product: $newName',
+                      isDark: isDark),
+                if (newModel != null)
+                  _infoRow(Icons.qr_code_rounded, 'Model: $newModel',
+                      isDark: isDark),
+                _infoRow(Icons.qr_code_rounded, 'Serial: $newSerial',
+                    customColor: AppColors.primary, isDark: isDark),
+                if (newDate != null)
+                  _infoRow(Icons.date_range_rounded,
+                      'Claim Date: ${dateFormat.format(newDate)}',
+                      customColor: AppColors.primary, isDark: isDark),
+              ],
+            ),
+          ),
+          if (warranty.relatedSaleId != null) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          SaleDetailsScreen(saleId: warranty.relatedSaleId!),
+                    ),
+                  );
+                },
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  side: BorderSide(
+                      color: isDark
+                          ? AppColors.greyDarker
+                          : const Color(0xFFE5E7EB)),
                 ),
+                icon:
+                    const Icon(Icons.receipt, size: 18, color: AppColors.blue),
+                label: Text(
+                    isClaimSale ? 'View Original Sale' : 'View Claim Sale'),
               ),
-            ],
+            ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusBanner(Warranty warranty) {
-    final bool isClaimed = warranty.warrantyClaimed;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isClaimed
-            ? ColorConstants.surfaceContainerHighest
-            : warranty.isActive
-                ? ColorConstants.successContainer
-                : ColorConstants.errorContainer,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            isClaimed
-                ? Icons.assignment_rounded
-                : warranty.isActive
-                    ? Icons.check_circle_rounded
-                    : Icons.cancel_rounded,
-            size: 64,
-            color: isClaimed
-                ? ColorConstants.onSurfaceVariant
-                : warranty.isActive
-                    ? ColorConstants.success
-                    : ColorConstants.error,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            isClaimed
-                ? 'Warranty Claimed'
-                : warranty.isActive
-                    ? 'Warranty Active'
-                    : 'Warranty Expired',
-            style: AppTextStyles.titleMd.copyWith(
-              color: isClaimed
-                  ? ColorConstants.onSurfaceVariant
-                  : warranty.isActive
-                      ? ColorConstants.success
-                      : ColorConstants.error,
-            ),
-          ),
-          const SizedBox(height: 4),
-          if (isClaimed) ...[
-            Text(
-              'Old Serial: ${warranty.serialNumber}',
-              style: AppTextStyles.bodyMd.copyWith(
-                color: ColorConstants.onSurfaceVariant,
-              ),
-            ),
-            if (warranty.newSerialNumber != null)
-              Text(
-                'New Serial: ${warranty.newSerialNumber}',
-                style: AppTextStyles.bodyMd.copyWith(
-                  color: ColorConstants.primary,
-                ),
-              ),
-          ] else
-            Text(
-              warranty.isActive
-                  ? 'Valid Until: ${AppDateUtils.formatDate(warranty.expiryDate)}'
-                  : 'Expired On: ${AppDateUtils.formatDate(warranty.expiryDate)}',
-              style: AppTextStyles.bodyMd.copyWith(
-                color: warranty.isActive
-                    ? ColorConstants.success
-                    : ColorConstants.error,
-              ),
-            ),
         ],
       ),
     );
   }
 
-  Widget _buildProductSection(Warranty warranty) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            if (warranty.imageUrl.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: SizedBox(
-                  width: 72,
-                  height: 72,
-                  child: Image.network(
-                    warranty.imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => _placeholder(),
+  Widget _buildStatusBanner(Warranty warranty, bool isDark) {
+    final isClaimed = warranty.warrantyClaimed;
+
+    final Color accentColor;
+    final IconData bannerIcon;
+    final String statusText;
+    final String? statusSubtext;
+
+    if (isClaimed) {
+      accentColor = AppColors.orange;
+      bannerIcon = Icons.assignment_rounded;
+      statusText = 'Warranty Claimed';
+      statusSubtext = 'Old S/N: ${warranty.serialNumber}';
+    } else if (warranty.isActive) {
+      accentColor = AppColors.green;
+      bannerIcon = Icons.check_circle_rounded;
+      statusText = 'Warranty Active';
+      statusSubtext =
+          'Valid until ${AppDateUtils.formatDate(warranty.expiryDate)}';
+    } else {
+      accentColor = AppColors.red;
+      bannerIcon = Icons.cancel_rounded;
+      statusText = 'Warranty Expired';
+      statusSubtext =
+          'Expired on ${AppDateUtils.formatDate(warranty.expiryDate)}';
+    }
+
+    return ModernCard(
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: accentColor.withAlpha(25),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(bannerIcon, color: accentColor, size: 24),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      statusText,
+                      style: AppTextStyles.titleSm.copyWith(
+                        color: isDark
+                            ? AppColors.textPrimary
+                            : const Color(0xFF1A1A2E),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    StatusBadge.warranty(warranty.isActive),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  statusSubtext,
+                  style: AppTextStyles.bodySm.copyWith(
+                    color: isDark
+                        ? AppColors.textMuted
+                        : const Color(0xFF6B7280),
                   ),
                 ),
-              )
-            else
-              _placeholder(),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    warranty.productName,
-                    style: AppTextStyles.titleMd,
-                  ),
-                  const SizedBox(height: 4),
-                  _infoRow(
-                    Icons.qr_code_rounded,
-                    'Model: ${warranty.modelNumber}',
-                  ),
+                if (isClaimed && warranty.newSerialNumber != null) ...[
                   const SizedBox(height: 2),
-                  _infoRow(
-                    Icons.confirmation_number_rounded,
-                    'S/N: ${warranty.serialNumber}',
-                    onLongPress: () {
-                      Clipboard.setData(ClipboardData(text: warranty.serialNumber));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Serial number copied')),
-                      );
-                    },
+                  Text(
+                    'New S/N: ${warranty.newSerialNumber}',
+                    style: AppTextStyles.bodySm.copyWith(
+                      color: AppColors.blue,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _placeholder() {
+  Widget _buildProductSection(Warranty warranty, bool isDark) {
+    return ModernCard(
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              width: 72,
+              height: 72,
+              child: warranty.imageUrl.isNotEmpty
+                  ? Image.network(
+                      warranty.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => _placeholder(isDark),
+                    )
+                  : _placeholder(isDark),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  warranty.productName,
+                  style: AppTextStyles.titleMd.copyWith(
+                    color: isDark
+                        ? AppColors.textPrimary
+                        : const Color(0xFF1A1A2E),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                _infoRow(Icons.qr_code_rounded,
+                    'Model: ${warranty.modelNumber}',
+                    isDark: isDark),
+                const SizedBox(height: 4),
+                _infoRow(
+                  Icons.confirmation_number_rounded,
+                  'S/N: ${warranty.serialNumber}',
+                  isDark: isDark,
+                  onLongPress: () {
+                    Clipboard.setData(
+                        ClipboardData(text: warranty.serialNumber));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Serial number copied')),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _placeholder(bool isDark) {
     return Container(
       width: 72,
       height: 72,
       decoration: BoxDecoration(
-        color: ColorConstants.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
+        color: isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Icon(
         Icons.inventory_2_rounded,
-        color: ColorConstants.onSurfaceVariant,
+        size: 32,
+        color: isDark ? AppColors.greyDarker : const Color(0xFFD1D5DB),
       ),
     );
   }
 
-  Widget _buildCustomerSection(Warranty warranty) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _infoRow(
-              Icons.person_rounded,
-              warranty.customerName,
+  Widget _buildCustomerSection(Warranty warranty, bool isDark) {
+    return ModernCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Customer',
+            style: AppTextStyles.labelMd.copyWith(
+              color:
+                  isDark ? AppColors.textMuted : const Color(0xFF6B7280),
+              letterSpacing: 0.08,
             ),
-            const SizedBox(height: 8),
-            _infoRow(
-              Icons.phone_rounded,
-              warranty.customerPhone,
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+          _infoRow(Icons.person_rounded, warranty.customerName,
+              isDark: isDark),
+          const SizedBox(height: 8),
+          _infoRow(Icons.phone_rounded, warranty.customerPhone,
+              isDark: isDark),
+        ],
       ),
     );
   }
 
-  Widget _buildSaleSection(Warranty warranty) {
+  Widget _buildSaleSection(Warranty warranty, bool isDark) {
     final symbol = context.watch<SettingsProvider>().currencySymbol;
     final currencyFormat = NumberFormat.currency(symbol: symbol);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _infoRow(
-              Icons.receipt_long_rounded,
-              'Sale ID: ${warranty.saleId}',
+    return ModernCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Sale Info',
+            style: AppTextStyles.labelMd.copyWith(
+              color:
+                  isDark ? AppColors.textMuted : const Color(0xFF6B7280),
+              letterSpacing: 0.08,
             ),
-            const SizedBox(height: 8),
-            _infoRow(
+          ),
+          const SizedBox(height: 12),
+          _infoRow(Icons.receipt_long_rounded, 'Sale ID: ${warranty.saleId}',
+              isDark: isDark),
+          const SizedBox(height: 8),
+          _infoRow(
               Icons.shopping_cart_rounded,
               'Purchase: ${AppDateUtils.formatDate(warranty.purchaseDate)}',
-            ),
-            const SizedBox(height: 8),
-            _infoRow(
+              isDark: isDark),
+          const SizedBox(height: 8),
+          _infoRow(
               Icons.monetization_on_rounded,
               'Price: ${currencyFormat.format(warranty.salePrice)}',
-            ),
-            const SizedBox(height: 8),
-            _infoRow(
-              Icons.update_rounded,
+              isDark: isDark),
+          const SizedBox(height: 8),
+          _infoRow(Icons.update_rounded,
               'Warranty: ${warranty.calculatedMonths} months',
-            ),
-          ],
-        ),
+              isDark: isDark),
+        ],
       ),
     );
   }
 
-  Widget _buildTimeline(Warranty warranty) {
+  Widget _buildTimeline(Warranty warranty, bool isDark) {
     final now = DateTime.now();
     final total = warranty.expiryDate.difference(warranty.purchaseDate);
     final elapsed = now.difference(warranty.purchaseDate);
@@ -453,80 +562,108 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
         ? (elapsed.inDays / total.inDays).clamp(0.0, 1.0)
         : 0.0;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                _timelineDot(
-                  Icons.add_shopping_cart_rounded,
-                  ColorConstants.primary,
-                ),
-                const Expanded(
-                  child: Divider(thickness: 2, height: 1),
-                ),
-                _timelineDot(
-                  warranty.isActive
-                      ? Icons.check_circle_rounded
-                      : Icons.cancel_rounded,
-                  warranty.isActive
-                      ? ColorConstants.success
-                      : ColorConstants.error,
-                ),
-              ],
+    final progressColor =
+        warranty.isActive ? AppColors.green : AppColors.red;
+
+    return ModernCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Warranty Timeline',
+            style: AppTextStyles.labelMd.copyWith(
+              color: isDark
+                  ? AppColors.textMuted
+                  : const Color(0xFF6B7280),
+              letterSpacing: 0.08,
             ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  AppDateUtils.formatDate(warranty.purchaseDate),
-                  style: AppTextStyles.labelMd,
-                ),
-                Text(
-                  warranty.isActive ? 'Today' : AppDateUtils.formatDate(warranty.expiryDate),
-                  style: AppTextStyles.labelMd,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 6,
-                backgroundColor: ColorConstants.surfaceContainerHighest,
-                valueColor: AlwaysStoppedAnimation(
-                  warranty.isActive
-                      ? ColorConstants.success
-                      : ColorConstants.error,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              warranty.isActive
-                  ? '${elapsed.inDays} of ${total.inDays} days used (${(progress * 100).round()}%)'
-                  : 'Warranty period ended (${total.inDays} days total)',
-              style: AppTextStyles.bodyMd.copyWith(
-                color: ColorConstants.onSurfaceVariant,
-              ),
-            ),
-            if (warranty.isActive)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  '${total.inDays - elapsed.inDays} days remaining',
-                  style: AppTextStyles.bodyMd.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: ColorConstants.success,
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              _timelineDot(
+                  Icons.add_shopping_cart_rounded, AppColors.blue),
+              Expanded(
+                child: Container(
+                  height: 2,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.blue,
+                        progressColor,
+                      ],
+                      stops: [progress, progress],
+                    ),
                   ),
                 ),
               ),
-          ],
-        ),
+              _timelineDot(
+                warranty.isActive
+                    ? Icons.check_circle_rounded
+                    : Icons.cancel_rounded,
+                progressColor,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                AppDateUtils.formatDate(warranty.purchaseDate),
+                style: AppTextStyles.labelSm.copyWith(
+                  color: isDark
+                      ? AppColors.textMuted
+                      : const Color(0xFF6B7280),
+                ),
+              ),
+              Text(
+                warranty.isActive
+                    ? 'Today'
+                    : AppDateUtils.formatDate(warranty.expiryDate),
+                style: AppTextStyles.labelSm.copyWith(
+                  color: isDark
+                      ? AppColors.textMuted
+                      : const Color(0xFF6B7280),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 6,
+              backgroundColor: isDark
+                  ? AppColors.surfaceLight
+                  : const Color(0xFFE5E7EB),
+              valueColor: AlwaysStoppedAnimation(progressColor),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            warranty.isActive
+                ? '${elapsed.inDays} of ${total.inDays} days used (${(progress * 100).round()}%)'
+                : 'Warranty period ended (${total.inDays} days total)',
+            style: AppTextStyles.bodySm.copyWith(
+              color: isDark
+                  ? AppColors.textMuted
+                  : const Color(0xFF6B7280),
+            ),
+          ),
+          if (warranty.isActive)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                '${total.inDays - elapsed.inDays} days remaining',
+                style: AppTextStyles.bodySm.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.green,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -536,26 +673,24 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
       width: 36,
       height: 36,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: color.withAlpha(25),
         shape: BoxShape.circle,
       ),
       child: Icon(icon, size: 18, color: color),
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: AppTextStyles.titleMd.copyWith(
-        fontSize: 18,
-        color: ColorConstants.onSurface,
-      ),
-    );
-  }
-
-  Widget _infoRow(IconData icon, String text, {VoidCallback? onLongPress, Color? customColor}) {
-    final iconColor = customColor ?? ColorConstants.onSurfaceVariant;
-    final textColor = customColor ?? ColorConstants.onSurface;
+  Widget _infoRow(
+    IconData icon,
+    String text, {
+    VoidCallback? onLongPress,
+    Color? customColor,
+    required bool isDark,
+  }) {
+    final iconColor = customColor ??
+        (isDark ? AppColors.textMuted : const Color(0xFF6B7280));
+    final textColor = customColor ??
+        (isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E));
     return Row(
       children: [
         Icon(icon, size: 18, color: iconColor),
@@ -607,8 +742,37 @@ class _ClaimFormDialogState extends State<_ClaimFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AlertDialog(
-      title: const Text('Claim Warranty'),
+      backgroundColor:
+          isDark ? AppColors.surface : Colors.white,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      title: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withAlpha(25),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.verified_user_rounded,
+                size: 16, color: AppColors.primary),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            'Claim Warranty',
+            style: AppTextStyles.titleSm.copyWith(
+              color: isDark
+                  ? AppColors.textPrimary
+                  : const Color(0xFF1A1A2E),
+            ),
+          ),
+        ],
+      ),
       content: Form(
         key: _formKey,
         child: Column(
@@ -617,11 +781,37 @@ class _ClaimFormDialogState extends State<_ClaimFormDialog> {
             TextFormField(
               controller: _serialCtrl,
               readOnly: true,
-              decoration: const InputDecoration(
+              style: AppTextStyles.bodyMd,
+              decoration: InputDecoration(
                 labelText: 'New Serial Number',
-                border: OutlineInputBorder(),
-                suffixIcon: Icon(Icons.arrow_drop_down),
+                labelStyle: AppTextStyles.labelMd.copyWith(
+                  color: isDark
+                      ? AppColors.textMuted
+                      : const Color(0xFF6B7280),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: isDark
+                        ? AppColors.greyDarker
+                        : const Color(0xFFE5E7EB),
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: isDark
+                        ? AppColors.greyDarker
+                        : const Color(0xFFE5E7EB),
+                  ),
+                ),
+                suffixIcon: const Icon(Icons.arrow_drop_down),
                 helperText: 'Tap to select from available stock',
+                helperStyle: AppTextStyles.caption.copyWith(
+                  color: isDark
+                      ? AppColors.textMuted
+                      : const Color(0xFF9CA3AF),
+                ),
               ),
               onTap: () async {
                 final selected = await showDialog<String>(
@@ -640,9 +830,30 @@ class _ClaimFormDialogState extends State<_ClaimFormDialog> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _reasonCtrl,
-              decoration: const InputDecoration(
+              style: AppTextStyles.bodyMd,
+              decoration: InputDecoration(
                 labelText: 'Reason',
-                border: OutlineInputBorder(),
+                labelStyle: AppTextStyles.labelMd.copyWith(
+                  color: isDark
+                      ? AppColors.textMuted
+                      : const Color(0xFF6B7280),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: isDark
+                        ? AppColors.greyDarker
+                        : const Color(0xFFE5E7EB),
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: isDark
+                        ? AppColors.greyDarker
+                        : const Color(0xFFE5E7EB),
+                  ),
+                ),
               ),
               maxLines: 2,
               validator: (v) =>
@@ -656,7 +867,12 @@ class _ClaimFormDialogState extends State<_ClaimFormDialog> {
           onPressed: () => Navigator.pop(context),
           builder: (_, isDisabled) => TextButton(
             onPressed: isDisabled ? null : () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            style: TextButton.styleFrom(
+              foregroundColor:
+                  isDark ? AppColors.textMuted : const Color(0xFF6B7280),
+            ),
+            child: Text('Cancel',
+                style: AppTextStyles.button.copyWith(fontSize: 13)),
           ),
         ),
         Debounced(
@@ -666,12 +882,20 @@ class _ClaimFormDialogState extends State<_ClaimFormDialog> {
             }
           },
           builder: (context, isDisabled) => FilledButton(
-            onPressed: isDisabled ? null : () {
-              if (_formKey.currentState!.validate()) {
-                Navigator.pop(context, _serialCtrl.text.trim());
-              }
-            },
-            child: const Text('Submit'),
+            onPressed: isDisabled
+                ? null
+                : () {
+                    if (_formKey.currentState!.validate()) {
+                      Navigator.pop(context, _serialCtrl.text.trim());
+                    }
+                  },
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Text('Submit',
+                style: AppTextStyles.button.copyWith(fontSize: 13)),
           ),
         ),
       ],

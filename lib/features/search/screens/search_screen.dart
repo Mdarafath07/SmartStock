@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:smartstock/core/constants/color_constants.dart';
+import 'package:smartstock/core/routes/app_routes.dart';
+import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/widgets/empty_state.dart';
 import 'package:smartstock/features/search/widgets/search_result_tile.dart';
@@ -113,7 +114,7 @@ class _SearchScreenState extends State<SearchScreen> {
             'subtitle': 'Model: ${data['modelNumber'] ?? ''}',
             'type': 'product',
             'icon': Icons.inventory_2_rounded,
-            'route': '/products/details',
+            'route': AppRoutes.productsDetails,
             'id': doc.id,
           };
         })
@@ -141,7 +142,7 @@ class _SearchScreenState extends State<SearchScreen> {
             'subtitle': 'Phone: ${data['phone'] ?? ''}',
             'type': 'customer',
             'icon': Icons.person_rounded,
-            'route': '/customers/details',
+            'route': AppRoutes.customersDetails,
             'id': doc.id,
           };
         })
@@ -177,7 +178,7 @@ class _SearchScreenState extends State<SearchScreen> {
             'subtitle': 'S/N: ${data['serialNumber'] ?? ''}',
             'type': 'sale',
             'icon': Icons.receipt_long_rounded,
-            'route': '/sales/details',
+            'route': AppRoutes.salesDetails,
             'id': doc.id,
           };
         })
@@ -187,39 +188,68 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final groupedResults = _groupResults();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Search'),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: TextField(
-              controller: _searchController,
-              focusNode: _focusNode,
-              onChanged: _onSearchChanged,
-              style: AppTextStyles.bodyMd,
-              decoration: InputDecoration(
-                hintText: 'Search products, customers, sales...',
-                prefixIcon: const Icon(Icons.search_rounded),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.close_rounded),
-                        onPressed: () {
-                          _searchController.clear();
-                          _onSearchChanged('');
-                        },
-                      )
-                    : null,
-                isDense: true,
+      backgroundColor: isDark ? AppColors.scaffoldBg : AppColors.whiteSoft,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                'Search',
+                style: AppTextStyles.headlineMd.copyWith(
+                  color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                ),
               ),
             ),
-          ),
-          Expanded(child: _buildResults(groupedResults)),
-        ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: TextField(
+                controller: _searchController,
+                focusNode: _focusNode,
+                onChanged: _onSearchChanged,
+                style: AppTextStyles.bodyMd.copyWith(
+                  color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Search products, customers, sales...',
+                  hintStyle: AppTextStyles.bodyMd.copyWith(
+                    color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+                  ),
+                  prefixIcon: Icon(Icons.search_rounded,
+                      size: 20, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(Icons.close_rounded, size: 18,
+                              color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                          onPressed: () {
+                            _searchController.clear();
+                            _onSearchChanged('');
+                          },
+                        )
+                      : null,
+                  isDense: true,
+                  filled: true,
+                  fillColor: isDark ? AppColors.surface : Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.green.withAlpha(80), width: 1),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Expanded(child: _buildResults(groupedResults, isDark)),
+          ],
+        ),
       ),
     );
   }
@@ -239,9 +269,9 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildResults(
-      List<MapEntry<String, List<Map<String, dynamic>>>> grouped) {
+      List<MapEntry<String, List<Map<String, dynamic>>>> grouped, bool isDark) {
     if (_isSearching) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator(color: AppColors.green));
     }
 
     if (_searchController.text.trim().isEmpty) {
@@ -262,7 +292,7 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       itemCount: grouped.length,
       itemBuilder: (context, sectionIndex) {
         final section = grouped[sectionIndex];
@@ -272,14 +302,30 @@ class _SearchScreenState extends State<SearchScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-              child: Text(
-                section.key,
-                style: AppTextStyles.labelMd.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: ColorConstants.onSurfaceVariant,
-                  letterSpacing: 0.5,
-                ),
+              padding: const EdgeInsets.only(top: 8, bottom: 4),
+              child: Row(
+                children: [
+                  Text(
+                    section.key,
+                    style: AppTextStyles.labelLg.copyWith(
+                      color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '${items.length}',
+                      style: AppTextStyles.caption.copyWith(
+                        color: isDark ? AppColors.textMuted : const Color(0xFF6B7280),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             ...items.map((item) => SearchResultTile(

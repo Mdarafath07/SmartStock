@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:smartstock/core/constants/color_constants.dart';
+import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/utils/date_utils.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
@@ -19,6 +19,7 @@ class WarrantyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       clipBehavior: Clip.antiAlias,
@@ -43,12 +44,12 @@ class WarrantyCard extends StatelessWidget {
                           child: Image.network(
                             warranty.imageUrl,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => _productPlaceholder(),
+                            errorBuilder: (_, _, _) => _productPlaceholder(context),
                           ),
                         ),
                       )
                     else
-                      _productPlaceholder(),
+                      _productPlaceholder(context),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -64,7 +65,7 @@ class WarrantyCard extends StatelessWidget {
                           Text(
                             'Model: ${warranty.modelNumber}',
                             style: AppTextStyles.bodyMd.copyWith(
-                              color: ColorConstants.onSurfaceVariant,
+                              color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -78,7 +79,7 @@ class WarrantyCard extends StatelessWidget {
                             child: Text(
                               'S/N: ${warranty.serialNumber}',
                               style: AppTextStyles.labelMd.copyWith(
-                                color: ColorConstants.onSurfaceVariant,
+                                color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
                               ),
                             ),
                           ),
@@ -93,7 +94,7 @@ class WarrantyCard extends StatelessWidget {
                     Icon(
                       Icons.person_outline_rounded,
                       size: 16,
-                      color: ColorConstants.onSurfaceVariant,
+                      color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
                     ),
                     const SizedBox(width: 4),
                     Expanded(
@@ -101,7 +102,7 @@ class WarrantyCard extends StatelessWidget {
                         warranty.customerName,
                         style: AppTextStyles.bodyMd.copyWith(
                           fontSize: 13,
-                          color: ColorConstants.onSurfaceVariant,
+                          color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -115,13 +116,13 @@ class WarrantyCard extends StatelessWidget {
                     Icon(
                       Icons.calendar_today_rounded,
                       size: 14,
-                      color: ColorConstants.onSurfaceVariant,
+                      color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       'Purchased: ${AppDateUtils.formatDate(warranty.purchaseDate)}',
                       style: AppTextStyles.labelMd.copyWith(
-                        color: ColorConstants.onSurfaceVariant,
+                        color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
                       ),
                     ),
                     const Spacer(),
@@ -140,17 +141,18 @@ class WarrantyCard extends StatelessWidget {
     );
   }
 
-  Widget _productPlaceholder() {
+  Widget _productPlaceholder(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: 56,
       height: 56,
       decoration: BoxDecoration(
-        color: ColorConstants.surfaceContainerHighest,
+        color: isDark ? AppColors.cardDark : const Color(0xFFE4E1EA),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Icon(
         Icons.inventory_2_rounded,
-        color: ColorConstants.onSurfaceVariant,
+        color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
         size: 28,
       ),
     );

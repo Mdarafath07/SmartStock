@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smartstock/core/widgets/modern_app_shell.dart';
 import 'app_routes.dart';
+import '../../features/splash/screens/splash_screen.dart';
 import '../../features/daily_additions/screens/daily_additions_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/products/screens/product_list_screen.dart';
@@ -35,6 +36,8 @@ class RouteGenerator {
     final args = settings.arguments;
 
     switch (settings.name) {
+      case AppRoutes.splash:
+        return _page(const SplashScreen(), settings);
       case AppRoutes.home:
         return _page(ModernAppShell(
           currentIndex: 0,

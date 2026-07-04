@@ -152,6 +152,14 @@ class _SaleFormState extends State<SaleForm> {
     if (!mounted) return;
 
     var salePriceText = product.sellingPrice.toStringAsFixed(2);
+    var warrantyValueText = (product.warrantyMonths > 0)
+        ? product.warrantyMonths.toString()
+        : (product.warrantyDays > 0 ? product.warrantyDays.toString() : '0');
+    var warrantyUnit = (product.warrantyMonths > 0)
+        ? 'month'
+        : (product.warrantyDays > 0 ? 'day' : 'month');
+    var noWarranty = product.warrantyMonths == 0 && product.warrantyDays == 0;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => _PriceDialog(
@@ -160,17 +168,36 @@ class _SaleFormState extends State<SaleForm> {
         modelNumber: product.modelNumber,
         initialPrice: product.sellingPrice.toStringAsFixed(2),
         onPriceChanged: (v) => salePriceText = v,
+        initialWarrantyValue: warrantyValueText,
+        initialWarrantyUnit: warrantyUnit,
+        initialNoWarranty: noWarranty,
+        onWarrantyValueChanged: (v) => warrantyValueText = v,
+        onWarrantyUnitChanged: (v) => warrantyUnit = v,
+        onNoWarrantyChanged: (v) => noWarranty = v,
       ),
     );
     if (confirmed != true) return;
     if (!mounted) return;
 
     final salePrice = double.tryParse(salePriceText) ?? product.sellingPrice;
+
+    int warrantyMonths;
+    if (noWarranty) {
+      warrantyMonths = 0;
+    } else {
+      final value = int.tryParse(warrantyValueText) ?? 0;
+      warrantyMonths = switch (warrantyUnit) {
+        'day' => (value / 30).ceil(),
+        'year' => value * 12,
+        _ => value,
+      };
+    }
+
     _scannedSerialNumbers.add(serialNumber);
     setState(() {
       final existingIndex = _cartItems.indexWhere((i) => i.product.id == product.id);
       final serial = SerialNumber(id: serialId, productId: product.id, serialNumber: serialNumber, status: 'available');
-      final cartProduct = product.copyWith(sellingPrice: salePrice);
+      final cartProduct = product.copyWith(sellingPrice: salePrice, warrantyMonths: warrantyMonths);
       if (existingIndex >= 0) {
         _cartItems[existingIndex].serials.add(serial);
       } else {
@@ -189,16 +216,19 @@ class _SaleFormState extends State<SaleForm> {
         value: context.read<CategoryProvider>(),
         child: ChangeNotifierProvider.value(
           value: context.read<ProductProvider>(),
-          child: _AddItemSheet(onAddToCart: (product, serials) {
-            setState(() {
-              final existingIndex = _cartItems.indexWhere((i) => i.product.id == product.id);
-              if (existingIndex >= 0) {
-                _cartItems[existingIndex].serials.addAll(serials);
-              } else {
-                _cartItems.add(_CartItem(product: product, serials: serials));
-              }
-            });
-          }),
+          child: _AddItemSheet(
+            onAddToCart: (product, serials) {
+              setState(() {
+                final existingIndex = _cartItems.indexWhere((i) => i.product.id == product.id);
+                if (existingIndex >= 0) {
+                  _cartItems[existingIndex].serials.addAll(serials);
+                } else {
+                  _cartItems.add(_CartItem(product: product, serials: serials));
+                }
+              });
+            },
+            onBarcodeScan: _handleBarcodeScan,
+          ),
         ),
       ),
     );
@@ -260,6 +290,7 @@ class _SaleFormState extends State<SaleForm> {
               child: const Icon(Icons.history_rounded, size: 20),
             ),
           ),
+
         ],
       ),
     );
@@ -371,14 +402,14 @@ class _SaleFormState extends State<SaleForm> {
               },
             ),
           ),
-        if (_cartItems.isNotEmpty)
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(80))),
-            ),
-            child: Row(
-              children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          decoration: BoxDecoration(
+            border: Border(top: BorderSide(color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(80))),
+          ),
+          child: Row(
+            children: [
+              if (_cartItems.isNotEmpty)
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -389,30 +420,32 @@ class _SaleFormState extends State<SaleForm> {
                     ],
                   ),
                 ),
-                FilledButton.icon(
-                  onPressed: _showAddItemSheet,
-                  icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text('Add'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6),
-                    foregroundColor: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
-                  ),
+              if (_cartItems.isEmpty)
+                const Spacer(),
+              FilledButton.icon(
+                onPressed: _showAddItemSheet,
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text('Add'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6),
+                  foregroundColor: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
                 ),
-                const SizedBox(width: 8),
-                Container(
-                  width: 44, height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withAlpha(25),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: IconButton(
-                    onPressed: _handleBarcodeScan,
-                    icon: const Icon(Icons.qr_code_scanner_rounded, size: 20, color: AppColors.primary),
-                  ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 44, height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(25),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ],
-            ),
+                child: IconButton(
+                  onPressed: _handleBarcodeScan,
+                  icon: const Icon(Icons.qr_code_scanner_rounded, size: 20, color: AppColors.primary),
+                ),
+              ),
+            ],
           ),
+        ),
       ],
     );
   }
@@ -520,6 +553,12 @@ class _PriceDialog extends StatefulWidget {
   final String modelNumber;
   final String initialPrice;
   final ValueChanged<String> onPriceChanged;
+  final String initialWarrantyValue;
+  final String initialWarrantyUnit;
+  final bool initialNoWarranty;
+  final ValueChanged<String> onWarrantyValueChanged;
+  final ValueChanged<String> onWarrantyUnitChanged;
+  final ValueChanged<bool> onNoWarrantyChanged;
 
   const _PriceDialog({
     required this.productName,
@@ -527,6 +566,12 @@ class _PriceDialog extends StatefulWidget {
     required this.modelNumber,
     required this.initialPrice,
     required this.onPriceChanged,
+    required this.initialWarrantyValue,
+    required this.initialWarrantyUnit,
+    required this.initialNoWarranty,
+    required this.onWarrantyValueChanged,
+    required this.onWarrantyUnitChanged,
+    required this.onNoWarrantyChanged,
   });
 
   @override
@@ -534,17 +579,24 @@ class _PriceDialog extends StatefulWidget {
 }
 
 class _PriceDialogState extends State<_PriceDialog> {
-  late final TextEditingController _controller;
+  late final TextEditingController _priceController;
+  late final TextEditingController _warrantyController;
+  late String _warrantyUnit;
+  late bool _noWarranty;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.initialPrice);
+    _priceController = TextEditingController(text: widget.initialPrice);
+    _warrantyController = TextEditingController(text: widget.initialWarrantyValue);
+    _warrantyUnit = widget.initialWarrantyUnit;
+    _noWarranty = widget.initialNoWarranty;
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _priceController.dispose();
+    _warrantyController.dispose();
     super.dispose();
   }
 
@@ -569,7 +621,7 @@ class _PriceDialogState extends State<_PriceDialog> {
                 style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
             const SizedBox(height: 16),
             TextField(
-              controller: _controller,
+              controller: _priceController,
               decoration: InputDecoration(
                 labelText: 'Sale Price',
                 prefixText: '\$ ',
@@ -580,7 +632,78 @@ class _PriceDialogState extends State<_PriceDialog> {
               onChanged: widget.onPriceChanged,
               style: TextStyle(fontFamily: 'Inter', fontSize: 16, fontWeight: FontWeight.w600, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _warrantyController,
+                    readOnly: _noWarranty,
+                    decoration: InputDecoration(
+                      labelText: _noWarranty ? 'No Warranty' : 'Warranty',
+                      filled: true,
+                      fillColor: isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    ),
+                    keyboardType: _noWarranty ? TextInputType.none : TextInputType.number,
+                    onChanged: widget.onWarrantyValueChanged,
+                    style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _warrantyUnit,
+                      isDense: true,
+                      onChanged: _noWarranty ? null : (v) {
+                        if (v != null) {
+                          setState(() => _warrantyUnit = v);
+                          widget.onWarrantyUnitChanged(v);
+                        }
+                      },
+                      items: const [
+                        DropdownMenuItem(value: 'day', child: Text('Day(s)', style: TextStyle(fontFamily: 'Geist', fontSize: 12))),
+                        DropdownMenuItem(value: 'month', child: Text('Month(s)', style: TextStyle(fontFamily: 'Geist', fontSize: 12))),
+                        DropdownMenuItem(value: 'year', child: Text('Year(s)', style: TextStyle(fontFamily: 'Geist', fontSize: 12))),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                SizedBox(
+                  height: 24,
+                  child: Checkbox(
+                    value: _noWarranty,
+                    onChanged: (v) {
+                      setState(() => _noWarranty = v ?? false);
+                      widget.onNoWarrantyChanged(v ?? false);
+                    },
+                    activeColor: AppColors.primary,
+                    checkColor: Colors.black,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                GestureDetector(
+                  onTap: () {
+                    setState(() => _noWarranty = !_noWarranty);
+                    widget.onNoWarrantyChanged(!_noWarranty);
+                  },
+                  child: Text('No warranty', style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
@@ -593,7 +716,8 @@ class _PriceDialogState extends State<_PriceDialog> {
                 Expanded(
                   child: FilledButton(
                     onPressed: () {
-                      widget.onPriceChanged(_controller.text);
+                      widget.onPriceChanged(_priceController.text);
+                      widget.onWarrantyValueChanged(_warrantyController.text);
                       Navigator.pop(context, true);
                     },
                     child: const Text('Add to Cart'),
@@ -616,7 +740,8 @@ class _CartItem {
 
 class _AddItemSheet extends StatefulWidget {
   final void Function(Product product, List<SerialNumber> serials) onAddToCart;
-  const _AddItemSheet({required this.onAddToCart});
+  final VoidCallback? onBarcodeScan;
+  const _AddItemSheet({required this.onAddToCart, this.onBarcodeScan});
 
   @override
   State<_AddItemSheet> createState() => _AddItemSheetState();
@@ -699,11 +824,30 @@ class _AddItemSheetState extends State<_AddItemSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Add Item to Cart', style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(width: 36, height: 36,
-                    decoration: BoxDecoration(color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200), borderRadius: BorderRadius.circular(10)),
-                    child: const Icon(Icons.close_rounded, size: 18)),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (widget.onBarcodeScan != null)
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                          widget.onBarcodeScan!();
+                        },
+                        child: Container(width: 36, height: 36,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withAlpha(25),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.qr_code_scanner_rounded, size: 18, color: AppColors.primary)),
+                      ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(width: 36, height: 36,
+                        decoration: BoxDecoration(color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200), borderRadius: BorderRadius.circular(10)),
+                        child: const Icon(Icons.close_rounded, size: 18)),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -778,7 +922,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                     child: p.imageUrl.isNotEmpty
                                         ? ClipRRect(borderRadius: BorderRadius.circular(10),
                                             child: Image.network(p.imageUrl, fit: BoxFit.cover,
-                                              errorBuilder: (_, __, ___) => Icon(Icons.inventory_2_rounded, size: 22, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))))
+                                              errorBuilder: (_, _, _) => Icon(Icons.inventory_2_rounded, size: 22, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))))
                                         : Icon(Icons.inventory_2_rounded, size: 22, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
                                   ),
                                   const SizedBox(width: 12),

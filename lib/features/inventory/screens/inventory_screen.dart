@@ -202,7 +202,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       return ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: 8,
-        itemBuilder: (_, __) => Container(
+        itemBuilder: (_, _) => Container(
           margin: const EdgeInsets.only(bottom: 8),
           height: 60,
           decoration: BoxDecoration(
@@ -339,7 +339,7 @@ class _InventoryRow extends StatelessWidget {
               decoration: BoxDecoration(color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200), borderRadius: BorderRadius.circular(10)),
               child: item.imageUrl.isNotEmpty
                   ? ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(item.imageUrl, fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Icon(Icons.inventory_2_rounded, size: 22, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))))
+                      errorBuilder: (_, _, _) => Icon(Icons.inventory_2_rounded, size: 22, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))))
                   : Icon(Icons.inventory_2_rounded, size: 22, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
             ),
             const SizedBox(width: 12),

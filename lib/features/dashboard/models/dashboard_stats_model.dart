@@ -3,6 +3,7 @@ class DashboardStats {
   final int totalProducts;
   final int totalAvailableStock;
   final double todaySalesAmount;
+  final double todayProfit;
   final int todaySoldProducts;
   final int lowStockProducts;
   final int outOfStockProducts;
@@ -10,12 +11,15 @@ class DashboardStats {
   final List<ProductSummary> mostStockedProducts;
   final List<ProductSummary> recentlyAddedProducts;
   final List<ProductSummary> recentlySoldProducts;
+  final List<double> dailySales;
+  final List<double> dailyProfit;
 
   const DashboardStats({
     this.totalCategories = 0,
     this.totalProducts = 0,
     this.totalAvailableStock = 0,
     this.todaySalesAmount = 0.0,
+    this.todayProfit = 0.0,
     this.todaySoldProducts = 0,
     this.lowStockProducts = 0,
     this.outOfStockProducts = 0,
@@ -23,6 +27,8 @@ class DashboardStats {
     this.mostStockedProducts = const [],
     this.recentlyAddedProducts = const [],
     this.recentlySoldProducts = const [],
+    this.dailySales = const [],
+    this.dailyProfit = const [],
   });
 
   factory DashboardStats.fromJson(Map<String, dynamic> json) {
@@ -32,6 +38,7 @@ class DashboardStats {
       totalAvailableStock:
           (json['totalAvailableStock'] as num?)?.toInt() ?? 0,
       todaySalesAmount: (json['todaySalesAmount'] as num?)?.toDouble() ?? 0.0,
+      todayProfit: (json['todayProfit'] as num?)?.toDouble() ?? 0.0,
       todaySoldProducts: (json['todaySoldProducts'] as num?)?.toInt() ?? 0,
       lowStockProducts: (json['lowStockProducts'] as num?)?.toInt() ?? 0,
       outOfStockProducts: (json['outOfStockProducts'] as num?)?.toInt() ?? 0,
@@ -59,6 +66,14 @@ class DashboardStats {
                       ProductSummary.fromJson(e as Map<String, dynamic>))
                   .toList() ??
               [],
+      dailySales: (json['dailySales'] as List<dynamic>?)
+              ?.map((e) => (e as num).toDouble())
+              .toList() ??
+          [],
+      dailyProfit: (json['dailyProfit'] as List<dynamic>?)
+              ?.map((e) => (e as num).toDouble())
+              .toList() ??
+          [],
     );
   }
 
@@ -68,6 +83,7 @@ class DashboardStats {
       'totalProducts': totalProducts,
       'totalAvailableStock': totalAvailableStock,
       'todaySalesAmount': todaySalesAmount,
+      'todayProfit': todayProfit,
       'todaySoldProducts': todaySoldProducts,
       'lowStockProducts': lowStockProducts,
       'outOfStockProducts': outOfStockProducts,
@@ -77,6 +93,8 @@ class DashboardStats {
           recentlyAddedProducts.map((e) => e.toJson()).toList(),
       'recentlySoldProducts':
           recentlySoldProducts.map((e) => e.toJson()).toList(),
+      'dailySales': dailySales,
+      'dailyProfit': dailyProfit,
     };
   }
 
@@ -85,6 +103,7 @@ class DashboardStats {
     int? totalProducts,
     int? totalAvailableStock,
     double? todaySalesAmount,
+    double? todayProfit,
     int? todaySoldProducts,
     int? lowStockProducts,
     int? outOfStockProducts,
@@ -92,12 +111,15 @@ class DashboardStats {
     List<ProductSummary>? mostStockedProducts,
     List<ProductSummary>? recentlyAddedProducts,
     List<ProductSummary>? recentlySoldProducts,
+    List<double>? dailySales,
+    List<double>? dailyProfit,
   }) {
     return DashboardStats(
       totalCategories: totalCategories ?? this.totalCategories,
       totalProducts: totalProducts ?? this.totalProducts,
       totalAvailableStock: totalAvailableStock ?? this.totalAvailableStock,
       todaySalesAmount: todaySalesAmount ?? this.todaySalesAmount,
+      todayProfit: todayProfit ?? this.todayProfit,
       todaySoldProducts: todaySoldProducts ?? this.todaySoldProducts,
       lowStockProducts: lowStockProducts ?? this.lowStockProducts,
       outOfStockProducts: outOfStockProducts ?? this.outOfStockProducts,
@@ -106,6 +128,8 @@ class DashboardStats {
       recentlyAddedProducts:
           recentlyAddedProducts ?? this.recentlyAddedProducts,
       recentlySoldProducts: recentlySoldProducts ?? this.recentlySoldProducts,
+      dailySales: dailySales ?? this.dailySales,
+      dailyProfit: dailyProfit ?? this.dailyProfit,
     );
   }
 }

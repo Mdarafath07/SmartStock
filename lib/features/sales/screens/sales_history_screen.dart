@@ -38,11 +38,11 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     _load();
   }
 
-  void _setYesterday() {
+  void _setThisMonth() {
     final now = DateTime.now();
-    _selectedDay = DateTime(now.year, now.month, now.day - 1);
+    _selectedDay = DateTime(now.year, now.month, 1);
     _startDate = _selectedDay;
-    _endDate = _selectedDay!.add(const Duration(days: 1));
+    _endDate = DateTime(now.year, now.month + 1, 1);
     _load();
   }
 
@@ -108,12 +108,28 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Text(
-                'Sales History',
-                style: AppTextStyles.headlineMd.copyWith(
-                  color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
-                ),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 38, height: 38,
+                      margin: const EdgeInsets.only(right: 10),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.glassBg : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      child: const Icon(Icons.arrow_back_rounded, size: 20, color: Color(0xFF475569)),
+                    ),
+                  ),
+                  Text(
+                    'Sales History',
+                    style: AppTextStyles.titleLg.copyWith(
+                      color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                    ),
+                  ),
+                ],
               ),
             ),
             _buildDateBar(isDark, dateFormat),
@@ -151,19 +167,23 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     final label = _selectedDay != null
         ? dateFormat.format(_selectedDay!)
         : 'Select date';
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final weekStart = now.subtract(Duration(days: now.weekday - 1));
+    final thisWeekStart = DateTime(weekStart.year, weekStart.month, weekStart.day);
+    final thisMonthStart = DateTime(now.year, now.month, 1);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            _dateChip(isDark, 'Today', _setToday,
-                _selectedDay == DateTime(DateTime.now().year,
-                    DateTime.now().month, DateTime.now().day)),
+            _dateChip(isDark, 'Today', _setToday, _selectedDay == today),
             const SizedBox(width: 6),
-            _dateChip(isDark, 'Yesterday', _setYesterday, false),
+            _dateChip(isDark, 'This Week', _setThisWeek, _selectedDay == thisWeekStart),
             const SizedBox(width: 6),
-            _dateChip(isDark, 'This Week', _setThisWeek, false),
+            _dateChip(isDark, 'This Month', _setThisMonth, _selectedDay == thisMonthStart),
             const SizedBox(width: 6),
             ModernCard(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -194,12 +214,12 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           color: isActive
               ? AppColors.greenBg
               : (isDark ? AppColors.surface : Colors.white),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isActive
                 ? AppColors.green.withAlpha(60)
@@ -209,9 +229,11 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
         ),
         child: Text(
           label,
-          style: AppTextStyles.labelSm.copyWith(
-            color: isActive ? AppColors.green : (isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 12,
             fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+            color: isActive ? AppColors.green : (isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
           ),
         ),
       ),
@@ -220,34 +242,107 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
 
   Widget _buildSummaryCards(bool isDark, NumberFormat currencyFormat,
       int totalSales, double totalRevenue, double totalProfit) {
+    final cardBg = isDark ? AppColors.cardDark : Colors.white;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
       child: Row(
         children: [
           Expanded(
-            child: StatCard(
+            child: _compactStatCard(
               label: 'Sales',
               value: '$totalSales',
               icon: Icons.shopping_bag_rounded,
               iconColor: AppColors.info,
+              bg: cardBg,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
-            child: StatCard(
+            child: _compactStatCard(
               label: 'Revenue',
               value: currencyFormat.format(totalRevenue),
               icon: Icons.monetization_on_rounded,
               iconColor: AppColors.green,
+              bg: cardBg,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
-            child: StatCard(
+            child: _compactStatCard(
               label: 'Profit',
               value: currencyFormat.format(totalProfit),
               icon: Icons.trending_up_rounded,
               iconColor: totalProfit >= 0 ? AppColors.green : AppColors.red,
+              bg: cardBg,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _compactStatCard({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color iconColor,
+    required Color bg,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(10),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: iconColor.withAlpha(25),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(icon, size: 13, color: iconColor),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontFamily: 'Hanken Grotesk',
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                height: 1.1,
+                letterSpacing: -0.02,
+                color: iconColor,
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 11,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textMuted,
+              height: 1.2,
             ),
           ),
         ],
@@ -281,73 +376,91 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
       String customerName, List<Sale> sales, double customerTotal) {
     final timeFormat = DateFormat('hh:mm a');
     return ModernCard(
-      margin: const EdgeInsets.only(top: 10),
+      margin: const EdgeInsets.only(top: 8),
       padding: EdgeInsets.zero,
+      borderRadius: 12,
       child: Column(
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: isDark ? AppColors.surfaceLight : const Color(0xFFF9FAFB),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
               ),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 36,
-                  height: 36,
+                  width: 28,
+                  height: 28,
                   decoration: BoxDecoration(
                     color: AppColors.greenBg,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(7),
                   ),
                   child: Center(
                     child: Text(
                       customerName.isNotEmpty
                           ? customerName[0].toUpperCase()
                           : '?',
-                      style: AppTextStyles.titleSm.copyWith(color: AppColors.green),
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.green,
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(customerName,
-                          style: AppTextStyles.titleSm.copyWith(
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
                             color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
                           )),
                       if (sales.isNotEmpty && sales.first.customerPhone.isNotEmpty)
                         Text(sales.first.customerPhone,
-                            style: AppTextStyles.caption.copyWith(
+                            style: TextStyle(
+                              fontFamily: 'Geist',
+                              fontSize: 11,
                               color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
                             )),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                   decoration: BoxDecoration(
                     color: AppColors.greenBg,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     '${sales.length} item${sales.length > 1 ? 's' : ''}',
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.green,
+                    style: TextStyle(
+                      fontFamily: 'Geist',
+                      fontSize: 10,
                       fontWeight: FontWeight.w600,
+                      color: AppColors.green,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Text(
                   currencyFormat.format(customerTotal),
-                  style: AppTextStyles.amountSm.copyWith(color: AppColors.green),
+                  style: TextStyle(
+                    fontFamily: 'Hanken Grotesk',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.green,
+                  ),
                 ),
               ],
             ),
@@ -366,12 +479,12 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                   ),
                   child: Padding(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   child: Row(
                     children: [
                       Container(
-                        width: 4,
-                        height: 40,
+                        width: 3,
+                        height: 32,
                         decoration: BoxDecoration(
                           color: sale.profit >= 0
                               ? AppColors.green
@@ -379,7 +492,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -388,56 +501,58 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                               children: [
                                 Flexible(
                                   child: Text(sale.productName,
-                                      style: AppTextStyles.titleSm.copyWith(
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
                                         color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
                                       )),
                                 ),
                                 if (sale.isReplacement)
                                   const Padding(
-                                    padding: EdgeInsets.only(left: 6),
-                                    child: StatusBadge(label: 'Replacement', color: AppColors.orange, fontSize: 9),
+                                    padding: EdgeInsets.only(left: 4),
+                                    child: StatusBadge(label: 'Replacement', color: AppColors.orange, fontSize: 8),
                                   )
                                 else if (sale.isWarrantyClaim)
                                   const Padding(
-                                    padding: EdgeInsets.only(left: 6),
-                                    child: StatusBadge(label: 'Warranty', color: AppColors.info, fontSize: 9),
+                                    padding: EdgeInsets.only(left: 4),
+                                    child: StatusBadge(label: 'Warranty', color: AppColors.info, fontSize: 8),
                                   ),
                               ],
                             ),
-                            const SizedBox(height: 2),
-                            Debounced(
-                              onPressed: () {
+                            const SizedBox(height: 1),
+                            GestureDetector(
+                              onTap: () {
                                 Clipboard.setData(ClipboardData(text: sale.serialNumber));
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('Serial number copied')),
                                 );
                               },
-                              builder: (context, isDisabled) => GestureDetector(
-                                onTap: isDisabled ? null : () {
-                                  Clipboard.setData(ClipboardData(text: sale.serialNumber));
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Serial number copied')),
-                                  );
-                                },
-                                child: Text('${sale.modelNumber} | S/N: ${sale.serialNumber}',
-                                  style: AppTextStyles.bodySm.copyWith(
-                                      color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
-                              ),
+                              child: Text('${sale.modelNumber} | ${sale.serialNumber}',
+                                style: TextStyle(
+                                  fontFamily: 'Geist',
+                                  fontSize: 10,
+                                  color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Text(
                         timeFormat.format(sale.saleDate),
-                        style: AppTextStyles.caption.copyWith(
-                            color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                        style: TextStyle(
+                          fontFamily: 'Geist',
+                          fontSize: 10,
+                          color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Text(
                         currencyFormat.format(sale.salePrice),
-                        style: AppTextStyles.titleSm.copyWith(
+                        style: TextStyle(
+                          fontFamily: 'Hanken Grotesk',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
                           color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
                         ),
                       ),

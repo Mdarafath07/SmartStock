@@ -67,6 +67,18 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
         children: [
           Row(
             children: [
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: 38, height: 38,
+                  margin: const EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.glassBg : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: const Icon(Icons.arrow_back_rounded, size: 20, color: Color(0xFF475569)),
+                ),
+              ),
               Expanded(
                 child: Text(
                   'Warranty Check',

@@ -33,6 +33,7 @@ class DashboardService {
       _getTopSellingProducts(),
       _getRecentlyAddedProducts(),
       _getRecentlySoldProducts(),
+      _getDailySales(7),
     ]);
 
     final totalCategories = (results[0] as AggregateQuerySnapshot).count ?? 0;
@@ -42,6 +43,8 @@ class DashboardService {
     final todaySalesData = results[3] as Map<String, dynamic>;
     final todaySalesAmount =
         (todaySalesData['totalAmount'] as num?)?.toDouble() ?? 0.0;
+    final todayProfit =
+        (todaySalesData['totalProfit'] as num?)?.toDouble() ?? 0.0;
     final todaySoldProducts =
         (todaySalesData['totalQuantity'] as num?)?.toInt() ?? 0;
     final lowStockProducts = results[4] as int;
@@ -49,12 +52,14 @@ class DashboardService {
     final topSelling = results[6] as List<TopSellingProduct>;
     final recentlyAdded = results[7] as List<ProductSummary>;
     final recentlySold = results[8] as List<ProductSummary>;
+    final dailyData = results[9] as Map<String, List<double>>;
 
     return DashboardStats(
       totalCategories: totalCategories,
       totalProducts: totalProducts,
       totalAvailableStock: totalAvailableStock,
       todaySalesAmount: todaySalesAmount,
+      todayProfit: todayProfit,
       todaySoldProducts: todaySoldProducts,
       lowStockProducts: lowStockProducts,
       outOfStockProducts: outOfStockProducts,
@@ -62,6 +67,8 @@ class DashboardService {
       mostStockedProducts: recentlyAdded,
       recentlyAddedProducts: recentlyAdded,
       recentlySoldProducts: recentlySold,
+      dailySales: dailyData['sales'] ?? [],
+      dailyProfit: dailyData['profit'] ?? [],
     );
   }
 
@@ -84,17 +91,51 @@ class DashboardService {
         .get();
 
     double totalAmount = 0;
+    double totalProfit = 0;
     int totalQuantity = 0;
     for (final doc in snapshot.docs) {
       final data = doc.data();
       if (data['saleType'] == 'warranty_claim') continue;
       totalAmount += (data['salePrice'] as num?)?.toDouble() ?? 0.0;
+      totalProfit += (data['profit'] as num?)?.toDouble() ?? 0.0;
       totalQuantity++;
     }
     return {
       'totalAmount': totalAmount,
+      'totalProfit': totalProfit,
       'totalQuantity': totalQuantity,
     };
+  }
+
+  Future<Map<String, List<double>>> _getDailySales(int days) async {
+    final now = DateTime.now();
+    final sales = <double>[];
+    final profits = <double>[];
+
+    for (int i = days - 1; i >= 0; i--) {
+      final day = DateTime(now.year, now.month, now.day - i);
+      final dayStart = day;
+      final dayEnd = dayStart.add(const Duration(days: 1));
+
+      final snapshot = await _firestore
+          .collection('sales')
+          .where('saleDate',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(dayStart))
+          .where('saleDate', isLessThan: Timestamp.fromDate(dayEnd))
+          .get();
+
+      double daySales = 0;
+      double dayProfit = 0;
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        if (data['saleType'] == 'warranty_claim') continue;
+        daySales += (data['salePrice'] as num?)?.toDouble() ?? 0.0;
+        dayProfit += (data['profit'] as num?)?.toDouble() ?? 0.0;
+      }
+      sales.add(daySales);
+      profits.add(dayProfit);
+    }
+    return {'sales': sales, 'profit': profits};
   }
 
   Future<int> _computeLowStockProducts() async {

@@ -1,0 +1,98 @@
+import 'package:flutter/material.dart';
+
+const categoryIconNames = [
+  'inventory_2_rounded',
+  'phone_android_rounded',
+  'laptop_mac_rounded',
+  'headphones_rounded',
+  'watch_rounded',
+  'tv_rounded',
+  'camera_alt_rounded',
+  'speaker_rounded',
+  'router_rounded',
+  'videogame_asset_rounded',
+  'print_rounded',
+  'mic_rounded',
+  'tablet_android_rounded',
+  'power_rounded',
+  'light_rounded',
+  'keyboard_rounded',
+  'mouse_rounded',
+  'memory_rounded',
+  'flight_rounded',
+  'smart_toy_rounded',
+  'coffee_rounded',
+  'ac_unit_rounded',
+  'battery_charging_full_rounded',
+  'security_rounded',
+  'toys_rounded',
+  'wifi_rounded',
+  'chair_rounded',
+  'local_shipping_rounded',
+  'lock_rounded',
+  'music_note_rounded',
+  'pets_rounded',
+  'sports_esports_rounded',
+  'developer_board_rounded',
+  'electrical_services_rounded',
+  'hardware_rounded',
+  'precision_manufacturing_rounded',
+  'settings_remote_rounded',
+  'sim_card_rounded',
+  'storage_rounded',
+  'usb_rounded',
+];
+
+IconData iconFromName(String name) {
+  return _iconMap[name] ?? Icons.inventory_2_rounded;
+}
+
+String iconNameFromData(IconData icon) {
+  return _reverseIconMap[icon] ?? 'inventory_2_rounded';
+}
+
+const _iconMap = <String, IconData>{
+  'inventory_2_rounded': Icons.inventory_2_rounded,
+  'phone_android_rounded': Icons.phone_android_rounded,
+  'laptop_mac_rounded': Icons.laptop_mac_rounded,
+  'headphones_rounded': Icons.headphones_rounded,
+  'watch_rounded': Icons.watch_rounded,
+  'tv_rounded': Icons.tv_rounded,
+  'camera_alt_rounded': Icons.camera_alt_rounded,
+  'speaker_rounded': Icons.speaker_rounded,
+  'router_rounded': Icons.router_rounded,
+  'videogame_asset_rounded': Icons.videogame_asset_rounded,
+  'print_rounded': Icons.print_rounded,
+  'mic_rounded': Icons.mic_rounded,
+  'tablet_android_rounded': Icons.tablet_android_rounded,
+  'power_rounded': Icons.power_rounded,
+  'light_rounded': Icons.light_rounded,
+  'keyboard_rounded': Icons.keyboard_rounded,
+  'mouse_rounded': Icons.mouse_rounded,
+  'memory_rounded': Icons.memory_rounded,
+  'flight_rounded': Icons.flight_rounded,
+  'smart_toy_rounded': Icons.smart_toy_rounded,
+  'coffee_rounded': Icons.coffee_rounded,
+  'ac_unit_rounded': Icons.ac_unit_rounded,
+  'battery_charging_full_rounded': Icons.battery_charging_full_rounded,
+  'security_rounded': Icons.security_rounded,
+  'toys_rounded': Icons.toys_rounded,
+  'wifi_rounded': Icons.wifi_rounded,
+  'chair_rounded': Icons.chair_rounded,
+  'local_shipping_rounded': Icons.local_shipping_rounded,
+  'lock_rounded': Icons.lock_rounded,
+  'music_note_rounded': Icons.music_note_rounded,
+  'pets_rounded': Icons.pets_rounded,
+  'sports_esports_rounded': Icons.sports_esports_rounded,
+  'developer_board_rounded': Icons.developer_board_rounded,
+  'electrical_services_rounded': Icons.electrical_services_rounded,
+  'hardware_rounded': Icons.hardware_rounded,
+  'precision_manufacturing_rounded': Icons.precision_manufacturing_rounded,
+  'settings_remote_rounded': Icons.settings_remote_rounded,
+  'sim_card_rounded': Icons.sim_card_rounded,
+  'storage_rounded': Icons.storage_rounded,
+  'usb_rounded': Icons.usb_rounded,
+};
+
+final _reverseIconMap =
+    _iconMap.map((key, value) => MapEntry(value, key));

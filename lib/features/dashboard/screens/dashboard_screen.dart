@@ -87,8 +87,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                 const SizedBox(height: 20),
                 _buildActivitySection(context, provider.stats!),
                 const SizedBox(height: 20),
-                _buildRecentAddedProducts(context, provider.stats!),
-                const SizedBox(height: 20),
                 _buildTopSelling(context, provider.stats!),
                 const SizedBox(height: 20),
                 _buildQuickActions(context),
@@ -109,7 +107,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       gradient: LinearGradient(
         colors: isDark
             ? [const Color(0xFF1A1A2E), const Color(0xFF16213E)]
-            : [AppColors.greenDark, AppColors.greenLight],
+            : [AppColors.primary, AppColors.primary.withAlpha(180)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
@@ -163,9 +161,9 @@ class _DashboardScreenState extends State<DashboardScreen>
               ),
               const SizedBox(width: 16),
               _WelcomeStat(
-                label: 'Products Sold',
-                value: '${provider.stats?.todaySoldProducts ?? 0}',
-                icon: Icons.shopping_bag_rounded,
+                label: "Today's Profit",
+                value: provider.stats?.todayProfit != null ? '\$${provider.stats!.todayProfit.toStringAsFixed(0)}' : '\$0',
+                icon: Icons.trending_up_rounded,
               ),
             ],
           ),
@@ -175,84 +173,151 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _buildSummaryCards(BuildContext context, DashboardStats stats) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final instock = stats.totalProducts - stats.outOfStockProducts;
+    final stockedRatio = stats.totalProducts > 0 ? (instock / stats.totalProducts).clamp(0.05, 1.0) : 0.05;
+    final stockVsProducts = stats.totalProducts > 0 ? (stats.totalAvailableStock / (stats.totalProducts * 5)).clamp(0.05, 1.0) : 0.05;
+    final catRatio = stats.totalProducts > 0 ? (stats.totalCategories / stats.totalProducts * 3).clamp(0.05, 1.0) : 0.05;
+    final sellThrough = (stats.todaySoldProducts + stats.totalAvailableStock) > 0
+        ? (stats.todaySoldProducts / (stats.todaySoldProducts + stats.totalAvailableStock)).clamp(0.05, 1.0)
+        : 0.05;
+    final lowStockRatio = stats.totalProducts > 0 ? (stats.lowStockProducts / stats.totalProducts).clamp(0.05, 1.0) : 0.05;
+    final oosRatio = stats.totalProducts > 0 ? (stats.outOfStockProducts / stats.totalProducts).clamp(0.05, 1.0) : 0.05;
+
+    final cards = <_OverviewCardData>[
+      _OverviewCardData(label: 'Total Products', value: '${stats.totalProducts}', icon: Icons.inventory_2_rounded, color: AppColors.blue, bar: stockedRatio, route: AppRoutes.products),
+      _OverviewCardData(label: 'Total Stock', value: '${stats.totalAvailableStock}', icon: Icons.warehouse_rounded, color: AppColors.primary, bar: stockVsProducts, route: AppRoutes.inventory),
+      _OverviewCardData(label: 'Categories', value: '${stats.totalCategories}', icon: Icons.category_rounded, color: AppColors.green, bar: catRatio, route: AppRoutes.categories),
+      _OverviewCardData(label: 'Sold Today', value: '${stats.todaySoldProducts}', icon: Icons.shopping_cart_rounded, color: AppColors.purple, bar: sellThrough, route: AppRoutes.salesToday),
+      _OverviewCardData(label: 'Low Stock', value: '${stats.lowStockProducts}', icon: Icons.warning_rounded, color: AppColors.orange, bar: lowStockRatio, route: AppRoutes.inventory),
+      _OverviewCardData(label: 'Out of Stock', value: '${stats.outOfStockProducts}', icon: Icons.error_outline_rounded, color: AppColors.red, bar: oosRatio, route: AppRoutes.inventory),
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle(context, 'Overview', 'Your business at a glance'),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: StatCard(
-                label: 'Total Products',
-                value: '${stats.totalProducts}',
-                icon: Icons.inventory_2_rounded,
-                iconColor: AppColors.blue,
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: cards.map((c) {
+            return SizedBox(
+              width: (MediaQuery.of(context).size.width - 42) / 2,
+              child: GestureDetector(
+                onTap: c.route != null ? () => Navigator.pushNamed(context, c.route!) : null,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.cardDark : Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withAlpha(6), blurRadius: 10, offset: const Offset(0, 3)),
+                      BoxShadow(color: c.color.withAlpha(6), blurRadius: 20, offset: const Offset(0, 6)),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Stack(
+                        children: [
+                          Positioned(
+                            right: -6, top: -6,
+                            child: Icon(c.icon, size: 48, color: c.color.withAlpha(10)),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 28, height: 28,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [c.color.withAlpha(30), c.color.withAlpha(10)],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(c.icon, size: 14, color: c.color),
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  c.value,
+                                  style: TextStyle(
+                                    fontFamily: 'Hanken Grotesk',
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.5,
+                                    height: 0.95,
+                                    color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  c.label,
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        height: 2.5,
+                        margin: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: c.color.withAlpha(15),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                        alignment: Alignment.centerLeft,
+                        child: FractionallySizedBox(
+                          widthFactor: c.bar,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [c.color, c.color.withAlpha(120)],
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                              ),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: StatCard(
-                label: 'Total Stock',
-                value: '${stats.totalAvailableStock}',
-                icon: Icons.warehouse_rounded,
-                iconColor: AppColors.primary,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: StatCard(
-                label: "Today's Revenue",
-                value: '\$${stats.todaySalesAmount.toStringAsFixed(0)}',
-                icon: Icons.attach_money_rounded,
-                iconColor: AppColors.green,
-                change: 12.5,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: StatCard(
-                label: 'Sold Today',
-                value: '${stats.todaySoldProducts}',
-                icon: Icons.shopping_cart_rounded,
-                iconColor: AppColors.purple,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: StatCard(
-                label: 'Low Stock Items',
-                value: '${stats.lowStockProducts}',
-                icon: Icons.warning_rounded,
-                iconColor: AppColors.orange,
-                subtitle: 'Need immediate restock',
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: StatCard(
-                label: 'Out of Stock',
-                value: '${stats.outOfStockProducts}',
-                icon: Icons.error_outline_rounded,
-                iconColor: AppColors.red,
-              ),
-            ),
-          ],
+            );
+          }).toList(),
         ),
       ],
     );
   }
 
+  List<double> _normalizeBars(List<double> values) {
+    if (values.isEmpty) return List.filled(7, 0.1);
+    final max = values.reduce((a, b) => a > b ? a : b);
+    if (max == 0) return List.filled(values.length, 0.1);
+    return values.map((v) => (v / max).clamp(0.05, 1.0)).toList();
+  }
+
   Widget _buildAnalyticsSection(BuildContext context, DashboardStats stats) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final salesBars = _normalizeBars(stats.dailySales);
+    final profitBars = _normalizeBars(stats.dailyProfit);
+    final weeklyAvg = stats.dailySales.isNotEmpty
+        ? stats.dailySales.reduce((a, b) => a + b) / stats.dailySales.length
+        : 0.0;
+    final todayVsAvg = weeklyAvg > 0
+        ? ((stats.todaySalesAmount - weeklyAvg) / weeklyAvg * 100)
+        : 0.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,9 +330,9 @@ class _DashboardScreenState extends State<DashboardScreen>
               child: _MiniChartCard(
                 title: 'Sales Trend',
                 value: '\$${stats.todaySalesAmount.toStringAsFixed(0)}',
-                percentage: '+12.5%',
-                isUp: true,
-                bars: [0.3, 0.5, 0.4, 0.7, 0.6, 0.8, 0.75],
+                percentage: '${todayVsAvg >= 0 ? '+' : ''}${todayVsAvg.toStringAsFixed(1)}%',
+                isUp: todayVsAvg >= 0,
+                bars: salesBars,
                 color: AppColors.primary,
                 isDark: isDark,
               ),
@@ -275,11 +340,11 @@ class _DashboardScreenState extends State<DashboardScreen>
             const SizedBox(width: 10),
             Expanded(
               child: _MiniChartCard(
-                title: 'Revenue',
-                value: '\$${(stats.todaySalesAmount * 3).toStringAsFixed(0)}',
-                percentage: '+8.3%',
-                isUp: true,
-                bars: [0.5, 0.6, 0.45, 0.75, 0.65, 0.85, 0.7],
+                title: 'Profit Trend',
+                value: '\$${stats.todayProfit.toStringAsFixed(0)}',
+                percentage: '+${stats.dailyProfit.isNotEmpty && stats.dailyProfit.length > 1 ? ((stats.dailyProfit.last - stats.dailyProfit.first) / (stats.dailyProfit.first.abs().clamp(1, double.infinity)) * 100).toStringAsFixed(1) : '0'}%',
+                isUp: stats.dailyProfit.isEmpty || stats.dailyProfit.last >= (stats.dailyProfit.length > 1 ? stats.dailyProfit.first : 0),
+                bars: profitBars,
                 color: AppColors.blue,
                 isDark: isDark,
               ),
@@ -293,9 +358,9 @@ class _DashboardScreenState extends State<DashboardScreen>
               child: _MiniChartCard(
                 title: 'Stock Growth',
                 value: '${stats.totalAvailableStock}',
-                percentage: '+5.2%',
-                isUp: true,
-                bars: [0.6, 0.55, 0.65, 0.6, 0.7, 0.68, 0.75],
+                percentage: '+${stats.recentlyAddedProducts.isNotEmpty ? ((stats.recentlyAddedProducts.length / stats.totalProducts.clamp(1, double.infinity)) * 100).toStringAsFixed(1) : '0'}%',
+                isUp: stats.recentlyAddedProducts.isNotEmpty,
+                bars: [0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6],
                 color: AppColors.purple,
                 isDark: isDark,
               ),
@@ -305,9 +370,9 @@ class _DashboardScreenState extends State<DashboardScreen>
               child: _MiniChartCard(
                 title: 'Profit Margin',
                 value: '${_calculateProfitMargin(stats).toStringAsFixed(1)}%',
-                percentage: '+2.1%',
-                isUp: true,
-                bars: [0.4, 0.45, 0.5, 0.48, 0.52, 0.55, 0.53],
+                percentage: stats.todayProfit > 0 ? '+${(stats.todayProfit / stats.todaySalesAmount.clamp(1, double.infinity) * 100).toStringAsFixed(1)}%' : '0%',
+                isUp: stats.todayProfit > 0,
+                bars: profitBars.isNotEmpty ? profitBars.sublist(0, profitBars.length > 4 ? 4 : profitBars.length) : [0.1],
                 color: AppColors.orange,
                 isDark: isDark,
               ),
@@ -353,7 +418,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       ),
                     ),
                     Text(
-                      '${healthScore.toStringAsFixed(0)}',
+                      healthScore.toStringAsFixed(0),
                       style: AppTextStyles.amountMd.copyWith(
                         color: healthScore >= 80
                             ? AppColors.green
@@ -464,29 +529,6 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildRecentAddedProducts(BuildContext context, DashboardStats stats) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle(context, 'Recently Added', 'Latest products in inventory'),
-        const SizedBox(height: 12),
-        Column(
-          children: stats.recentlyAddedProducts.take(5).map((product) {
-            return _ProductRow(
-              product: product,
-              isDark: Theme.of(context).brightness == Brightness.dark,
-              onTap: () => Navigator.pushNamed(
-                context,
-                AppRoutes.productsDetails,
-                arguments: product.productId,
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
   Widget _buildTopSelling(BuildContext context, DashboardStats stats) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -522,59 +564,106 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildQuickActions(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final actions = <_QuickAction>[
+      _QuickAction(icon: Icons.add_circle_rounded, label: 'Add Product', color: AppColors.primary, route: AppRoutes.productsAdd),
+      _QuickAction(icon: Icons.add_shopping_cart_rounded, label: 'New Sale', color: AppColors.green, route: AppRoutes.salesNew),
+      _QuickAction(icon: Icons.post_add_rounded, label: 'Add Stock', color: AppColors.orange, route: AppRoutes.dailyAdditions),
+      _QuickAction(icon: Icons.inventory_2_rounded, label: 'Products', color: AppColors.blue, route: AppRoutes.products),
+      _QuickAction(icon: Icons.warehouse_rounded, label: 'Inventory', color: AppColors.teal, route: AppRoutes.inventory),
+      _QuickAction(icon: Icons.category_rounded, label: 'Categories', color: AppColors.purple, route: AppRoutes.categories),
+      _QuickAction(icon: Icons.people_rounded, label: 'Customers', color: AppColors.pink, route: AppRoutes.customers),
+      _QuickAction(icon: Icons.history_rounded, label: 'Sales History', color: AppColors.purple, route: AppRoutes.salesHistory),
+      _QuickAction(icon: Icons.today_rounded, label: "Today's Sales", color: AppColors.orange, route: AppRoutes.salesToday),
+      _QuickAction(icon: Icons.assessment_rounded, label: 'Reports', color: AppColors.red, route: AppRoutes.reports),
+      _QuickAction(icon: Icons.verified_rounded, label: 'Warranty', color: AppColors.teal, route: AppRoutes.warranty),
+      _QuickAction(icon: Icons.bug_report_rounded, label: 'Issues', color: AppColors.red, route: AppRoutes.productIssues),
+      _QuickAction(icon: Icons.swap_horiz_rounded, label: 'Replacements', color: AppColors.orange, route: AppRoutes.replacements),
+      _QuickAction(icon: Icons.search_rounded, label: 'Search', color: AppColors.grey, route: AppRoutes.search),
+      _QuickAction(icon: Icons.settings_rounded, label: 'Settings', color: AppColors.greyDark, route: AppRoutes.settings),
+    ];
+    final itemWidth = (MediaQuery.of(context).size.width - 56) / 4;
+    final totalItems = actions.length;
+    final remainder = totalItems % 4;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle(context, 'Quick Actions', 'Frequently used tasks'),
+        _buildSectionTitle(context, 'Quick Actions', 'All app pages'),
         const SizedBox(height: 12),
-        Row(
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
-            Expanded(
-              child: _ActionButton(
-                icon: Icons.add_circle_rounded,
-                label: 'Add Product',
-                color: AppColors.primary,
-                isDark: isDark,
-                onTap: () => Navigator.pushNamed(context, AppRoutes.productsAdd),
+            ...actions.map((a) {
+            return SizedBox(
+              width: itemWidth,
+              child: GestureDetector(
+                onTap: () => Navigator.pushNamed(context, a.route),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.cardDark : Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: a.color.withAlpha(20),
+                      width: 0.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: a.color.withAlpha(10),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withAlpha(6),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              a.color.withAlpha(30),
+                              a.color.withAlpha(10),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(a.icon, size: 16, color: a.color),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        a.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _ActionButton(
-                icon: Icons.add_shopping_cart_rounded,
-                label: 'New Sale',
-                color: AppColors.blue,
-                isDark: isDark,
-                onTap: () => Navigator.pushNamed(context, AppRoutes.salesNew),
-              ),
-            ),
+            );
+          }),
+          if (remainder > 0) ...[
+            ...List.generate(4 - remainder, (_) => SizedBox(width: itemWidth)),
           ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: _ActionButton(
-                icon: Icons.post_add_rounded,
-                label: 'Add Stock',
-                color: AppColors.orange,
-                isDark: isDark,
-                onTap: () => Navigator.pushNamed(context, AppRoutes.dailyAdditions),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _ActionButton(
-                icon: Icons.assessment_rounded,
-                label: 'Reports',
-                color: AppColors.purple,
-                isDark: isDark,
-                onTap: () => Navigator.pushNamed(context, AppRoutes.reports),
-              ),
-            ),
-          ],
-        ),
+        ],
+      ),
       ],
     );
   }
@@ -739,7 +828,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   double _calculateProfitMargin(DashboardStats stats) {
     if (stats.todaySalesAmount == 0) return 0;
-    return 25.5;
+    return (stats.todayProfit / stats.todaySalesAmount) * 100;
   }
 
   Color _getTextColor(BuildContext context) {
@@ -759,19 +848,36 @@ class _WelcomeStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: Colors.white.withAlpha(180)),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: Colors.white.withAlpha(160))),
-              const SizedBox(height: 2),
-              Text(value, style: const TextStyle(fontFamily: 'Hanken Grotesk', fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
-            ],
-          ),
-        ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withAlpha(30),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white.withAlpha(25), width: 0.5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha(25),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 18, color: Colors.white),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: Colors.white.withAlpha(180), fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 2),
+                  Text(value, style: const TextStyle(fontFamily: 'Hanken Grotesk', fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5)),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -800,49 +906,76 @@ class _MiniChartCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return ModernCard(
       padding: const EdgeInsets.all(16),
+      gradient: LinearGradient(
+        colors: [
+          color.withAlpha(12),
+          Colors.transparent,
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title, style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                width: 28, height: 28,
                 decoration: BoxDecoration(
-                  color: (isUp ? AppColors.greenBg : AppColors.redBg).withAlpha(180),
-                  borderRadius: BorderRadius.circular(4),
+                  color: color.withAlpha(25),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  title == 'Sales Trend' ? Icons.trending_up_rounded :
+                  title == 'Revenue' ? Icons.attach_money_rounded :
+                  title == 'Stock Growth' ? Icons.inventory_2_rounded :
+                  Icons.pie_chart_rounded,
+                  size: 15, color: color,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  color: (isUp ? AppColors.greenBg : AppColors.redBg).withAlpha(200),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(isUp ? Icons.trending_up : Icons.trending_down, size: 10, color: isUp ? AppColors.green : AppColors.red),
                     const SizedBox(width: 2),
-                    Text(percentage, style: TextStyle(fontFamily: 'Geist', fontSize: 9, fontWeight: FontWeight.w600, color: isUp ? AppColors.green : AppColors.red)),
+                    Text(percentage, style: TextStyle(fontFamily: 'Geist', fontSize: 9, fontWeight: FontWeight.w700, color: isUp ? AppColors.green : AppColors.red)),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(value, style: AppTextStyles.amountSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          const SizedBox(height: 10),
+          Text(title, style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+          const SizedBox(height: 2),
+          Text(value, style: AppTextStyles.amountSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E), fontWeight: FontWeight.w700)),
           const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: bars.map((bar) {
               return Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 1),
+                  padding: const EdgeInsets.symmetric(horizontal: 1.5),
                   child: Container(
                     height: 32 * bar,
                     decoration: BoxDecoration(
-                      color: color.withAlpha(120),
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
+                      gradient: LinearGradient(
+                        colors: [color.withAlpha(180), color.withAlpha(60)],
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                      ),
+                      borderRadius: BorderRadius.circular(4),
                     ),
                   ),
                 ),
               );
-            }).toList(),
+            }).toList(growable: false),
           ),
         ],
       ),
@@ -949,59 +1082,6 @@ class _ActivityTile extends StatelessWidget {
   }
 }
 
-class _ProductRow extends StatelessWidget {
-  final ProductSummary product;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _ProductRow({required this.product, required this.isDark, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return ModernCard(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      color: isDark ? AppColors.cardDark.withAlpha(150) : Colors.white.withAlpha(200),
-      onTap: onTap,
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: product.imageUrl.isNotEmpty
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.network(product.imageUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Icon(Icons.inventory_2_rounded, size: 20, color: AppColors.textMuted)))
-                : Icon(Icons.inventory_2_rounded, size: 20, color: AppColors.textMuted),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(product.productName, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
-                Text('${product.modelNumber} · ${product.categoryName}', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.primaryBg,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text('${product.availableQuantity} in stock', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.labelSm.copyWith(color: AppColors.green)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _TopSellingRow extends StatelessWidget {
   final TopSellingProduct product;
   final int rank;
@@ -1018,21 +1098,35 @@ class _TopSellingRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: (isDark ? AppColors.cardDark : Colors.white).withAlpha(180),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(60), width: 0.5),
+        gradient: LinearGradient(
+          colors: [
+            (isDark ? AppColors.cardDark : Colors.white).withAlpha(200),
+            (isDark ? AppColors.cardDark : Colors.white).withAlpha(160),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withAlpha(25), width: 0.5),
+        boxShadow: [
+          BoxShadow(color: color.withAlpha(10), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            width: 28,
-            height: 28,
+            width: 30,
+            height: 30,
             decoration: BoxDecoration(
-              color: color.withAlpha(25),
-              borderRadius: BorderRadius.circular(8),
+              gradient: LinearGradient(
+                colors: [color.withAlpha(30), color.withAlpha(15)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
-              child: Text('$rank', style: AppTextStyles.labelMd.copyWith(color: color, fontWeight: FontWeight.w700)),
+              child: Text('$rank', style: AppTextStyles.labelMd.copyWith(color: color, fontWeight: FontWeight.w800)),
             ),
           ),
           const SizedBox(width: 12),
@@ -1046,12 +1140,16 @@ class _TopSellingRow extends StatelessWidget {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: color.withAlpha(25),
-              borderRadius: BorderRadius.circular(6),
+              gradient: LinearGradient(
+                colors: [color.withAlpha(30), color.withAlpha(15)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Text('${product.totalSold} sold', style: AppTextStyles.labelSm.copyWith(color: color)),
+            child: Text('${product.totalSold} sold', style: AppTextStyles.labelSm.copyWith(color: color, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -1059,45 +1157,22 @@ class _TopSellingRow extends StatelessWidget {
   }
 }
 
-class _ActionButton extends StatelessWidget {
+class _QuickAction {
   final IconData icon;
   final String label;
   final Color color;
-  final bool isDark;
-  final VoidCallback onTap;
+  final String route;
+  const _QuickAction({required this.icon, required this.label, required this.color, required this.route});
+}
 
-  const _ActionButton({required this.icon, required this.label, required this.color, required this.isDark, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: (isDark ? AppColors.cardDark : Colors.white).withAlpha(200),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(60), width: 0.5),
-          boxShadow: [BoxShadow(color: Colors.black.withAlpha(12), blurRadius: 8, offset: const Offset(0, 2))],
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: color.withAlpha(25),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, size: 20, color: color),
-            ),
-            const SizedBox(height: 8),
-            Text(label, style: AppTextStyles.labelSm.copyWith(color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
-          ],
-        ),
-      ),
-    );
-  }
+class _OverviewCardData {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+  final double bar;
+  final String? route;
+  const _OverviewCardData({required this.label, required this.value, required this.icon, required this.color, this.bar = 0.5, this.route});
 }
 
 class _SkeletonBlock extends StatelessWidget {

@@ -6,6 +6,7 @@ class SerialNumberList extends StatelessWidget {
   final VoidCallback onAdd;
   final void Function(int index) onRemove;
   final void Function(int index) onScan;
+  final void Function(int index, String value)? onSubmitted;
 
   const SerialNumberList({
     super.key,
@@ -13,6 +14,7 @@ class SerialNumberList extends StatelessWidget {
     required this.onAdd,
     required this.onRemove,
     required this.onScan,
+    this.onSubmitted,
   });
 
   @override
@@ -38,6 +40,9 @@ class SerialNumberList extends StatelessWidget {
                 Expanded(
                   child: TextField(
                     controller: controllers[index],
+                    onSubmitted: onSubmitted != null
+                        ? (value) => onSubmitted!(index, value)
+                        : null,
                     decoration: InputDecoration(
                       hintText: 'Serial number ${index + 1}',
                       hintStyle: const TextStyle(

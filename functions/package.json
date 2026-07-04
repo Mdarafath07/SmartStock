@@ -1,0 +1,10 @@
+{
+  "name": "smartstock-sheets-sync",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.0.0",
+    "googleapis": "^140.0.0"
+  }
+}

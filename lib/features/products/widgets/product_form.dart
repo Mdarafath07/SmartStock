@@ -3,19 +3,22 @@ import 'package:provider/provider.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/features/categories/providers/category_provider.dart';
 import 'package:smartstock/features/products/models/product_model.dart';
+import 'package:smartstock/features/products/providers/product_provider.dart';
+import 'package:smartstock/features/products/screens/product_details_screen.dart';
 import 'package:smartstock/features/products/widgets/barcode_scanner_screen.dart';
 import 'package:smartstock/features/products/widgets/image_picker_widget.dart';
-import 'package:smartstock/features/products/widgets/serial_number_list.dart';
 
 class ProductForm extends StatefulWidget {
   final Product? product;
   final bool isEdit;
+  final bool hideSerials;
   final Future<void> Function(Product product, List<String> serialNumbers) onSave;
 
   const ProductForm({
     super.key,
     this.product,
     this.isEdit = false,
+    this.hideSerials = false,
     required this.onSave,
   });
 
@@ -31,7 +34,8 @@ class _ProductFormState extends State<ProductForm> {
   final _purchasePriceController = TextEditingController();
   final _sellingPriceController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _serialControllers = <TextEditingController>[];
+  final _serialInputController = TextEditingController();
+  final _pendingSerials = <String>[];
   bool _isSubmitting = false;
 
   String? _selectedCategoryId;
@@ -93,7 +97,6 @@ class _ProductFormState extends State<ProductForm> {
         _warrantyDropdownValue = 'custom';
       }
     }
-    _addSerialField();
   }
 
   String? _resolveDropdown(int months, int days) {
@@ -108,27 +111,132 @@ class _ProductFormState extends State<ProductForm> {
     return null;
   }
 
-  void _addSerialField() {
+  void _addPendingSerial() async {
+    final s = _serialInputController.text.trim();
+    if (s.isEmpty) return;
+    if (_pendingSerials.contains(s)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Serial already added in this form')),
+        );
+      }
+      return;
+    }
+    final provider = context.read<ProductProvider>();
+    final duplicate = await provider.checkDuplicateSerial(s);
+    if (duplicate != null && mounted) {
+      _showSerialExistsPopup(context, duplicate);
+      return;
+    }
     setState(() {
-      _serialControllers.add(TextEditingController());
+      _pendingSerials.add(s);
+      _serialInputController.clear();
     });
   }
 
-  void _removeSerialField(int index) {
+  void _removePendingSerial(int index) {
     setState(() {
-      _serialControllers[index].dispose();
-      _serialControllers.removeAt(index);
+      _pendingSerials.removeAt(index);
     });
   }
 
-  void _handleScan(int index) async {
+  void _handleScan() async {
     final result = await Navigator.push<String>(
       context,
       MaterialPageRoute(builder: (_) => const BarcodeScannerScreen()),
     );
-    if (result != null && index < _serialControllers.length) {
-      _serialControllers[index].text = result;
+    if (result != null && result.trim().isNotEmpty) {
+      if (!mounted) return;
+      if (_pendingSerials.contains(result.trim())) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Serial already added in this form')),
+        );
+        return;
+      }
+      final provider = context.read<ProductProvider>();
+      final duplicate = await provider.checkDuplicateSerial(result);
+      if (duplicate != null && mounted) {
+        _showSerialExistsPopup(context, duplicate);
+        return;
+      }
+      setState(() {
+        _pendingSerials.add(result.trim());
+        _serialInputController.clear();
+      });
     }
+  }
+
+  void _showSerialExistsPopup(BuildContext ctx, DuplicateSerialInfo dup) {
+    final isSold = dup.status == 'sold';
+    showDialog(
+      context: ctx,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 24),
+            SizedBox(width: 8),
+            Expanded(child: Text('Serial Already in Stock')),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(dup.existingProductName,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600, fontSize: 15)),
+            const SizedBox(height: 4),
+            Text('S/N: ${dup.serialNumber}',
+                style: const TextStyle(fontSize: 13)),
+            const SizedBox(height: 2),
+            Text('Model: ${dup.existingProductModel}',
+                style: const TextStyle(fontSize: 13)),
+            const SizedBox(height: 8),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: isSold
+                    ? Colors.red.withValues(alpha: 0.1)
+                    : Colors.green.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                isSold ? 'SOLD' : 'Available in Stock',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: isSold ? Colors.red : Colors.green,
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                ctx,
+                MaterialPageRoute(
+                  builder: (_) => ProductDetailsScreen(
+                      productId: dup.existingProductId),
+                ),
+              );
+            },
+            icon: const Icon(Icons.open_in_new, size: 16),
+            label: const Text('View Product'),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.primary,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -139,10 +247,8 @@ class _ProductFormState extends State<ProductForm> {
     _purchasePriceController.dispose();
     _sellingPriceController.dispose();
     _descriptionController.dispose();
+    _serialInputController.dispose();
     _customWarrantyController.dispose();
-    for (final c in _serialControllers) {
-      c.dispose();
-    }
     super.dispose();
   }
 
@@ -175,12 +281,9 @@ class _ProductFormState extends State<ProductForm> {
       return;
     }
 
-    final serialNumbers = _serialControllers
-        .map((c) => c.text.trim())
-        .where((s) => s.isNotEmpty)
-        .toList();
+    final serialNumbers = List<String>.from(_pendingSerials);
 
-    if (!widget.isEdit && serialNumbers.isEmpty) {
+    if (!widget.isEdit && !widget.hideSerials && serialNumbers.isEmpty) {
       if (mounted) {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -301,13 +404,119 @@ class _ProductFormState extends State<ProductForm> {
             hint: 'Product description...',
             maxLines: 3,
           ),
-          const SizedBox(height: 20),
-          SerialNumberList(
-            controllers: _serialControllers,
-            onAdd: _addSerialField,
-            onRemove: _removeSerialField,
-            onScan: _handleScan,
-          ),
+          if (!widget.hideSerials) ...[
+            const SizedBox(height: 20),
+            const Text('Serial Numbers',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.onSurface,
+                )),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _serialInputController,
+                    decoration: InputDecoration(
+                      hintText: 'Type or scan serial number',
+                      hintStyle: const TextStyle(
+                        fontFamily: 'Geist',
+                        fontSize: 13,
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                      filled: true,
+                      fillColor: AppColors.surfaceContainerLow,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    style: const TextStyle(
+                      fontFamily: 'Geist',
+                      fontSize: 13,
+                      color: AppColors.onSurface,
+                    ),
+                    onSubmitted: (_) => _addPendingSerial(),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                IconButton(
+                  onPressed: _handleScan,
+                  icon: const Icon(Icons.qr_code_scanner,
+                      color: AppColors.primary, size: 22),
+                  tooltip: 'Scan & add',
+                ),
+                FilledButton.tonalIcon(
+                  onPressed: _addPendingSerial,
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Add',
+                      style: TextStyle(fontFamily: 'Inter', fontSize: 13)),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (_pendingSerials.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              ...List.generate(_pendingSerials.length, (i) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.check_circle_outline,
+                            size: 16, color: AppColors.green),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(_pendingSerials[i],
+                              style: const TextStyle(
+                                fontFamily: 'Geist',
+                                fontSize: 13,
+                                color: AppColors.onSurface,
+                              )),
+                        ),
+                        GestureDetector(
+                          onTap: () => _removePendingSerial(i),
+                          child: const Icon(Icons.close,
+                              size: 16, color: AppColors.error),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+              if (!widget.isEdit) ...[
+                const SizedBox(height: 14),
+                _buildSummary(),
+              ],
+            ],
+          ],
           const SizedBox(height: 20),
             SizedBox(
             width: double.infinity,
@@ -455,6 +664,66 @@ class _ProductFormState extends State<ProductForm> {
         color: AppColors.onSurface,
       ),
       validator: (v) => v == null || v.isEmpty ? 'Category is required' : null,
+    );
+  }
+
+  Widget _buildSummary() {
+    final serialCount = _pendingSerials.length;
+    final purchasePrice = double.tryParse(_purchasePriceController.text) ?? 0;
+    final sellingPrice = double.tryParse(_sellingPriceController.text) ?? 0;
+    final totalPurchase = serialCount * purchasePrice;
+    final totalSelling = serialCount * sellingPrice;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Summary',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              )),
+          const SizedBox(height: 10),
+          _summaryRow('Total Items', '$serialCount unit${serialCount == 1 ? '' : 's'}'),
+          _summaryRow('Purchase Total', '\$${totalPurchase.toStringAsFixed(2)}'),
+          _summaryRow('Selling Total', '\$${totalSelling.toStringAsFixed(2)}'),
+          const Divider(height: 18),
+          _summaryRow('Est. Profit', '\$${(totalSelling - totalPurchase).toStringAsFixed(2)}',
+              valueColor: AppColors.green),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryRow(String label, String value, {Color? valueColor}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                color: AppColors.onSurfaceVariant,
+              )),
+          Text(value,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: valueColor ?? AppColors.onSurface,
+              )),
+        ],
+      ),
     );
   }
 

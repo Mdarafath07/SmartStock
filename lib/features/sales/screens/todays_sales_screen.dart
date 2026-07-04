@@ -39,6 +39,18 @@ class _TodaysSalesScreenState extends State<TodaysSalesScreen> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Row(
                 children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 38, height: 38,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.glassBg : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      child: const Icon(Icons.arrow_back_rounded, size: 20, color: Color(0xFF475569)),
+                    ),
+                  ),
                   Text(
                     "Today's Sales",
                     style: AppTextStyles.headlineMd.copyWith(

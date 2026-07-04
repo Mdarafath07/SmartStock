@@ -48,7 +48,7 @@ class InventoryProvider extends ChangeNotifier {
 
   int get totalProducts => _items.length;
   int get totalAvailable =>
-      _items.fold(0, (sum, item) => sum + item.availableStock);
+      _items.fold(0, (total, item) => total + item.availableStock);
   int get lowStockCount =>
       _items.where((item) => item.stockStatus == 'low_stock').length;
   int get outOfStockCount =>

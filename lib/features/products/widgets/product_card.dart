@@ -347,7 +347,7 @@ class ProductCard extends StatelessWidget {
     return CachedNetworkImage(
       imageUrl: product.imageUrl,
       fit: BoxFit.cover,
-      placeholder: (_, __) => Center(
+      placeholder: (_, _) => Center(
         child: SizedBox(
           width: 20,
           height: 20,
@@ -357,7 +357,7 @@ class ProductCard extends StatelessWidget {
           ),
         ),
       ),
-      errorWidget: (_, __, ___) => Center(
+      errorWidget: (_, _, _) => Center(
         child: Icon(Icons.inventory_2_rounded, size: 28, color: AppColors.textMuted.withAlpha(100)),
       ),
     );

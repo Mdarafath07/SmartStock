@@ -11,14 +11,31 @@ class ReportsScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Reports', style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
-            const SizedBox(height: 4),
-            Text('Generate and view business reports', style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 38, height: 38,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.glassBg : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      child: const Icon(Icons.arrow_back_rounded, size: 20, color: Color(0xFF475569)),
+                    ),
+                  ),
+                  Expanded(child: Text('Reports', style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)))),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text('Generate and view business reports', style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
             const SizedBox(height: 20),
             Expanded(
               child: GridView.count(
@@ -64,6 +81,7 @@ class ReportsScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

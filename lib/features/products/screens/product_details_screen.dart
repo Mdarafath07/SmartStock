@@ -197,7 +197,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     return Stack(
       children: [
         Container(
-          height: 220,
+          height: 300,
           width: double.infinity,
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -212,10 +212,26 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               ? CachedNetworkImage(
                   imageUrl: product.imageUrl,
                   fit: BoxFit.cover,
-                  errorWidget: (_, __, ___) => _buildPlaceholder(isDark),
+                  errorWidget: (_, _, _) => _buildPlaceholder(isDark),
                 )
               : _buildPlaceholder(isDark),
         ),
+        if (product.imageUrl.isNotEmpty)
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.6),
+                  ],
+                  stops: const [0.75, 1.0],
+                ),
+              ),
+            ),
+          ),
         Positioned(
           top: MediaQuery.of(context).padding.top + 8,
           left: 8,
@@ -257,10 +273,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(product.productName, style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+              Text(product.productName, style: AppTextStyles.headlineMd.copyWith(color: Colors.white)),
               const SizedBox(height: 2),
               Text('${product.brandName.isNotEmpty ? '${product.brandName} · ' : ''}${product.modelNumber}',
-                  style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+                  style: AppTextStyles.bodySm.copyWith(color: Colors.white.withValues(alpha: 0.85))),
               const SizedBox(height: 16),
             ],
           ),

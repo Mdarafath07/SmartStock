@@ -57,6 +57,18 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
       child: Row(
         children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 38, height: 38,
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: AppColors.glassBg,
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: const Icon(Icons.arrow_back_rounded, size: 20, color: Color(0xFF475569)),
+            ),
+          ),
           Container(
             width: 40, height: 40,
             decoration: BoxDecoration(
@@ -75,7 +87,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                     style: AppTextStyles.headlineMd.copyWith(
                         color: AppColors.textPrimary)),
                 Consumer<CategoryProvider>(
-                  builder: (_, p, __) => Text(
+                  builder: (_, p, _) => Text(
                     '${p.categories.length} category${p.categories.length == 1 ? '' : 'ies'}',
                     style: AppTextStyles.caption.copyWith(
                         color: AppColors.textMuted),

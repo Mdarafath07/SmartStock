@@ -212,6 +212,15 @@ class ProductProvider extends ChangeNotifier {
         throw DuplicateSerialException(duplicates);
       }
 
+      final productDoc =
+          await _firestore.collection('products').doc(productId).get();
+      final productData = productDoc.data() ?? {};
+      final productName = productData['productName'] as String? ?? 'Unknown';
+      final categoryName = productData['categoryName'] as String? ?? '';
+      final purchasePrice =
+          (productData['purchasePrice'] as num?)?.toDouble() ?? 0.0;
+      final qty = serialNumbers.length;
+
       final batch = _firestore.batch();
       for (final serial in serialNumbers) {
         final serialRef = _firestore.collection('serial_numbers').doc();
@@ -223,7 +232,19 @@ class ProductProvider extends ChangeNotifier {
         });
       }
       batch.update(_firestore.collection('products').doc(productId), {
-        'availableQuantity': FieldValue.increment(serialNumbers.length),
+        'availableQuantity': FieldValue.increment(qty),
+      });
+      batch.set(_firestore.collection('daily_additions').doc(), {
+        'productName': productName,
+        'categoryName': categoryName,
+        'quantity': qty,
+        'unitPrice': purchasePrice,
+        'totalPrice': qty * purchasePrice,
+        'notes': '',
+        'dateAdded': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
+        'reminderEnabled': false,
+        'reminderTime': null,
       });
       await batch.commit();
     } on DuplicateSerialException {
@@ -334,6 +355,60 @@ class ProductProvider extends ChangeNotifier {
     } catch (_) {
       return null;
     }
+  }
+
+  Future<DuplicateSerialInfo?> checkDuplicateSerial(String serial) async {
+    final trimmed = serial.trim();
+    if (trimmed.isEmpty) return null;
+
+    final snapshot = await _firestore
+        .collection('serial_numbers')
+        .where('serialNumber', isEqualTo: trimmed)
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isEmpty) return null;
+
+    final data = snapshot.docs.first.data();
+    final productId = data['productId'] as String? ?? '';
+    if (productId.isEmpty) return null;
+
+    final productDoc =
+        await _firestore.collection('products').doc(productId).get();
+    final productData = productDoc.data() ?? {};
+
+    DateTime? saleDate;
+    String? customerName;
+    String? customerPhone;
+    double? salePrice;
+    final saleId = data['saleId'] as String?;
+    if (saleId != null && saleId.isNotEmpty) {
+      final saleDoc =
+          await _firestore.collection('sales').doc(saleId).get();
+      if (saleDoc.exists) {
+        final saleData = saleDoc.data()!;
+        saleDate = (saleData['saleDate'] as Timestamp?)?.toDate();
+        customerName = saleData['customerName'] as String?;
+        customerPhone = saleData['customerPhone'] as String?;
+        salePrice = (saleData['salePrice'] as num?)?.toDouble();
+      }
+    }
+
+    return DuplicateSerialInfo(
+      serialNumber: trimmed,
+      existingProductId: productId,
+      existingProductName:
+          productData['productName'] as String? ?? 'Unknown',
+      existingProductModel: productData['modelNumber'] as String? ?? '',
+      status: data['status'] as String? ?? 'available',
+      createdAt:
+          (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      saleId: saleId,
+      saleDate: saleDate,
+      customerName: customerName,
+      customerPhone: customerPhone,
+      salePrice: salePrice,
+    );
   }
 
   Future<List<DuplicateSerialInfo>> _findDuplicateSerials(

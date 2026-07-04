@@ -13,6 +13,9 @@ class SettingsProvider extends ChangeNotifier {
   int _lowStockThreshold = 5;
   int _overstockThreshold = 100;
   bool _isLoading = false;
+  String _sheetsSpreadsheetId = '';
+  String _sheetsServiceAccountJson = '';
+  bool _isSyncing = false;
 
   String get storeName => _storeName;
   String get currency => _currency;
@@ -23,6 +26,9 @@ class SettingsProvider extends ChangeNotifier {
   int get lowStockThreshold => _lowStockThreshold;
   int get overstockThreshold => _overstockThreshold;
   bool get isLoading => _isLoading;
+  String get sheetsSpreadsheetId => _sheetsSpreadsheetId;
+  String get sheetsServiceAccountJson => _sheetsServiceAccountJson;
+  bool get isSyncing => _isSyncing;
 
   Future<void> loadSettings() async {
     _isLoading = true;
@@ -73,6 +79,23 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateSheetsSpreadsheetId(String value) async {
+    _sheetsSpreadsheetId = value;
+    await _service.saveSettings({'sheetsSpreadsheetId': value});
+    notifyListeners();
+  }
+
+  Future<void> updateSheetsServiceAccountJson(String value) async {
+    _sheetsServiceAccountJson = value;
+    await _service.saveSettings({'sheetsServiceAccountJson': value});
+    notifyListeners();
+  }
+
+  Future<void> setSyncing(bool value) async {
+    _isSyncing = value;
+    notifyListeners();
+  }
+
   void _apply(Map<String, dynamic> data) {
     _storeName = data['storeName'] as String? ?? _storeName;
     _currency = data['currency'] as String? ?? _currency;
@@ -82,5 +105,7 @@ class SettingsProvider extends ChangeNotifier {
     _ownerEmail = data['ownerEmail'] as String? ?? _ownerEmail;
     _lowStockThreshold = (data['lowStockThreshold'] as num?)?.toInt() ?? _lowStockThreshold;
     _overstockThreshold = (data['overstockThreshold'] as num?)?.toInt() ?? _overstockThreshold;
+    _sheetsSpreadsheetId = data['sheetsSpreadsheetId'] as String? ?? '';
+    _sheetsServiceAccountJson = data['sheetsServiceAccountJson'] as String? ?? '';
   }
 }

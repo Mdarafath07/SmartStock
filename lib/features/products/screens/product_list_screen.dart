@@ -357,7 +357,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
         mainAxisSpacing: 12,
       ),
       itemCount: 6,
-      itemBuilder: (_, __) => Container(
+      itemBuilder: (_, _) => Container(
         decoration: BoxDecoration(
           color: (isDark ? AppColors.shimmerBase : const Color(0xFFE5E7EB)).withAlpha(150),
           borderRadius: BorderRadius.circular(14),

@@ -210,7 +210,9 @@ class WarrantyService {
       'relatedSaleId': saleId,
       'oldSerialNumber': serialNumber,
       'oldPurchaseDate': oldSaleDate != null ? Timestamp.fromDate(oldSaleDate) : null,
+      // ignore: use_null_aware_elements
       if (reason != null) 'claimReason': reason,
+      // ignore: use_null_aware_elements
       if (notes != null) 'notes': notes,
     });
 

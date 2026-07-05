@@ -7,6 +7,7 @@ import 'package:smartstock/core/theme/app_theme.dart';
 import 'package:smartstock/features/categories/providers/category_provider.dart';
 import 'package:smartstock/features/customers/providers/customer_provider.dart';
 import 'package:smartstock/features/dashboard/providers/dashboard_provider.dart';
+import 'package:smartstock/features/integrations/providers/sync_provider.dart';
 import 'package:smartstock/features/inventory/providers/inventory_provider.dart';
 import 'package:smartstock/features/inventory/repositories/inventory_repository.dart';
 import 'package:smartstock/features/inventory/services/inventory_service.dart';
@@ -50,6 +51,7 @@ class SmartStockApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SaleProvider()),
         ChangeNotifierProvider(create: (_) => CustomerProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => SyncProvider()),
         ChangeNotifierProvider(create: (_) => DailyAdditionProvider()),
         ChangeNotifierProvider(create: (_) => WarrantyProvider()),
         ChangeNotifierProvider(create: (_) => ReportProvider()),
@@ -65,4 +67,8 @@ class SmartStockApp extends StatelessWidget {
       ),
     );
   }
+
+
+
+
 }

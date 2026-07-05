@@ -16,6 +16,7 @@ class SettingsProvider extends ChangeNotifier {
   String _sheetsSpreadsheetId = '';
   String _sheetsServiceAccountJson = '';
   bool _isSyncing = false;
+  bool _autoBackupEnabled = false;
 
   String get storeName => _storeName;
   String get currency => _currency;
@@ -29,6 +30,7 @@ class SettingsProvider extends ChangeNotifier {
   String get sheetsSpreadsheetId => _sheetsSpreadsheetId;
   String get sheetsServiceAccountJson => _sheetsServiceAccountJson;
   bool get isSyncing => _isSyncing;
+  bool get autoBackupEnabled => _autoBackupEnabled;
 
   Future<void> loadSettings() async {
     _isLoading = true;
@@ -96,6 +98,12 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setAutoBackup(bool value) async {
+    _autoBackupEnabled = value;
+    await _service.saveSettings({'autoBackupEnabled': value});
+    notifyListeners();
+  }
+
   void _apply(Map<String, dynamic> data) {
     _storeName = data['storeName'] as String? ?? _storeName;
     _currency = data['currency'] as String? ?? _currency;
@@ -107,5 +115,6 @@ class SettingsProvider extends ChangeNotifier {
     _overstockThreshold = (data['overstockThreshold'] as num?)?.toInt() ?? _overstockThreshold;
     _sheetsSpreadsheetId = data['sheetsSpreadsheetId'] as String? ?? '';
     _sheetsServiceAccountJson = data['sheetsServiceAccountJson'] as String? ?? '';
+    _autoBackupEnabled = data['autoBackupEnabled'] as bool? ?? false;
   }
 }

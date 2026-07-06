@@ -44,3 +44,6 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 opencode.json
+
+# API keys and secrets
+lib/core/constants/api_constants.dart

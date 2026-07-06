@@ -223,7 +223,7 @@ This project is licensed under the MIT License.
 
 ## Author
 
-**Md Arafat Hossain**
+**MOHAMMAD ARAFATH UDDIN**
 
 ---
 

@@ -160,6 +160,10 @@ class AppTheme {
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) return AppColors.primary.withAlpha(50);
           return AppColors.greyLight;
+
+
+
+
         }),
       ),
       checkboxTheme: CheckboxThemeData(

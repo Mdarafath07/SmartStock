@@ -61,7 +61,7 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
     final totalCount = provider.warranties.length;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -70,19 +70,19 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: Container(
-                  width: 38, height: 38,
-                  margin: const EdgeInsets.only(right: 10),
+                  width: 34, height: 34,
+                  margin: const EdgeInsets.only(right: 8),
                   decoration: BoxDecoration(
                     color: isDark ? AppColors.glassBg : const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(11),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.arrow_back_rounded, size: 20, color: Color(0xFF475569)),
+                  child: const Icon(Icons.arrow_back_rounded, size: 18, color: Color(0xFF475569)),
                 ),
               ),
               Expanded(
                 child: Text(
                   'Warranty Check',
-                  style: AppTextStyles.headlineLg.copyWith(
+                  style: AppTextStyles.titleLg.copyWith(
                     color: isDark
                         ? AppColors.textPrimary
                         : const Color(0xFF1A1A2E),
@@ -92,33 +92,33 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
               Icon(
                 Icons.verified_user_rounded,
                 color: isDark ? AppColors.grey : AppColors.greyDark,
-                size: 24,
+                size: 20,
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
-                child: StatCard(
+                child: _compactStatCard(
                   label: 'Active',
                   value: '$activeCount',
                   icon: Icons.check_circle_rounded,
                   iconColor: AppColors.green,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               Expanded(
-                child: StatCard(
+                child: _compactStatCard(
                   label: 'Expired',
                   value: '$expiredCount',
                   icon: Icons.cancel_rounded,
                   iconColor: AppColors.red,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               Expanded(
-                child: StatCard(
+                child: _compactStatCard(
                   label: 'Total',
                   value: '$totalCount',
                   icon: Icons.inventory_2_rounded,
@@ -132,29 +132,75 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
     );
   }
 
-  Widget _buildSearchSection(WarrantyProvider provider) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: ModernCard(
-        padding: EdgeInsets.zero,
-        child: WarrantySearchBar(
-          onSerialChanged: (value) => provider.search(value),
-          onModelChanged: (value) => provider.search(value),
-          onCategoryChanged: (value) => provider.search(value),
-        ),
+  Widget _compactStatCard({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color iconColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.dark ? AppColors.cardDark : Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(8),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
+      child: Row(
+        children: [
+          Container(
+            width: 22, height: 22,
+            decoration: BoxDecoration(
+              color: iconColor.withAlpha(25),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(icon, size: 12, color: iconColor),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(value, style: TextStyle(
+                  fontFamily: 'Hanken Grotesk',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: iconColor,
+                )),
+                Text(label, style: TextStyle(
+                  fontSize: 9,
+                  color: AppColors.textMuted,
+                )),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchSection(WarrantyProvider provider) {
+    return WarrantySearchBar(
+      onSerialChanged: (value) => provider.search(value),
+      onModelChanged: (value) => provider.search(value),
+      onCategoryChanged: (value) => provider.search(value),
     );
   }
 
   Widget _buildTabRow(WarrantyProvider provider, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Container(
         decoration: BoxDecoration(
           color: isDark ? AppColors.surface : const Color(0xFFF0F0F0),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
         ),
-        padding: const EdgeInsets.all(3),
+        padding: const EdgeInsets.all(2),
         child: Row(
           children: [
             _tabChip(
@@ -177,7 +223,7 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 6),
           decoration: BoxDecoration(
             color: isSelected
                 ? (isDark ? AppColors.cardDark : Colors.white)
@@ -248,7 +294,7 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
     return RefreshIndicator(
       onRefresh: () => provider.loadAll(),
       child: ListView.builder(
-        padding: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.only(bottom: 8),
         itemCount: warranties.length,
         itemBuilder: (context, index) {
           final warranty = warranties[index];
@@ -266,9 +312,9 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
         isDark ? AppColors.textMuted : const Color(0xFF6B7280);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       child: ModernCard(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(10),
         onTap: () {
           Navigator.pushNamed(
             context,
@@ -280,10 +326,10 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
               child: SizedBox(
-                width: 48,
-                height: 48,
+                width: 40,
+                height: 40,
                 child: warranty.imageUrl.isNotEmpty
                     ? Image.network(
                         warranty.imageUrl,
@@ -294,7 +340,7 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
                     : _productPlaceholder(isDark),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,18 +350,19 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
                       Expanded(
                         child: Text(
                           warranty.productName,
-                          style: AppTextStyles.titleSm.copyWith(
+                          style: AppTextStyles.bodyMd.copyWith(
+                            fontWeight: FontWeight.w600,
                             color: textPrimary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       StatusBadge.warranty(warranty.isActive),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   GestureDetector(
                     onLongPress: () {
                       Clipboard.setData(
@@ -327,38 +374,35 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
                     },
                     child: Text(
                       'S/N: ${warranty.serialNumber}',
-                      style: AppTextStyles.bodySm.copyWith(
+                      style: AppTextStyles.caption.copyWith(
                         color: textMuted,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 1),
                   Row(
                     children: [
                       Icon(Icons.person_outline_rounded,
-                          size: 12, color: textMuted),
-                      const SizedBox(width: 4),
+                          size: 10, color: textMuted),
+                      const SizedBox(width: 3),
                       Expanded(
                         child: Text(
                           warranty.customerName,
-                          style: AppTextStyles.bodySm.copyWith(
+                          style: AppTextStyles.caption.copyWith(
                             color: textMuted,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
+                      const SizedBox(width: 8),
                       Icon(Icons.calendar_today_rounded,
-                          size: 10, color: textMuted),
-                      const SizedBox(width: 4),
+                          size: 8, color: textMuted),
+                      const SizedBox(width: 3),
                       Text(
                         AppDateUtils.formatDate(warranty.purchaseDate),
-                        style: AppTextStyles.caption.copyWith(
+                        style: TextStyle(
+                          fontSize: 9,
                           color: textMuted,
                         ),
                       ),
@@ -375,15 +419,15 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
 
   Widget _productPlaceholder(bool isDark) {
     return Container(
-      width: 48,
-      height: 48,
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Icon(
         Icons.inventory_2_rounded,
-        size: 24,
+        size: 20,
         color: isDark ? AppColors.greyDarker : const Color(0xFFD1D5DB),
       ),
     );

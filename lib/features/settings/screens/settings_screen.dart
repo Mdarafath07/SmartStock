@@ -3,9 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/widgets/glass_card.dart';
-import 'package:smartstock/features/integrations/providers/sync_provider.dart';
 import 'package:smartstock/features/integrations/screens/sync_dashboard_screen.dart';
-import 'package:smartstock/features/integrations/services/google_sheets_backup_service.dart';
 import 'package:smartstock/features/settings/providers/settings_provider.dart';
 import 'package:smartstock/features/settings/services/settings_service.dart';
 
@@ -17,25 +15,12 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final _sheetIdController = TextEditingController();
-  final _jsonController = TextEditingController();
-
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final s = context.read<SettingsProvider>();
-      s.loadSettings();
-      _sheetIdController.text = s.sheetsSpreadsheetId;
-      _jsonController.text = s.sheetsServiceAccountJson;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await context.read<SettingsProvider>().loadSettings();
     });
-  }
-
-  @override
-  void dispose() {
-    _sheetIdController.dispose();
-    _jsonController.dispose();
-    super.dispose();
   }
 
   @override
@@ -172,203 +157,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildGoogleSheetsSection(SettingsProvider settings, bool isDark) {
-    final syncProvider = context.watch<SyncProvider>();
     return ModernCard(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(width: 34, height: 34,
-                decoration: BoxDecoration(
-                  color: AppColors.green.withAlpha(25),
-                  borderRadius: BorderRadius.circular(10)),
-                child: Icon(Icons.table_chart_rounded, size: 18, color: AppColors.green)),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text('Google Sheets Backup', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+      child: InkWell(
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SyncDashboardScreen())),
+        borderRadius: BorderRadius.circular(12),
+        child: Row(
+          children: [
+            Container(width: 42, height: 42,
+              decoration: BoxDecoration(
+                color: AppColors.green.withAlpha(25),
+                borderRadius: BorderRadius.circular(12)),
+              child: Icon(Icons.table_chart_rounded, size: 20, color: AppColors.green)),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Google Sheets Backup', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+                  const SizedBox(height: 2),
+                  Text('Configure and sync data to Google Sheets',
+                      style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8))),
+                ],
               ),
-              InkWell(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SyncDashboardScreen())),
-                child: Container(width: 34, height: 34,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withAlpha(20),
-                    borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.open_in_new_rounded, size: 18, color: AppColors.primary)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            decoration: BoxDecoration(
-              color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(150),
-              borderRadius: BorderRadius.circular(10),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-            child: TextField(
-              controller: _sheetIdController,
-              decoration: InputDecoration(
-                hintText: 'Sheet ID (from URL: /d/<ID>/edit)',
-                hintStyle: TextStyle(fontSize: 13, color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8)),
-                border: InputBorder.none,
-                isDense: true,
+            Container(width: 26, height: 26,
+              decoration: BoxDecoration(
+                color: (isDark ? AppColors.surfaceLight : const Color(0xFFF1F5F9)).withAlpha(150),
+                borderRadius: BorderRadius.circular(8),
               ),
-              style: TextStyle(fontSize: 13, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
-              onChanged: (v) {
-                settings.updateSheetsSpreadsheetId(v.trim());
-                syncProvider.configure(settings.sheetsServiceAccountJson, v.trim());
-              },
+              child: Icon(Icons.chevron_right_rounded, size: 16, color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8)),
             ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(150),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-            child: TextField(
-              controller: _jsonController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: 'Paste Service Account JSON here',
-                hintStyle: TextStyle(fontSize: 13, color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8)),
-                border: InputBorder.none,
-                isDense: true,
-              ),
-              style: TextStyle(fontSize: 11, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E), fontFamily: 'monospace'),
-              onChanged: (v) {
-                settings.updateSheetsServiceAccountJson(v.trim());
-                syncProvider.configure(v.trim(), settings.sheetsSpreadsheetId);
-              },
-            ),
-          ),
-          const SizedBox(height: 10),
-          // Auto Backup Toggle
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-            decoration: BoxDecoration(
-              color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(100),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.autorenew_rounded, size: 18, color: AppColors.green),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Auto Backup', style: AppTextStyles.bodyMd.copyWith(
-                        fontWeight: FontWeight.w500,
-                        color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
-                      )),
-                      Text('Auto-sync all data to sheets on changes',
-                          style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8))),
-                    ],
-                  ),
-                ),
-                Switch(
-                  value: syncProvider.autoSyncEnabled,
-                  onChanged: _sheetIdController.text.trim().isEmpty || _jsonController.text.trim().isEmpty
-                      ? null
-                      : (v) async {
-                          if (v) {
-                            syncProvider.configure(
-                              settings.sheetsServiceAccountJson,
-                              settings.sheetsSpreadsheetId,
-                            );
-                          }
-                          await syncProvider.setAutoSync(v);
-                          await settings.setAutoBackup(v);
-                        },
-                  activeThumbColor: AppColors.green,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 38,
-                  child: ElevatedButton.icon(
-                    onPressed: settings.isSyncing || _sheetIdController.text.trim().isEmpty || _jsonController.text.trim().isEmpty
-                        ? null
-                        : () => _syncAllNow(settings, syncProvider),
-                    icon: settings.isSyncing || syncProvider.isSyncing
-                        ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Icon(Icons.backup_rounded, size: 16),
-                    label: Text(settings.isSyncing || syncProvider.isSyncing ? 'Backing up...' : 'Backup All Now', style: TextStyle(fontSize: 13)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: SizedBox(
-                  height: 38,
-                  child: OutlinedButton.icon(
-                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SyncDashboardScreen())),
-                    icon: Icon(Icons.history_rounded, size: 16),
-                    label: Text('Backup History', style: TextStyle(fontSize: 13)),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: BorderSide(color: AppColors.primary.withAlpha(80)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 38,
-                  child: OutlinedButton.icon(
-                    onPressed: _sheetIdController.text.trim().isEmpty || _jsonController.text.trim().isEmpty
-                        ? null
-                        : () => _testConnection(settings),
-                    icon: Icon(Icons.wifi_tethering_rounded, size: 16),
-                    label: Text('Test Connection', style: TextStyle(fontSize: 13)),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.green,
-                      side: BorderSide(color: AppColors.green.withAlpha(80)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: SizedBox(
-                  height: 38,
-                  child: OutlinedButton.icon(
-                    onPressed: _sheetIdController.text.trim().isEmpty || _jsonController.text.trim().isEmpty
-                        ? null
-                        : () => _runDiagnostic(settings),
-                    icon: Icon(Icons.bug_report_rounded, size: 16),
-                    label: Text('Diagnostic', style: TextStyle(fontSize: 13)),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.orange,
-                      side: BorderSide(color: AppColors.orange.withAlpha(80)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -379,11 +200,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Data & Backup', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          Text('Data', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
           const SizedBox(height: 12),
-          _settingRow(icon: Icons.backup_rounded, label: 'Export Data', value: 'Download all data as CSV', isDark: isDark, onTap: () => _showSnackBar('Export started')),
-          Divider(height: 1, color: isDark ? AppColors.greyDarker.withAlpha(60) : const Color(0xFFE2E8F0)),
-          _settingRow(icon: Icons.restore_rounded, label: 'Import Data', value: 'Restore data from backup', isDark: isDark, onTap: () => _showSnackBar('Import started')),
+          _settingRow(icon: Icons.download_rounded, label: 'Download Data', value: 'Save all data as CSV file', isDark: isDark, onTap: () => _showSnackBar('Download started')),
         ],
       ),
     );
@@ -398,8 +217,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text('About', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
           const SizedBox(height: 12),
           _settingRow(icon: Icons.info_outline_rounded, label: 'Version', value: '1.0.0', isDark: isDark),
-          Divider(height: 1, color: isDark ? AppColors.greyDarker.withAlpha(60) : const Color(0xFFE2E8F0)),
-          _settingRow(icon: Icons.code_rounded, label: 'Developer', value: 'SmartStock Team', isDark: isDark),
         ],
       ),
     );
@@ -626,73 +443,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ]),
         ]),
       ),
-    ));
-  }
-
-  Future<void> _syncAllNow(SettingsProvider settings, SyncProvider syncProvider) async {
-    final sheetId = _sheetIdController.text.trim();
-    final json = _jsonController.text.trim();
-    settings.updateSheetsSpreadsheetId(sheetId);
-    settings.updateSheetsServiceAccountJson(json);
-    syncProvider.configure(json, sheetId);
-    final service = GoogleSheetsBackupService();
-    final err = service.validateJson(json);
-    if (err != null) { _showError(err); return; }
-    if (sheetId.isEmpty) { _showError('Sheet ID is empty'); return; }
-    settings.setSyncing(true);
-    try {
-      final result = await service.syncAll(json, sheetId);
-      _showSnackBar('Backup complete: ${result.totalRecords} records in ${result.successCount} collections');
-      if (result.hasErrors) {
-        _showError('Errors in: ${result.errors.join(', ')}');
-      }
-    } catch (e) {
-      _showError(e.toString().replaceFirst('Exception: ', ''));
-    }
-    settings.setSyncing(false);
-  }
-
-  Future<void> _testConnection(SettingsProvider settings) async {
-    final sheetId = _sheetIdController.text.trim();
-    final json = _jsonController.text.trim();
-    final service = GoogleSheetsBackupService();
-    _showSnackBar('Testing connection...');
-    final msg = await service.testConnection(json, sheetId);
-    if (msg == 'Connection OK') {
-      _showSnackBar('✅ Connection successful!');
-    } else {
-      _showError(msg);
-    }
-  }
-
-  Future<void> _runDiagnostic(SettingsProvider settings) async {
-    final sheetId = _sheetIdController.text.trim();
-    final json = _jsonController.text.trim();
-    final service = GoogleSheetsBackupService();
-    _showSnackBar('Running diagnostic...');
-    try {
-      final result = await service.diagnosticCheck(json, sheetId);
-      if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Sheet Diagnostic'),
-          content: SingleChildScrollView(
-            child: Text(result, style: const TextStyle(fontSize: 12, fontFamily: 'monospace')),
-          ),
-          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
-        ),
-      );
-    } catch (e) {
-      _showError('Diagnostic failed: $e');
-    }
-  }
-
-  void _showError(String msg) {
-    showDialog(context: context, builder: (ctx) => AlertDialog(
-      title: Text('Sync Error', style: AppTextStyles.titleSm),
-      content: Text(msg, style: AppTextStyles.bodyMd),
-      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text('OK'))],
     ));
   }
 

@@ -5,36 +5,51 @@ import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/widgets/glass_card.dart';
 import 'package:smartstock/features/integrations/providers/sync_provider.dart';
 import 'package:smartstock/features/integrations/services/google_sheets_backup_service.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
-class SyncDashboardScreen extends StatelessWidget {
+class SyncDashboardScreen extends StatefulWidget {
   const SyncDashboardScreen({super.key});
+
+  @override
+  State<SyncDashboardScreen> createState() => _SyncDashboardScreenState();
+}
+
+class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
+  final _sheetIdController = TextEditingController();
+  final _jsonController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final s = context.read<SettingsProvider>();
+      _sheetIdController.text = s.sheetsSpreadsheetId;
+      _jsonController.text = s.sheetsServiceAccountJson;
+    });
+  }
+
+  @override
+  void dispose() {
+    _sheetIdController.dispose();
+    _jsonController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final syncProvider = context.watch<SyncProvider>();
+    final settings = context.watch<SettingsProvider>();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Google Sheets Backup'),
-        actions: [
-          IconButton(
-            icon: syncProvider.isSyncing
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.sync_rounded),
-            onPressed: syncProvider.isSyncing
-                ? null
-                : () => syncProvider.syncAll(),
-          ),
-        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          _buildConfigSection(settings, syncProvider, isDark),
+          const SizedBox(height: 16),
           _buildStatusCard(syncProvider, isDark),
           const SizedBox(height: 16),
           if (syncProvider.autoSyncEnabled)
@@ -42,6 +57,162 @@ class SyncDashboardScreen extends StatelessWidget {
           if (syncProvider.lastResult != null)
             _buildResultCard(context, syncProvider, isDark),
         ],
+      ),
+    );
+  }
+
+  Widget _buildConfigSection(SettingsProvider settings, SyncProvider syncProvider, bool isDark) {
+    return ModernCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Configuration', style: AppTextStyles.titleSm.copyWith(
+            color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+          )),
+          const SizedBox(height: 12),
+          _buildField(
+            controller: _sheetIdController,
+            hint: 'Sheet ID (from URL: /d/<ID>/edit)',
+            isDark: isDark,
+            onChanged: (v) {
+              settings.updateSheetsSpreadsheetId(v.trim());
+              syncProvider.configure(settings.sheetsServiceAccountJson, v.trim());
+            },
+          ),
+          const SizedBox(height: 8),
+          _buildField(
+            controller: _jsonController,
+            hint: 'Paste Service Account JSON here',
+            isDark: isDark,
+            monospace: true,
+            maxLines: 4,
+            onChanged: (v) {
+              settings.updateSheetsServiceAccountJson(v.trim());
+              syncProvider.configure(v.trim(), settings.sheetsSpreadsheetId);
+            },
+          ),
+          const SizedBox(height: 12),
+          Row(children: [
+            Expanded(
+              child: SizedBox(
+                height: 40,
+                child: OutlinedButton.icon(
+                  onPressed: _jsonController.text.trim().isEmpty
+                      ? null
+                      : () => _createNewSheet(settings, syncProvider),
+                  icon: settings.isSyncing
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.add_circle_outline_rounded, size: 16),
+                  label: const Text('Create Sheet', style: TextStyle(fontSize: 13)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.green,
+                    side: BorderSide(color: AppColors.green.withAlpha(80)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ),
+            if (_sheetIdController.text.trim().isNotEmpty) ...[
+              const SizedBox(width: 8),
+              Expanded(
+                child: SizedBox(
+                  height: 40,
+                  child: ElevatedButton.icon(
+                    onPressed: settings.isSyncing || syncProvider.isSyncing
+                        ? null
+                        : () => _syncAllNow(settings, syncProvider),
+                    icon: settings.isSyncing || syncProvider.isSyncing
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Icon(Icons.backup_rounded, size: 16),
+                    label: Text(settings.isSyncing || syncProvider.isSyncing ? 'Backing up...' : 'Backup All Now', style: const TextStyle(fontSize: 13)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ]),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            decoration: BoxDecoration(
+              color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(100),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.autorenew_rounded, size: 18, color: AppColors.green),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Auto Backup', style: AppTextStyles.bodyMd.copyWith(
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                      )),
+                      Text('Auto-sync all data to sheets on changes',
+                          style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8))),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: syncProvider.autoSyncEnabled,
+                  onChanged: _sheetIdController.text.trim().isEmpty || _jsonController.text.trim().isEmpty
+                      ? null
+                      : (v) async {
+                          if (v) {
+                            syncProvider.configure(
+                              settings.sheetsServiceAccountJson,
+                              settings.sheetsSpreadsheetId,
+                            );
+                          }
+                          await syncProvider.setAutoSync(v);
+                          await settings.setAutoBackup(v);
+                        },
+                  activeThumbColor: AppColors.green,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildField({
+    required TextEditingController controller,
+    required String hint,
+    required bool isDark,
+    required Function(String) onChanged,
+    bool monospace = false,
+    int maxLines = 1,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(150),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      padding: const EdgeInsets.only(left: 12, right: 4, top: 2, bottom: 2),
+      child: TextField(
+        controller: controller,
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(fontSize: 13, color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8)),
+          border: InputBorder.none,
+          isDense: true,
+        ),
+        style: TextStyle(
+          fontSize: monospace ? 11 : 13,
+          color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+          fontFamily: monospace ? 'monospace' : null,
+        ),
+        onChanged: onChanged,
       ),
     );
   }
@@ -83,8 +254,7 @@ class SyncDashboardScreen extends StatelessWidget {
                           ? 'Syncing...'
                           : 'Backup Status',
                       style: AppTextStyles.titleMd.copyWith(
-                        color:
-                            isDark ? AppColors.textPrimary : const Color(0xFF0F172A),
+                        color: isDark ? AppColors.textPrimary : const Color(0xFF0F172A),
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -93,9 +263,7 @@ class SyncDashboardScreen extends StatelessWidget {
                           ? 'Last: ${_formatTime(syncProvider.lastSyncTime!)}'
                           : 'Not backed up yet',
                       style: AppTextStyles.caption.copyWith(
-                        color: isDark
-                            ? AppColors.textMuted
-                            : const Color(0xFF64748B),
+                        color: isDark ? AppColors.textMuted : const Color(0xFF64748B),
                       ),
                     ),
                   ],
@@ -365,6 +533,59 @@ class SyncDashboardScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _syncAllNow(SettingsProvider settings, SyncProvider syncProvider) async {
+    final sheetId = _sheetIdController.text.trim();
+    final json = _jsonController.text.trim();
+    settings.updateSheetsSpreadsheetId(sheetId);
+    settings.updateSheetsServiceAccountJson(json);
+    syncProvider.configure(json, sheetId);
+    final service = GoogleSheetsBackupService();
+    final err = service.validateJson(json);
+    if (err != null) { _showError(err); return; }
+    if (sheetId.isEmpty) { _showError('Sheet ID is empty'); return; }
+    settings.setSyncing(true);
+    try {
+      final result = await service.syncAll(json, sheetId);
+      _showSnackBar('Backup complete: ${result.totalRecords} records in ${result.successCount} collections');
+      if (result.hasErrors) {
+        _showError('Errors in: ${result.errors.join(', ')}');
+      }
+    } catch (e) {
+      _showError(e.toString().replaceFirst('Exception: ', ''));
+    }
+    settings.setSyncing(false);
+  }
+
+  Future<void> _createNewSheet(SettingsProvider settings, SyncProvider syncProvider) async {
+    final json = _jsonController.text.trim();
+    final service = GoogleSheetsBackupService();
+    final err = service.validateJson(json);
+    if (err != null) { _showError(err); return; }
+    settings.setSyncing(true);
+    try {
+      final sheetId = await service.createSpreadsheet(json);
+      _sheetIdController.text = sheetId;
+      settings.updateSheetsSpreadsheetId(sheetId);
+      syncProvider.configure(json, sheetId);
+      _showSnackBar('New Google Sheet created! ID: $sheetId');
+    } catch (e) {
+      _showError(e.toString().replaceFirst('Exception: ', ''));
+    }
+    settings.setSyncing(false);
+  }
+
+  void _showError(String msg) {
+    showDialog(context: context, builder: (ctx) => AlertDialog(
+      title: Text('Error', style: AppTextStyles.titleSm),
+      content: Text(msg, style: AppTextStyles.bodyMd),
+      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+    ));
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   String _formatTime(DateTime dt) {

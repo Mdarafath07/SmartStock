@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
+import 'package:smartstock/features/products/widgets/barcode_scanner_screen.dart';
 
 class WarrantySearchBar extends StatefulWidget {
   final ValueChanged<String> onSerialChanged;
@@ -45,12 +46,21 @@ class _WarrantySearchBarState extends State<WarrantySearchBar> {
       _modelController.text.isNotEmpty ||
       _categoryController.text.isNotEmpty;
 
+  Future<void> _scanQrCode() async {
+    final code = await Navigator.push<String>(
+      context, MaterialPageRoute(builder: (_) => const BarcodeScannerScreen()),
+    );
+    if (code == null || code.isEmpty) return;
+    _serialController.text = code;
+    widget.onSerialChanged(code);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           child: TextField(
             controller: _serialController,
             onChanged: widget.onSerialChanged,
@@ -67,6 +77,11 @@ class _WarrantySearchBarState extends State<WarrantySearchBar> {
                       onPressed: _clearAll,
                       splashRadius: 18,
                     ),
+                  IconButton(
+                    icon: const Icon(Icons.qr_code_scanner_rounded, size: 20),
+                    onPressed: _scanQrCode,
+                    splashRadius: 18,
+                  ),
                   IconButton(
                     icon: Icon(
                       _showFilters

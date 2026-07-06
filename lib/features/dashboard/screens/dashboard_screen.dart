@@ -671,7 +671,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildSkeletonLoading() {
     final isDark = true;
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+      padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 12, 16, 100),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

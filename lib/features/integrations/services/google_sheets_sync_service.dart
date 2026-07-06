@@ -28,7 +28,7 @@ class GoogleSheetsSyncService {
         .collection('sales')
         .where('saleDate', isGreaterThanOrEqualTo: Timestamp.fromDate(today))
         .where('saleDate', isLessThan: Timestamp.fromDate(tomorrow))
-        .get();
+        .get(const GetOptions(source: Source.server));
 
     double totalSales = 0;
     double totalProfit = 0;
@@ -53,7 +53,9 @@ class GoogleSheetsSyncService {
       ]);
     }
 
-    final settingsDoc = await _firestore.collection('settings').doc('app_settings').get();
+    final settingsDoc = await _firestore.collection('settings').doc('app_settings').get(
+      const GetOptions(source: Source.server),
+    );
     final storeName = (settingsDoc.data() ?? {})['storeName'] ?? 'My Store';
 
     final creds = ServiceAccountCredentials.fromJson(jsonDecode(serviceAccountJson));
@@ -127,7 +129,7 @@ class GoogleSheetsSyncService {
         .collection('sales')
         .where('saleDate', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
         .where('saleDate', isLessThan: Timestamp.fromDate(end))
-        .get();
+        .get(const GetOptions(source: Source.server));
 
     double totalSales = 0;
     double totalProfit = 0;
@@ -140,7 +142,9 @@ class GoogleSheetsSyncService {
       count++;
     }
 
-    final settingsDoc = await _firestore.collection('settings').doc('app_settings').get();
+    final settingsDoc = await _firestore.collection('settings').doc('app_settings').get(
+      const GetOptions(source: Source.server),
+    );
     final storeName = (settingsDoc.data() ?? {})['storeName'] ?? 'My Store';
 
     final creds = ServiceAccountCredentials.fromJson(jsonDecode(serviceAccountJson));

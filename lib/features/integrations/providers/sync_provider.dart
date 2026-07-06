@@ -36,6 +36,7 @@ class SyncProvider extends ChangeNotifier {
       await syncAll();
     } else {
       _stopListening();
+
     }
   }
 

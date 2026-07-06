@@ -376,7 +376,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
       String customerName, List<Sale> sales, double customerTotal) {
     final timeFormat = DateFormat('hh:mm a');
     return ModernCard(
-      margin: const EdgeInsets.only(top: 8),
+      margin: const EdgeInsets.only(top: 12, bottom: 4),
       padding: EdgeInsets.zero,
       borderRadius: 12,
       child: Column(

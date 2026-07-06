@@ -132,9 +132,14 @@ class GoogleSheetsBackupService {
       final client = await clientViaServiceAccount(creds, [SheetsApi.spreadsheetsScope]);
       final sheets = SheetsApi(client);
       try {
-        await sheets.spreadsheets.get(spreadsheetId);
-        // Try writing a test value
-        const sheetName = '_test_conn';
+        final spreadsheet = await sheets.spreadsheets.get(spreadsheetId);
+        // Use the first existing sheet for the test write
+        final firstSheet = spreadsheet.sheets?.firstOrNull;
+        if (firstSheet == null) {
+          return 'Connection failed: spreadsheet has no sheets';
+        }
+        final sheetName = firstSheet.properties!.title!;
+        // Verify write capability by writing AND reading back
         try {
           await sheets.spreadsheets.values.update(
             ValueRange.fromJson({
@@ -142,16 +147,55 @@ class GoogleSheetsBackupService {
               'majorDimension': 'ROWS',
             }),
             spreadsheetId,
-            '$sheetName!A1',
+            '$sheetName!Z1',
             valueInputOption: 'RAW',
           );
-        } catch (_) {}
+          final readBack = await sheets.spreadsheets.values.get(
+            spreadsheetId,
+            '$sheetName!Z1:Z1',
+          );
+          if (readBack.values == null ||
+              readBack.values!.isEmpty ||
+              readBack.values![0][0] != 'SmartStock OK') {
+            return 'Connection failed: write verification failed - service account may not have write access';
+          }
+          // Clean up the test value
+          try {
+            await sheets.spreadsheets.values.clear(
+              ClearValuesRequest(),
+              spreadsheetId,
+              '$sheetName!Z1:Z1',
+            );
+          } catch (_) {}
+        } catch (e) {
+          return 'Connection failed: write error - $e';
+        }
         return 'Connection OK';
       } finally {
         client.close();
       }
     } catch (e) {
       return 'Connection failed: $e';
+    }
+  }
+
+  Future<String> createSpreadsheet(String serviceAccountJson, {String? title}) async {
+    try {
+      final creds = ServiceAccountCredentials.fromJson(jsonDecode(serviceAccountJson));
+      final client = await clientViaServiceAccount(creds, [SheetsApi.spreadsheetsScope]);
+      final sheets = SheetsApi(client);
+      try {
+        final spreadsheet = await sheets.spreadsheets.create(
+          Spreadsheet(properties: SpreadsheetProperties(
+            title: title ?? 'SmartStock Backup',
+          )),
+        );
+        return spreadsheet.spreadsheetId!;
+      } finally {
+        client.close();
+      }
+    } catch (e) {
+      throw Exception('Failed to create spreadsheet: $e');
     }
   }
 
@@ -184,6 +228,14 @@ class GoogleSheetsBackupService {
 
         await _writeBackupLog(sheets, spreadsheetId, existingSheets, result);
 
+        // Generate monthly sales report sheets
+        try {
+          await _generateMonthlyReports(sheets, spreadsheetId, existingSheets);
+        } catch (e) {
+          result.errors.add('Monthly reports: $e');
+          result.errorCount++;
+        }
+
         // Final verification: check all sheets exist
         final updatedSpreadsheet = await sheets.spreadsheets.get(spreadsheetId);
         final finalSheetNames = updatedSpreadsheet.sheets!
@@ -213,7 +265,9 @@ class GoogleSheetsBackupService {
     CollectionConfig config,
     Set<String> existingSheets,
   ) async {
-    final snap = await _firestore.collection(config.collection).get();
+    final snap = await _firestore.collection(config.collection).get(
+      const GetOptions(source: Source.server),
+    );
 
     if (!existingSheets.contains(config.sheetName)) {
       await sheets.spreadsheets.batchUpdate(
@@ -234,33 +288,30 @@ class GoogleSheetsBackupService {
         config.rowMapper(doc.data(), doc.id),
     ];
 
-    final range = '${config.sheetName}!A1';
+    // Clear existing content first to prevent data accumulation
+    final clearRange = '${config.sheetName}!A1:ZZZ99999';
+    try {
+      await sheets.spreadsheets.values.clear(
+        ClearValuesRequest(),
+        spreadsheetId,
+        clearRange,
+      );
+    } catch (_) {
+      // If clear fails (e.g., range invalid), continue anyway
+    }
 
-    // First: write header
+    // Write ALL rows (header + data) at once, completely replacing old data
     await sheets.spreadsheets.values.update(
       ValueRange.fromJson({
-        'values': [allRows.first],
+        'values': allRows,
         'majorDimension': 'ROWS',
       }),
       spreadsheetId,
-      range,
+      '${config.sheetName}!A1',
       valueInputOption: 'RAW',
     );
 
-    // Second: append data rows if any
-    if (allRows.length > 1) {
-      await sheets.spreadsheets.values.append(
-        ValueRange.fromJson({
-          'values': allRows.sublist(1),
-          'majorDimension': 'ROWS',
-        }),
-        spreadsheetId,
-        range,
-        valueInputOption: 'RAW',
-      );
-    }
-
-    // Verify: read back
+    // Verify: read back header row
     try {
       final readBack = await sheets.spreadsheets.values.get(
         spreadsheetId,
@@ -271,7 +322,6 @@ class GoogleSheetsBackupService {
       }
     } catch (e) {
       if (e is Exception && e.toString().contains('Write verification')) rethrow;
-      // Ignore read errors - write might still have worked
     }
 
     return allRows.length - 1;
@@ -293,6 +343,18 @@ class GoogleSheetsBackupService {
         ]),
         spreadsheetId,
       );
+      // Write header only when creating the sheet for the first time
+      await sheets.spreadsheets.values.update(
+        ValueRange.fromJson({
+          'values': [
+            ['Backup Time', 'Duration (s)', 'Collections Synced', 'Total Records', 'Success', 'Errors', 'Details'],
+          ],
+          'majorDimension': 'ROWS',
+        }),
+        spreadsheetId,
+        '$logName!A1',
+        valueInputOption: 'RAW',
+      );
     }
 
     final dateStr = DateFormat('yyyy-MM-dd HH:mm:ss').format(result.startTime!);
@@ -301,10 +363,10 @@ class GoogleSheetsBackupService {
         .map((e) => '${e.key}: ${e.value >= 0 ? e.value.toString() : "FAILED"}')
         .join(', ');
 
+    // Only append the data row (header is written once)
     await sheets.spreadsheets.values.append(
       ValueRange.fromJson({
         'values': [
-          ['Backup Time', 'Duration (s)', 'Collections Synced', 'Total Records', 'Success', 'Errors', 'Details'],
           [dateStr, duration, result.successCount + result.errorCount,
            result.totalRecords, result.successCount, result.errorCount, details],
         ],
@@ -314,6 +376,81 @@ class GoogleSheetsBackupService {
       '$logName!A1',
       valueInputOption: 'RAW',
     );
+  }
+
+  Future<void> _generateMonthlyReports(
+    SheetsApi sheets,
+    String spreadsheetId,
+    Set<String> existingSheets,
+  ) async {
+    final salesSnap = await _firestore
+        .collection('sales')
+        .get(const GetOptions(source: Source.server));
+
+    if (salesSnap.docs.isEmpty) return;
+
+    final Map<String, List<Map<String, dynamic>>> monthSales = {};
+    for (final doc in salesSnap.docs) {
+      final data = doc.data();
+      if (data['saleType'] == 'warranty_claim') continue;
+      final saleDate = data['saleDate'];
+      String monthKey;
+      if (saleDate is Timestamp) {
+        monthKey = DateFormat('yyyy-MM').format(saleDate.toDate());
+      } else if (saleDate is DateTime) {
+        monthKey = DateFormat('yyyy-MM').format(saleDate);
+      } else {
+        continue;
+      }
+      monthSales.putIfAbsent(monthKey, () => []).add(data);
+    }
+
+    final sortedMonths = monthSales.keys.toList()..sort();
+
+    for (final monthKey in sortedMonths) {
+      final sales = monthSales[monthKey]!;
+      double totalSales = 0;
+      double totalProfit = 0;
+      for (final s in sales) {
+        totalSales += (s['salePrice'] as num?)?.toDouble() ?? 0;
+        totalProfit += (s['profit'] as num?)?.toDouble() ?? 0;
+      }
+
+      if (!existingSheets.contains(monthKey)) {
+        await sheets.spreadsheets.batchUpdate(
+          BatchUpdateSpreadsheetRequest(requests: [
+            Request(addSheet: AddSheetRequest(
+              properties: SheetProperties(title: monthKey),
+            )),
+          ]),
+          spreadsheetId,
+        );
+        existingSheets.add(monthKey);
+        await sheets.spreadsheets.values.update(
+          ValueRange.fromJson({
+            'values': [
+              ['Store', 'Sales', 'Profit', 'Transactions'],
+            ],
+            'majorDimension': 'ROWS',
+          }),
+          spreadsheetId,
+          '$monthKey!A1',
+          valueInputOption: 'RAW',
+        );
+      }
+
+      await sheets.spreadsheets.values.append(
+        ValueRange.fromJson({
+          'values': [
+            ['', totalSales, totalProfit, sales.length],
+          ],
+          'majorDimension': 'ROWS',
+        }),
+        spreadsheetId,
+        '$monthKey!A:D',
+        valueInputOption: 'RAW',
+      );
+    }
   }
 
   // Row mappers

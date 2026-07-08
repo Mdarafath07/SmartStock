@@ -840,22 +840,24 @@ class _HeroStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
       decoration: BoxDecoration(
         color: Colors.white.withAlpha(20),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white.withAlpha(20), width: 0.5),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(label,
-                style: TextStyle(
-                    fontFamily: 'Inter', fontSize: 12, color: Colors.white.withAlpha(180))),
-          ),
+          Text(label,
+              maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                  fontFamily: 'Inter', fontSize: 11, color: Colors.white.withAlpha(180))),
+          const SizedBox(height: 2),
           Text(value,
+              maxLines: 1, overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                  fontFamily: 'Hanken Grotesk', fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                  fontFamily: 'Hanken Grotesk', fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
         ],
       ),
     );

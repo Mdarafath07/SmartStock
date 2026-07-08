@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:smartstock/core/routes/app_routes.dart';
@@ -82,66 +83,68 @@ class ModernAppShellState extends State<ModernAppShell>
         index: _currentIndex,
         children: _pages,
       ),
+      extendBody: true,
       bottomNavigationBar: Container(
         margin: EdgeInsets.only(
           left: 12, right: 12,
           bottom: MediaQuery.of(context).padding.bottom + 8,
         ),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
+        child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.greyLight, width: 0.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(16),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: GNav(
-              selectedIndex: _currentIndex,
-              onTabChange: switchToTab,
-              duration: const Duration(milliseconds: 300),
-              haptic: true,
-              curve: Curves.easeOutCubic,
-              gap: 4,
-              color: AppColors.grey,
-              activeColor: AppColors.primary,
-              iconSize: 22,
-              tabBackgroundColor: AppColors.primaryBg,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              tabs: const [
-                GButton(
-                  icon: Icons.grid_view_rounded,
-                  text: 'Dashboard',
-                  textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface.withAlpha(230),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: AppColors.greyLight.withAlpha(80), width: 0.5),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  child: GNav(
+                    selectedIndex: _currentIndex,
+                    onTabChange: switchToTab,
+                    duration: const Duration(milliseconds: 300),
+                    haptic: true,
+                    curve: Curves.easeOutCubic,
+                    gap: 4,
+                    color: AppColors.grey,
+                    activeColor: AppColors.primary,
+                    iconSize: 22,
+                    tabBackgroundColor: AppColors.primaryBg,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    tabs: const [
+                      GButton(
+                        icon: Icons.grid_view_rounded,
+                        text: 'Dashboard',
+                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                      ),
+                      GButton(
+                        icon: Icons.inventory_2_rounded,
+                        text: 'Products',
+                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                      ),
+                      GButton(
+                        icon: Icons.add_circle_rounded,
+                        text: 'Sale',
+                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                      ),
+                      GButton(
+                        icon: Icons.analytics_rounded,
+                        text: 'Analytics',
+                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                      ),
+                      GButton(
+                        icon: Icons.person_rounded,
+                        text: 'Profile',
+                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
                 ),
-                GButton(
-                  icon: Icons.inventory_2_rounded,
-                  text: 'Products',
-                  textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
-                ),
-                GButton(
-                  icon: Icons.add_circle_rounded,
-                  text: 'Sale',
-                  textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
-                ),
-                GButton(
-                  icon: Icons.analytics_rounded,
-                  text: 'Analytics',
-                  textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
-                ),
-                GButton(
-                  icon: Icons.person_rounded,
-                  text: 'Profile',
-                  textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
-                ),
-              ],
+              ),
             ),
           ),
         ),

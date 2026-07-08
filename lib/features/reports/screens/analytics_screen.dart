@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/utils/formatters.dart';
+import 'package:smartstock/features/products/providers/product_provider.dart';
 import 'package:smartstock/features/reports/providers/report_provider.dart';
 import 'package:smartstock/features/settings/providers/settings_provider.dart';
 import 'package:smartstock/features/reports/widgets/download_report_button.dart';
@@ -103,6 +104,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final symbol = context.watch<SettingsProvider>().currencySymbol;
+    final stockValue = context.watch<ProductProvider>().products.fold<double>(0, (sum, p) => sum + p.sellingPrice * p.availableQuantity);
 
     return SafeArea(
       child: Consumer<ReportProvider>(
@@ -133,9 +135,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       key: ValueKey(_tab),
                       child: Column(
                         children: [
-                          if (_tab == 0) _buildDaily(provider, symbol),
-                          if (_tab == 1) _buildMonthly(provider, symbol),
-                          if (_tab == 2) _buildYearly(provider, symbol),
+                          if (_tab == 0) _buildDaily(provider, symbol, stockValue),
+                          if (_tab == 1) _buildMonthly(provider, symbol, stockValue),
+                          if (_tab == 2) _buildYearly(provider, symbol, stockValue),
                         ],
                       ),
                     ),
@@ -275,7 +277,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
 
   // ─── Daily ───
-  Widget _buildDaily(ReportProvider provider, String symbol) {
+  Widget _buildDaily(ReportProvider provider, String symbol, double stockValue) {
     final r = provider.dailyReport;
     final margin = (r != null && r.totalSales > 0)
         ? '${(r.totalProfit / r.totalSales * 100).toStringAsFixed(1)}%'
@@ -294,6 +296,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           label: "Today's Revenue",
           amount: AppFormatters.formatCurrency(r?.totalSales ?? 0, symbol: symbol),
           stats: [
+            _StatData(label: 'Stock Value', value: AppFormatters.formatCurrency(stockValue, symbol: symbol)),
             _StatData(label: 'Profit', value: AppFormatters.formatCurrency(r?.totalProfit ?? 0, symbol: symbol)),
             _StatData(label: 'Margin', value: margin),
           ],
@@ -309,7 +312,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
 
   // ─── Monthly ───
-  Widget _buildMonthly(ReportProvider provider, String symbol) {
+  Widget _buildMonthly(ReportProvider provider, String symbol, double stockValue) {
     final r = provider.monthlyReport;
     final margin = (r != null && r.totalSales > 0)
         ? '${(r.totalProfit / r.totalSales * 100).toStringAsFixed(1)}%'
@@ -346,6 +349,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           label: 'Monthly Revenue',
           amount: AppFormatters.formatCurrency(r?.totalSales ?? 0, symbol: symbol),
           stats: [
+            _StatData(label: 'Stock Value', value: AppFormatters.formatCurrency(stockValue, symbol: symbol)),
             _StatData(label: 'Profit', value: AppFormatters.formatCurrency(r?.totalProfit ?? 0, symbol: symbol)),
             _StatData(label: 'Margin', value: margin),
           ],
@@ -361,7 +365,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
 
   // ─── Yearly ───
-  Widget _buildYearly(ReportProvider provider, String symbol) {
+  Widget _buildYearly(ReportProvider provider, String symbol, double stockValue) {
     final reports = provider.yearlyReports;
     final totalSales = reports.fold<double>(0, (s, r) => s + r.totalSales);
     final totalProfit = reports.fold<double>(0, (s, r) => s + r.totalProfit);
@@ -394,6 +398,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           label: 'Yearly Revenue',
           amount: AppFormatters.formatCurrency(totalSales, symbol: symbol),
           stats: [
+            _StatData(label: 'Stock Value', value: AppFormatters.formatCurrency(stockValue, symbol: symbol)),
             _StatData(label: 'Profit', value: AppFormatters.formatCurrency(totalProfit, symbol: symbol)),
             _StatData(label: 'Margin', value: margin),
           ],

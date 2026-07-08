@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:smartstock/core/routes/app_routes.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
+
 import 'package:smartstock/core/widgets/glass_card.dart';
 import 'package:smartstock/features/dashboard/providers/dashboard_provider.dart';
 import 'package:smartstock/features/dashboard/models/dashboard_stats_model.dart';
@@ -177,7 +178,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     final instock = stats.totalProducts - stats.outOfStockProducts;
     final stockedRatio = stats.totalProducts > 0 ? (instock / stats.totalProducts).clamp(0.05, 1.0) : 0.05;
     final stockVsProducts = stats.totalProducts > 0 ? (stats.totalAvailableStock / (stats.totalProducts * 5)).clamp(0.05, 1.0) : 0.05;
-    final catRatio = stats.totalProducts > 0 ? (stats.totalCategories / stats.totalProducts * 3).clamp(0.05, 1.0) : 0.05;
+    final stockValueRatio = stats.totalStockValue > 0 ? (stats.totalStockValue / (stats.totalProducts * 5000)).clamp(0.05, 1.0) : 0.05;
     final sellThrough = (stats.todaySoldProducts + stats.totalAvailableStock) > 0
         ? (stats.todaySoldProducts / (stats.todaySoldProducts + stats.totalAvailableStock)).clamp(0.05, 1.0)
         : 0.05;
@@ -187,7 +188,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     final cards = <_OverviewCardData>[
       _OverviewCardData(label: 'Total Products', value: '${stats.totalProducts}', icon: Icons.inventory_2_rounded, color: AppColors.blue, bar: stockedRatio, route: AppRoutes.products),
       _OverviewCardData(label: 'Total Stock', value: '${stats.totalAvailableStock}', icon: Icons.warehouse_rounded, color: AppColors.primary, bar: stockVsProducts, route: AppRoutes.inventory),
-      _OverviewCardData(label: 'Categories', value: '${stats.totalCategories}', icon: Icons.category_rounded, color: AppColors.green, bar: catRatio, route: AppRoutes.categories),
+      _OverviewCardData(label: 'Stock Value', value: _formatValue(stats.totalStockValue), icon: Icons.account_balance_wallet_rounded, color: AppColors.green, bar: stockValueRatio, route: AppRoutes.inventory),
       _OverviewCardData(label: 'Sold Today', value: '${stats.todaySoldProducts}', icon: Icons.shopping_cart_rounded, color: AppColors.purple, bar: sellThrough, route: AppRoutes.salesToday),
       _OverviewCardData(label: 'Low Stock', value: '${stats.lowStockProducts}', icon: Icons.warning_rounded, color: AppColors.orange, bar: lowStockRatio, route: AppRoutes.inventory),
       _OverviewCardData(label: 'Out of Stock', value: '${stats.outOfStockProducts}', icon: Icons.error_outline_rounded, color: AppColors.red, bar: oosRatio, route: AppRoutes.inventory),
@@ -299,6 +300,17 @@ class _DashboardScreenState extends State<DashboardScreen>
         ),
       ],
     );
+  }
+
+  String _formatValue(double value) {
+    if (value >= 10000000) {
+      return '${(value / 10000000).toStringAsFixed(1)}Cr';
+    } else if (value >= 100000) {
+      return '${(value / 100000).toStringAsFixed(1)}L';
+    } else if (value >= 1000) {
+      return '${(value / 1000).toStringAsFixed(1)}k';
+    }
+    return value.toStringAsFixed(0);
   }
 
   List<double> _normalizeBars(List<double> values) {

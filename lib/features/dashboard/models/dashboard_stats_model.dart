@@ -2,6 +2,7 @@ class DashboardStats {
   final int totalCategories;
   final int totalProducts;
   final int totalAvailableStock;
+  final double totalStockValue;
   final double todaySalesAmount;
   final double todayProfit;
   final int todaySoldProducts;
@@ -18,6 +19,7 @@ class DashboardStats {
     this.totalCategories = 0,
     this.totalProducts = 0,
     this.totalAvailableStock = 0,
+    this.totalStockValue = 0.0,
     this.todaySalesAmount = 0.0,
     this.todayProfit = 0.0,
     this.todaySoldProducts = 0,
@@ -37,6 +39,7 @@ class DashboardStats {
       totalProducts: (json['totalProducts'] as num?)?.toInt() ?? 0,
       totalAvailableStock:
           (json['totalAvailableStock'] as num?)?.toInt() ?? 0,
+      totalStockValue: (json['totalStockValue'] as num?)?.toDouble() ?? 0.0,
       todaySalesAmount: (json['todaySalesAmount'] as num?)?.toDouble() ?? 0.0,
       todayProfit: (json['todayProfit'] as num?)?.toDouble() ?? 0.0,
       todaySoldProducts: (json['todaySoldProducts'] as num?)?.toInt() ?? 0,
@@ -82,6 +85,7 @@ class DashboardStats {
       'totalCategories': totalCategories,
       'totalProducts': totalProducts,
       'totalAvailableStock': totalAvailableStock,
+      'totalStockValue': totalStockValue,
       'todaySalesAmount': todaySalesAmount,
       'todayProfit': todayProfit,
       'todaySoldProducts': todaySoldProducts,
@@ -102,6 +106,7 @@ class DashboardStats {
     int? totalCategories,
     int? totalProducts,
     int? totalAvailableStock,
+    double? totalStockValue,
     double? todaySalesAmount,
     double? todayProfit,
     int? todaySoldProducts,
@@ -118,6 +123,7 @@ class DashboardStats {
       totalCategories: totalCategories ?? this.totalCategories,
       totalProducts: totalProducts ?? this.totalProducts,
       totalAvailableStock: totalAvailableStock ?? this.totalAvailableStock,
+      totalStockValue: totalStockValue ?? this.totalStockValue,
       todaySalesAmount: todaySalesAmount ?? this.todaySalesAmount,
       todayProfit: todayProfit ?? this.todayProfit,
       todaySoldProducts: todaySoldProducts ?? this.todaySoldProducts,

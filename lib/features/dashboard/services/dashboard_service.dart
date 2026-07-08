@@ -34,6 +34,7 @@ class DashboardService {
       _getRecentlyAddedProducts(),
       _getRecentlySoldProducts(),
       _getDailySales(7),
+      _computeTotalStockValue(),
     ]);
 
     final totalCategories = (results[0] as AggregateQuerySnapshot).count ?? 0;
@@ -53,11 +54,13 @@ class DashboardService {
     final recentlyAdded = results[7] as List<ProductSummary>;
     final recentlySold = results[8] as List<ProductSummary>;
     final dailyData = results[9] as Map<String, List<double>>;
+    final totalStockValue = results[10] as double;
 
     return DashboardStats(
       totalCategories: totalCategories,
       totalProducts: totalProducts,
       totalAvailableStock: totalAvailableStock,
+      totalStockValue: totalStockValue,
       todaySalesAmount: todaySalesAmount,
       todayProfit: todayProfit,
       todaySoldProducts: todaySoldProducts,
@@ -70,6 +73,20 @@ class DashboardService {
       dailySales: dailyData['sales'] ?? [],
       dailyProfit: dailyData['profit'] ?? [],
     );
+  }
+
+  Future<double> _computeTotalStockValue() async {
+    final snapshot = await _firestore
+        .collection('products')
+        .get();
+    double total = 0;
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      final price = (data['sellingPrice'] as num?)?.toDouble() ?? 0.0;
+      final qty = (data['availableQuantity'] as num?)?.toInt() ?? 0;
+      total += price * qty;
+    }
+    return total;
   }
 
   Future<int> _countAllAvailableSerials() async {

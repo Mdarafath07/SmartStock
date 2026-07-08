@@ -20,6 +20,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await context.read<SettingsProvider>().loadSettings();
+      if (!mounted) return;
     });
   }
 

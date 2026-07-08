@@ -669,7 +669,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _buildSkeletonLoading() {
-    final isDark = true;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 12, 16, 100),
       child: Column(

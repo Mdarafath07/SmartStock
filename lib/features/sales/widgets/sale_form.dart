@@ -193,8 +193,8 @@ class _SaleFormState extends State<SaleForm> {
       };
     }
 
-    _scannedSerialNumbers.add(serialNumber);
     setState(() {
+      _scannedSerialNumbers.add(serialNumber);
       final existingIndex = _cartItems.indexWhere((i) => i.product.id == product.id);
       final serial = SerialNumber(id: serialId, productId: product.id, serialNumber: serialNumber, status: 'available');
       final cartProduct = product.copyWith(sellingPrice: salePrice, warrantyMonths: warrantyMonths);
@@ -258,7 +258,7 @@ class _SaleFormState extends State<SaleForm> {
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => Navigator.pop(context),
+            onTap: () => Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (route) => false),
             child: Container(
               width: 40, height: 40,
               decoration: BoxDecoration(
@@ -392,7 +392,16 @@ class _SaleFormState extends State<SaleForm> {
                 return _CartItemTile(
                   item: item,
                   isDark: isDark,
-                  onRemove: () {
+                  onRemoveSerial: (serial) {
+                    setState(() {
+                      _scannedSerialNumbers.remove(serial.serialNumber);
+                      item.serials.remove(serial);
+                      if (item.serials.isEmpty) {
+                        _cartItems.removeAt(index);
+                      }
+                    });
+                  },
+                  onRemoveAll: () {
                     setState(() {
                       _scannedSerialNumbers.removeAll(item.serials.map((s) => s.serialNumber));
                       _cartItems.removeAt(index);
@@ -489,9 +498,15 @@ class _SaleFormState extends State<SaleForm> {
 class _CartItemTile extends StatelessWidget {
   final _CartItem item;
   final bool isDark;
-  final VoidCallback onRemove;
+  final void Function(SerialNumber) onRemoveSerial;
+  final VoidCallback onRemoveAll;
 
-  const _CartItemTile({required this.item, required this.isDark, required this.onRemove});
+  const _CartItemTile({
+    required this.item,
+    required this.isDark,
+    required this.onRemoveSerial,
+    required this.onRemoveAll,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -512,7 +527,7 @@ class _CartItemTile extends StatelessWidget {
                 child: Text(item.product.productName, style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
               ),
               GestureDetector(
-                onTap: onRemove,
+                onTap: onRemoveAll,
                 child: Container(
                   width: 32, height: 32,
                   decoration: BoxDecoration(color: AppColors.redBg, borderRadius: BorderRadius.circular(8)),
@@ -528,10 +543,20 @@ class _CartItemTile extends StatelessWidget {
               children: [
                 Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle)),
                 const SizedBox(width: 8),
-                Text(s.serialNumber, style: TextStyle(fontFamily: 'Geist', fontSize: 12, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
-                const Spacer(),
+                Expanded(
+                  child: Text(s.serialNumber, style: TextStyle(fontFamily: 'Geist', fontSize: 12, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
+                ),
                 Text('\$${item.product.sellingPrice.toStringAsFixed(0)}',
                     style: AppTextStyles.labelMd.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => onRemoveSerial(s),
+                  child: Container(
+                    width: 24, height: 24,
+                    decoration: BoxDecoration(color: AppColors.redBg, borderRadius: BorderRadius.circular(6)),
+                    child: const Icon(Icons.close_rounded, size: 14, color: AppColors.red),
+                  ),
+                ),
               ],
             ),
           )),
@@ -715,11 +740,7 @@ class _PriceDialogState extends State<_PriceDialog> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: FilledButton(
-                    onPressed: () {
-                      widget.onPriceChanged(_priceController.text);
-                      widget.onWarrantyValueChanged(_warrantyController.text);
-                      Navigator.pop(context, true);
-                    },
+                    onPressed: () => Navigator.pop(context, true),
                     child: const Text('Add to Cart'),
                   ),
                 ),
@@ -1074,25 +1095,24 @@ class _AddItemSheetState extends State<_AddItemSheet> {
 
     _serialNumbers = serials;
 
-    return Container(
-      constraints: const BoxConstraints(maxHeight: 100),
-      child: ListView(
-        children: serials.map((sn) => CheckboxListTile(
-          title: Text(sn.serialNumber, style: TextStyle(fontFamily: 'Geist', fontSize: 13, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
-          value: _selectedSerialIds.contains(sn.id),
-          onChanged: (checked) {
-            setState(() {
-              if (checked == true) { _selectedSerialIds.add(sn.id); }
-              else { _selectedSerialIds.remove(sn.id); }
-            });
-          },
-          controlAffinity: ListTileControlAffinity.leading,
-          dense: true,
-          contentPadding: EdgeInsets.zero,
-          activeColor: AppColors.primary,
-          checkColor: Colors.black,
-        )).toList(),
-      ),
+    return ListView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      children: serials.map((sn) => CheckboxListTile(
+        title: Text(sn.serialNumber, style: TextStyle(fontFamily: 'Geist', fontSize: 13, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+        value: _selectedSerialIds.contains(sn.id),
+        onChanged: (checked) {
+          setState(() {
+            if (checked == true) { _selectedSerialIds.add(sn.id); }
+            else { _selectedSerialIds.remove(sn.id); }
+          });
+        },
+        controlAffinity: ListTileControlAffinity.leading,
+        dense: true,
+        contentPadding: EdgeInsets.zero,
+        activeColor: AppColors.primary,
+        checkColor: Colors.black,
+      )).toList(),
     );
   }
 }

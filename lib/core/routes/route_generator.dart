@@ -3,8 +3,7 @@ import 'package:smartstock/core/widgets/modern_app_shell.dart';
 import 'app_routes.dart';
 import '../../features/splash/screens/splash_screen.dart';
 import '../../features/daily_additions/screens/daily_additions_screen.dart';
-import '../../features/dashboard/screens/dashboard_screen.dart';
-import '../../features/products/screens/product_list_screen.dart';
+
 import '../../features/products/screens/add_product_screen.dart';
 import '../../features/products/screens/edit_product_screen.dart';
 import '../../features/products/screens/product_details_screen.dart';
@@ -12,7 +11,6 @@ import '../../features/categories/screens/category_management_screen.dart';
 import '../../features/categories/screens/add_category_screen.dart';
 import '../../features/inventory/screens/inventory_screen.dart';
 import '../../features/inventory/screens/stock_details_screen.dart';
-import '../../features/sales/screens/new_sale_screen.dart';
 import '../../features/sales/screens/todays_sales_screen.dart';
 import '../../features/sales/screens/sales_history_screen.dart';
 import '../../features/sales/screens/sale_details_screen.dart';
@@ -21,12 +19,10 @@ import '../../features/customers/screens/customer_details_screen.dart';
 import '../../features/warranty/screens/warranty_check_screen.dart';
 import '../../features/warranty/screens/warranty_details_screen.dart';
 import '../../features/reports/screens/reports_screen.dart';
-import '../../features/reports/screens/analytics_screen.dart';
 import '../../features/product_issues/screens/product_issue_list_screen.dart';
 import '../../features/product_issues/screens/product_issue_details_screen.dart';
 import '../../features/replacements/screens/replacement_list_screen.dart';
 import '../../features/replacements/screens/replacement_details_screen.dart';
-import '../../features/settings/screens/settings_screen.dart';
 import '../../features/search/screens/search_screen.dart';
 
 class RouteGenerator {
@@ -39,15 +35,9 @@ class RouteGenerator {
       case AppRoutes.splash:
         return _page(const SplashScreen(), settings);
       case AppRoutes.home:
-        return _page(ModernAppShell(
-          currentIndex: 0,
-          child: const DashboardScreen(),
-        ), settings);
+        return _page(const ModernAppShell(initialIndex: 0), settings);
       case AppRoutes.products:
-        return _page(ModernAppShell(
-          currentIndex: 1,
-          child: const ProductListScreen(),
-        ), settings);
+        return _page(const ModernAppShell(initialIndex: 1), settings);
       case AppRoutes.productsAdd:
         return _page(const AddProductScreen(), settings);
       case AppRoutes.productsEdit:
@@ -59,17 +49,11 @@ class RouteGenerator {
       case AppRoutes.categoriesAdd:
         return _page(const AddCategoryScreen(), settings);
       case AppRoutes.inventory:
-        return _page(ModernAppShell(
-          currentIndex: 1,
-          child: const InventoryScreen(),
-        ), settings);
+        return _page(const InventoryScreen(), settings);
       case AppRoutes.inventoryStockDetails:
         return _page(StockDetailsScreen(productId: args as String), settings);
       case AppRoutes.salesNew:
-        return _page(ModernAppShell(
-          currentIndex: 2,
-          child: const NewSaleScreen(),
-        ), settings);
+        return _page(const ModernAppShell(initialIndex: 2), settings);
       case AppRoutes.salesToday:
         return _page(const TodaysSalesScreen(), settings);
       case AppRoutes.salesHistory:
@@ -89,10 +73,7 @@ class RouteGenerator {
       case AppRoutes.reports:
         return _page(const ReportsScreen(), settings);
       case AppRoutes.reportsAnalytics:
-        return _page(ModernAppShell(
-          currentIndex: 3,
-          child: const AnalyticsScreen(),
-        ), settings);
+        return _page(const ModernAppShell(initialIndex: 3), settings);
       case AppRoutes.productIssues:
         return _page(const ProductIssueListScreen(), settings);
       case AppRoutes.productIssuesDetails:
@@ -102,17 +83,11 @@ class RouteGenerator {
       case AppRoutes.replacementsDetails:
         return _page(ReplacementDetailsScreen(replacementId: args as String), settings);
       case AppRoutes.settings:
-        return _page(ModernAppShell(
-          currentIndex: 4,
-          child: const SettingsScreen(),
-        ), settings);
+        return _page(const ModernAppShell(initialIndex: 4), settings);
       case AppRoutes.search:
         return _page(const SearchScreen(), settings);
       default:
-        return _page(ModernAppShell(
-          currentIndex: 0,
-          child: const DashboardScreen(),
-        ), settings);
+        return _page(const ModernAppShell(initialIndex: 0), settings);
     }
   }
 

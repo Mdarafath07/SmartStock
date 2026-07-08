@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:smartstock/core/routes/app_routes.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
+import 'package:smartstock/features/dashboard/screens/dashboard_screen.dart';
+import 'package:smartstock/features/products/screens/product_list_screen.dart';
+import 'package:smartstock/features/sales/screens/new_sale_screen.dart';
+import 'package:smartstock/features/reports/screens/analytics_screen.dart';
+import 'package:smartstock/features/settings/screens/settings_screen.dart';
 
 class ModernAppShell extends StatefulWidget {
-  final Widget child;
-  final int currentIndex;
+  final int initialIndex;
 
   const ModernAppShell({
     super.key,
-    required this.child,
-    this.currentIndex = 0,
+    this.initialIndex = 0,
   });
 
   @override
@@ -23,18 +27,18 @@ class ModernAppShellState extends State<ModernAppShell>
   late AnimationController _fabController;
   bool _isFabOpen = false;
 
-  final List<_NavItem> _navItems = [
-    _NavItem(0, Icons.grid_view_rounded, 'Dashboard'),
-    _NavItem(1, Icons.inventory_2_rounded, 'Products'),
-    _NavItem(2, Icons.add_circle_rounded, 'Sale'),
-    _NavItem(3, Icons.analytics_rounded, 'Analytics'),
-    _NavItem(4, Icons.person_rounded, 'Profile'),
+  final List<Widget> _pages = const [
+    DashboardScreen(),
+    ProductListScreen(),
+    NewSaleScreen(),
+    AnalyticsScreen(),
+    SettingsScreen(),
   ];
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.currentIndex;
+    _currentIndex = widget.initialIndex;
     _fabController = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 200),
     );
@@ -46,22 +50,11 @@ class ModernAppShellState extends State<ModernAppShell>
     super.dispose();
   }
 
-  void _onTabSelected(int index) {
+  void switchToTab(int index) {
     if (_currentIndex == index) return;
     setState(() => _currentIndex = index);
-    String? route;
-    switch (index) {
-      case 0: route = AppRoutes.home; break;
-      case 1: route = AppRoutes.products; break;
-      case 2: route = AppRoutes.salesNew; break;
-      case 3: route = AppRoutes.reportsAnalytics; break;
-      case 4: route = AppRoutes.settings; break;
-    }
-    if (route != null) {
-      Navigator.pushNamedAndRemoveUntil(
-        context, route, (r) => r.settings.name == AppRoutes.home,
-      );
-    }
+    _isFabOpen = false;
+    _fabController.reset();
   }
 
   void _toggleFab() {
@@ -85,11 +78,14 @@ class ModernAppShellState extends State<ModernAppShell>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
-      body: widget.child,
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _pages,
+      ),
       bottomNavigationBar: Container(
         margin: EdgeInsets.only(
           left: 12, right: 12,
-          bottom: MediaQuery.of(context).padding.bottom + 4,
+          bottom: MediaQuery.of(context).padding.bottom + 8,
         ),
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -106,29 +102,46 @@ class ModernAppShellState extends State<ModernAppShell>
         child: SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: _navItems.map((item) {
-                final sel = _currentIndex == item.index;
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () => _onTabSelected(item.index),
-                    child: Container(
-                      height: 40,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: sel ? AppColors.primaryBg : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        item.icon, size: 22,
-                        color: sel ? AppColors.primary : AppColors.grey,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            child: GNav(
+              selectedIndex: _currentIndex,
+              onTabChange: switchToTab,
+              duration: const Duration(milliseconds: 300),
+              haptic: true,
+              curve: Curves.easeOutCubic,
+              gap: 4,
+              color: AppColors.grey,
+              activeColor: AppColors.primary,
+              iconSize: 22,
+              tabBackgroundColor: AppColors.primaryBg,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              tabs: const [
+                GButton(
+                  icon: Icons.grid_view_rounded,
+                  text: 'Dashboard',
+                  textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                ),
+                GButton(
+                  icon: Icons.inventory_2_rounded,
+                  text: 'Products',
+                  textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                ),
+                GButton(
+                  icon: Icons.add_circle_rounded,
+                  text: 'Sale',
+                  textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                ),
+                GButton(
+                  icon: Icons.analytics_rounded,
+                  text: 'Analytics',
+                  textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                ),
+                GButton(
+                  icon: Icons.person_rounded,
+                  text: 'Profile',
+                  textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                ),
+              ],
             ),
           ),
         ),
@@ -202,11 +215,4 @@ class ModernAppShellState extends State<ModernAppShell>
       ),
     );
   }
-}
-
-class _NavItem {
-  final int index;
-  final IconData icon;
-  final String label;
-  const _NavItem(this.index, this.icon, this.label);
 }

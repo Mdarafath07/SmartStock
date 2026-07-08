@@ -74,6 +74,7 @@ class AnalyticsScreen extends StatefulWidget {
 class _AnalyticsScreenState extends State<AnalyticsScreen> {
   int _tab = 0;
   int _month = DateTime.now().month;
+  int _year = DateTime.now().year;
 
   static const _months = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -310,7 +311,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   // ─── Monthly ───
   Widget _buildMonthly(ReportProvider provider, String symbol) {
     final r = provider.monthlyReport;
-    final now = DateTime.now();
     final margin = (r != null && r.totalSales > 0)
         ? '${(r.totalProfit / r.totalSales * 100).toStringAsFixed(1)}%'
         : '0.0%';
@@ -321,14 +321,20 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return Column(
       children: [
         _PickerRow(
-          label: '${_months[_month - 1]} ${now.year}',
+          label: '${_months[_month - 1]} $_year',
           onPrev: () {
-            setState(() => _month = _month == 1 ? 12 : _month - 1);
-            context.read<ReportProvider>().loadMonthlyReportFor(now.year, _month);
+            setState(() {
+              if (_month == 1) { _month = 12; _year--; }
+              else { _month--; }
+            });
+            context.read<ReportProvider>().loadMonthlyReportFor(_year, _month);
           },
           onNext: () {
-            setState(() => _month = _month == 12 ? 1 : _month + 1);
-            context.read<ReportProvider>().loadMonthlyReportFor(now.year, _month);
+            setState(() {
+              if (_month == 12) { _month = 1; _year++; }
+              else { _month++; }
+            });
+            context.read<ReportProvider>().loadMonthlyReportFor(_year, _month);
           },
         ),
         const SizedBox(height: 16),

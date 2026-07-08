@@ -41,9 +41,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
   void _onSearch(String query) {
     setState(() => _searchQuery = query);
-    context
-        .read<ProductProvider>()
-        .loadProducts(categoryId: _selectedCategoryId);
   }
 
   void _onCategoryFilter(String? categoryId) {
@@ -257,7 +254,18 @@ class _ProductListScreenState extends State<ProductListScreen> {
     );
   }
 
+  List<Product> _filterBySearch(List<Product> products) {
+    if (_searchQuery.isEmpty) return products;
+    final q = _searchQuery.toLowerCase();
+    return products.where((p) =>
+      p.productName.toLowerCase().contains(q) ||
+      p.brandName.toLowerCase().contains(q) ||
+      p.modelNumber.toLowerCase().contains(q)
+    ).toList();
+  }
+
   Widget _buildContent(List<Product> products, ProductProvider productProvider, bool isDark) {
+    products = _filterBySearch(products);
     if (productProvider.isLoading && products.isEmpty) {
       return _buildSkeleton(isDark);
     }

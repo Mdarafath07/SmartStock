@@ -807,10 +807,14 @@ class _HeroCardState extends State<_HeroCard>
                           style: const TextStyle(
                               fontFamily: 'Inter', fontSize: 14, color: Colors.white, fontWeight: FontWeight.w400, letterSpacing: 0.3)),
                       const SizedBox(height: 8),
-                      Text(widget.amount,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(widget.amount,
                           style: const TextStyle(
                               fontFamily: 'Hanken Grotesk', fontSize: 38, fontWeight: FontWeight.w700,
                               color: Colors.white, height: 1.1, letterSpacing: -0.03)),
+                      ),
                       const SizedBox(height: 22),
                       Row(
                         children: widget.stats.map((s) => Expanded(
@@ -854,10 +858,14 @@ class _HeroStat extends StatelessWidget {
               style: TextStyle(
                   fontFamily: 'Inter', fontSize: 11, color: Colors.white.withAlpha(180))),
           const SizedBox(height: 2),
-          Text(value,
-              maxLines: 1, overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                  fontFamily: 'Hanken Grotesk', fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(value,
+                maxLines: 1,
+                style: const TextStyle(
+                    fontFamily: 'Hanken Grotesk', fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+          ),
         ],
       ),
     );

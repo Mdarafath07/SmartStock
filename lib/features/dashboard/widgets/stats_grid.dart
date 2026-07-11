@@ -28,7 +28,7 @@ class StatsGrid extends StatelessWidget {
             _StatCard(
               icon: Icons.inventory_2,
               label: 'Total Products',
-              value: NumberFormat.compact().format(stats.totalProducts),
+              value: NumberFormat('#,###').format(stats.totalProducts),
               gradientColors: [const Color(0xFF7C4DFF), const Color(0xFFB388FF)],
               iconBgColor: Colors.white.withValues(alpha: 0.2),
               route: AppRoutes.products,
@@ -36,7 +36,7 @@ class StatsGrid extends StatelessWidget {
             _StatCard(
               icon: Icons.check_circle,
               label: 'Available Stock',
-              value: NumberFormat.compact().format(stats.totalAvailableStock),
+              value: NumberFormat('#,###').format(stats.totalAvailableStock),
               gradientColors: [const Color(0xFF00C853), const Color(0xFF69F0AE)],
               iconBgColor: Colors.white.withValues(alpha: 0.2),
               route: AppRoutes.inventory,
@@ -44,9 +44,7 @@ class StatsGrid extends StatelessWidget {
             _StatCard(
               icon: Icons.payments,
               label: "Today's Sales",
-              value: NumberFormat.compactCurrency(
-                      symbol: symbol, decimalDigits: 0)
-                  .format(stats.todaySalesAmount),
+              value: '$symbol${NumberFormat('#,###').format(stats.todaySalesAmount)}',
               subtitle: '${stats.todaySoldProducts} items',
               gradientColors: [const Color(0xFF2979FF), const Color(0xFF82B1FF)],
               iconBgColor: Colors.white.withValues(alpha: 0.2),

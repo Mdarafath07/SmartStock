@@ -72,6 +72,9 @@ class SaleRepository {
 
   Future<Sale?> getSaleById(String id) => _saleService.getSaleById(id);
 
+  Future<Sale?> searchSaleBySerialNumber(String serial) =>
+      _saleService.searchSaleBySerialNumber(serial);
+
   Future<Map<String, dynamic>> getDailySalesSummary() =>
       _saleService.getDailySalesSummary();
 

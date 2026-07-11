@@ -167,6 +167,27 @@ class SaleProvider extends ChangeNotifier {
     }
   }
 
+  Sale? _searchedSale;
+  Sale? get searchedSale => _searchedSale;
+
+  Future<void> searchSaleBySerialNumber(String serial) async {
+    if (serial.isEmpty) {
+      _searchedSale = null;
+      notifyListeners();
+      return;
+    }
+    _setLoading(true);
+    _setError(null);
+    try {
+      _searchedSale = await _repository.searchSaleBySerialNumber(serial);
+      notifyListeners();
+    } catch (e) {
+      _setError(e.toString());
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   Future<void> loadSaleById(String id) async {
     _setLoading(true);
     _setError(null);

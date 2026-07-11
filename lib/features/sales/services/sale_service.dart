@@ -257,6 +257,17 @@ class SaleService {
             .toList());
   }
 
+  Future<Sale?> searchSaleBySerialNumber(String serial) async {
+    final snapshot = await _firestore
+        .collection(_salesCollection)
+        .where('serialNumber', isEqualTo: serial)
+        .limit(1)
+        .get();
+    if (snapshot.docs.isEmpty) return null;
+    final doc = snapshot.docs.first;
+    return Sale.fromJson(doc.data(), doc.id);
+  }
+
   Future<Sale?> getSaleById(String id) async {
     final doc = await _firestore.collection(_salesCollection).doc(id).get();
     if (!doc.exists) return null;

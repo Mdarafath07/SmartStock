@@ -33,6 +33,34 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     });
   }
 
+  void _showFullImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            InteractiveViewer(
+              child: Center(
+                child: CachedNetworkImage(imageUrl: imageUrl, fit: BoxFit.contain,
+                    errorWidget: (_, _, _) => const Icon(Icons.broken_image, size: 64, color: Colors.white54)),
+              ),
+            ),
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 8,
+              right: 16,
+              child: IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close_rounded, color: Colors.white, size: 28),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _confirmDelete() {
     showDialog(
       context: context,
@@ -209,10 +237,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             ),
           ),
           child: product.imageUrl.isNotEmpty
-              ? CachedNetworkImage(
-                  imageUrl: product.imageUrl,
-                  fit: BoxFit.cover,
-                  errorWidget: (_, _, _) => _buildPlaceholder(isDark),
+              ? GestureDetector(
+                  onTap: () => _showFullImage(context, product.imageUrl),
+                  child: CachedNetworkImage(
+                    imageUrl: product.imageUrl,
+                    fit: BoxFit.cover,
+                    errorWidget: (_, _, _) => _buildPlaceholder(isDark),
+                  ),
                 )
               : _buildPlaceholder(isDark),
         ),
@@ -250,20 +281,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         Positioned(
           top: MediaQuery.of(context).padding.top + 8,
           right: 8,
-          child: Row(
-            children: [
-              _HeaderBtn(
-                icon: Icons.edit_rounded,
-                isDark: isDark,
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => EditProductScreen(productId: widget.productId))),
-              ),
-              const SizedBox(width: 8),
-              _HeaderBtn(
-                icon: Icons.delete_rounded,
-                isDark: isDark,
-                onTap: _confirmDelete,
-              ),
-            ],
+          child: _HeaderBtn(
+            icon: Icons.edit_rounded,
+            isDark: isDark,
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => EditProductScreen(productId: widget.productId))),
           ),
         ),
         Positioned(

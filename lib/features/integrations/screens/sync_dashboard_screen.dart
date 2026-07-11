@@ -17,6 +17,7 @@ class SyncDashboardScreen extends StatefulWidget {
 class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
   final _sheetIdController = TextEditingController();
   final _jsonController = TextEditingController();
+  bool _locked = true;
 
   @override
   void initState() {
@@ -56,8 +57,10 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
           const SizedBox(height: 16),
           _buildStatusCard(syncProvider, isDark),
           const SizedBox(height: 16),
-          if (syncProvider.autoSyncEnabled)
+          if (syncProvider.autoSyncEnabled) ...[
             _buildAutoSyncCard(syncProvider, isDark),
+            const SizedBox(height: 16),
+          ],
           if (syncProvider.lastResult != null)
             _buildResultCard(context, syncProvider, isDark),
         ],
@@ -71,14 +74,38 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Configuration', style: AppTextStyles.titleSm.copyWith(
-            color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
-          )),
+          Row(
+            children: [
+              Text('Configuration', style: AppTextStyles.titleSm.copyWith(
+                color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+              )),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => setState(() => _locked = !_locked),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _locked ? AppColors.orange.withAlpha(20) : AppColors.green.withAlpha(20),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(_locked ? Icons.lock_rounded : Icons.lock_open_rounded, size: 14, color: _locked ? AppColors.orange : AppColors.green),
+                      const SizedBox(width: 4),
+                      Text(_locked ? 'Locked' : 'Unlocked', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _locked ? AppColors.orange : AppColors.green)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
           _buildField(
             controller: _sheetIdController,
             hint: 'Sheet ID (from URL: /d/<ID>/edit)',
             isDark: isDark,
+            readOnly: _locked,
             onChanged: (v) {
               settings.updateSheetsSpreadsheetId(v.trim());
               syncProvider.configure(settings.sheetsServiceAccountJson, v.trim());
@@ -91,55 +118,32 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
             isDark: isDark,
             monospace: true,
             maxLines: 4,
+            readOnly: _locked,
             onChanged: (v) {
               settings.updateSheetsServiceAccountJson(v.trim());
               syncProvider.configure(v.trim(), settings.sheetsSpreadsheetId);
             },
           ),
           const SizedBox(height: 12),
-          Row(children: [
-            Expanded(
-              child: SizedBox(
-                height: 40,
-                child: OutlinedButton.icon(
-                  onPressed: _jsonController.text.trim().isEmpty
-                      ? null
-                      : () => _createNewSheet(settings, syncProvider),
-                  icon: settings.isSyncing
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.add_circle_outline_rounded, size: 16),
-                  label: const Text('Create Sheet', style: TextStyle(fontSize: 13)),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.green,
-                    side: BorderSide(color: AppColors.green.withAlpha(80)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
+          if (_sheetIdController.text.trim().isNotEmpty)
+            SizedBox(
+              width: double.infinity,
+              height: 40,
+              child: ElevatedButton.icon(
+                onPressed: settings.isSyncing || syncProvider.isSyncing
+                    ? null
+                    : () => _syncAllNow(settings, syncProvider),
+                icon: settings.isSyncing || syncProvider.isSyncing
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.backup_rounded, size: 16),
+                label: Text(settings.isSyncing || syncProvider.isSyncing ? 'Backing up...' : 'Backup All Now', style: const TextStyle(fontSize: 13)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
             ),
-            if (_sheetIdController.text.trim().isNotEmpty) ...[
-              const SizedBox(width: 8),
-              Expanded(
-                child: SizedBox(
-                  height: 40,
-                  child: ElevatedButton.icon(
-                    onPressed: settings.isSyncing || syncProvider.isSyncing
-                        ? null
-                        : () => _syncAllNow(settings, syncProvider),
-                    icon: settings.isSyncing || syncProvider.isSyncing
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Icon(Icons.backup_rounded, size: 16),
-                    label: Text(settings.isSyncing || syncProvider.isSyncing ? 'Backing up...' : 'Backup All Now', style: const TextStyle(fontSize: 13)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ]),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
@@ -193,6 +197,7 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
     required String hint,
     required bool isDark,
     required Function(String) onChanged,
+    bool readOnly = false,
     bool monospace = false,
     int maxLines = 1,
   }) {
@@ -205,6 +210,7 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
       child: TextField(
         controller: controller,
         maxLines: maxLines,
+        readOnly: readOnly,
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(fontSize: 13, color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8)),
@@ -213,10 +219,12 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
         ),
         style: TextStyle(
           fontSize: monospace ? 11 : 13,
-          color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+          color: readOnly
+              ? (isDark ? AppColors.textMuted : const Color(0xFF94A3B8))
+              : (isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
           fontFamily: monospace ? 'monospace' : null,
         ),
-        onChanged: onChanged,
+        onChanged: readOnly ? null : onChanged,
       ),
     );
   }
@@ -559,24 +567,6 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
       if (result.hasErrors) {
         _showError('Errors in: ${result.errors.join(', ')}');
       }
-    } catch (e) {
-      _showError(e.toString().replaceFirst('Exception: ', ''));
-    }
-    settings.setSyncing(false);
-  }
-
-  Future<void> _createNewSheet(SettingsProvider settings, SyncProvider syncProvider) async {
-    final json = _jsonController.text.trim();
-    final service = GoogleSheetsBackupService();
-    final err = service.validateJson(json);
-    if (err != null) { _showError(err); return; }
-    settings.setSyncing(true);
-    try {
-      final sheetId = await service.createSpreadsheet(json);
-      _sheetIdController.text = sheetId;
-      settings.updateSheetsSpreadsheetId(sheetId);
-      syncProvider.configure(json, sheetId);
-      _showSnackBar('New Google Sheet created! ID: $sheetId');
     } catch (e) {
       _showError(e.toString().replaceFirst('Exception: ', ''));
     }

@@ -18,6 +18,8 @@ class SaleDetailsScreen extends StatefulWidget {
 }
 
 class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
+  bool _hideSensitive = true;
+
   @override
   void initState() {
     super.initState();
@@ -25,6 +27,8 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
       context.read<SaleProvider>().loadSaleById(widget.saleId);
     });
   }
+
+  String _mask(String value) => _hideSensitive ? '*****' : value;
 
   @override
   Widget build(BuildContext context) {
@@ -109,20 +113,23 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                             ?.copyWith(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
                     if (sale.imageUrl.isNotEmpty)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          sale.imageUrl,
-                          height: 120,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Container(
-                            height: 120,
-                            color: theme.colorScheme.surfaceContainerHighest,
-                            child: Center(
-                              child: Icon(Icons.image,
-                                  size: 48,
-                                  color: theme.colorScheme.onSurfaceVariant),
+                      GestureDetector(
+                        onTap: () => _showFullImage(context, sale.imageUrl),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            sale.imageUrl,
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Container(
+                              height: 200,
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              child: Center(
+                                child: Icon(Icons.image,
+                                    size: 48,
+                                    color: theme.colorScheme.onSurfaceVariant),
+                              ),
                             ),
                           ),
                         ),
@@ -174,19 +181,41 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Price Breakdown',
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold)),
+                    Row(
+                      children: [
+                        Text('Price Breakdown',
+                            style: theme.textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold)),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () => setState(() => _hideSensitive = !_hideSensitive),
+                          child: Icon(
+                            _hideSensitive ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                            size: 20,
+                            color: _hideSensitive ? Colors.orange : theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 12),
                     _buildInfoRow(theme, 'Purchase Price',
-                        priceFormatter.format(sale.purchasePrice)),
+                        _mask(priceFormatter.format(sale.purchasePrice))),
                     _buildInfoRow(theme, 'Sale Price',
                         priceFormatter.format(sale.salePrice)),
                     const Divider(),
                     _buildInfoRow(
                       theme,
                       'Profit',
-                      priceFormatter.format(sale.profit),
+                      _mask(priceFormatter.format(sale.profit)),
+                      valueColor:
+                          sale.profit >= 0 ? Colors.green : Colors.red,
+                    ),
+                    _buildInfoRow(
+                      theme,
+                      'Profit Margin',
+                      _mask(sale.salePrice > 0
+                          ? '${(sale.profit / sale.salePrice * 100).toStringAsFixed(1)}%'
+                          : '0.0%'),
                       valueColor:
                           sale.profit >= 0 ? Colors.green : Colors.red,
                     ),
@@ -346,6 +375,34 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
         SnackBar(content: Text('Failed to void sale: $e')),
       );
     }
+  }
+
+  void _showFullImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            InteractiveViewer(
+              child: Center(
+                child: Image.network(imageUrl, fit: BoxFit.contain,
+                    errorBuilder: (_, _, _) => const Icon(Icons.broken_image, size: 64, color: Colors.white54)),
+              ),
+            ),
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 8,
+              right: 16,
+              child: IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close_rounded, color: Colors.white, size: 28),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildInfoRow(ThemeData theme, String label, String value,

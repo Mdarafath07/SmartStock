@@ -99,8 +99,17 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   Widget _buildAppBar(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Text('Inventory', style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+      padding: const EdgeInsets.fromLTRB(4, 8, 16, 8),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: Icon(Icons.arrow_back_rounded, size: 22, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+          ),
+          const SizedBox(width: 4),
+          Text('Inventory', style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+        ],
+      ),
     );
   }
 

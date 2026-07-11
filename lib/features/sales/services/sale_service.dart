@@ -92,6 +92,10 @@ class SaleService {
 
     final productStockUpdates = <String, int>{};
 
+    final batchId = _firestore.collection(_salesCollection).doc().id;
+    final now = DateTime.now();
+    final saleTimestamp = Timestamp.fromDate(now);
+
     for (final item in items) {
       final saleRef = _firestore.collection(_salesCollection).doc();
       final salePrice = item['salePrice'] as double;
@@ -113,10 +117,11 @@ class SaleService {
         'salePrice': salePrice,
         'purchasePrice': purchasePrice,
         'profit': profit,
-        'saleDate': Timestamp.fromDate(DateTime.now()),
+        'saleDate': saleTimestamp,
         'warrantyExpiryDate': Timestamp.fromDate(item['warrantyExpiryDate'] as DateTime),
         'warrantyMonths': item['warrantyMonths'] as int? ?? 0,
-        'createdAt': Timestamp.fromDate(DateTime.now()),
+        'createdAt': saleTimestamp,
+        'batchId': batchId,
       });
       saleIds.add(saleRef.id);
 
@@ -266,17 +271,15 @@ class SaleService {
     if (snapshot.docs.isEmpty) return [];
     final doc = snapshot.docs.first;
     final data = doc.data();
-    final customerId = data['customerId'] as String?;
-    final saleDate = data['saleDate'] as Timestamp?;
-    if (customerId == null || customerId.isEmpty || saleDate == null) {
-      return [Sale.fromJson(data, doc.id)];
+    final batchId = data['batchId'] as String?;
+    if (batchId != null && batchId.isNotEmpty) {
+      final siblings = await _firestore
+          .collection(_salesCollection)
+          .where('batchId', isEqualTo: batchId)
+          .get();
+      return siblings.docs.map((d) => Sale.fromJson(d.data(), d.id)).toList();
     }
-    final siblings = await _firestore
-        .collection(_salesCollection)
-        .where('customerId', isEqualTo: customerId)
-        .where('saleDate', isEqualTo: saleDate)
-        .get();
-    return siblings.docs.map((d) => Sale.fromJson(d.data(), d.id)).toList();
+    return [Sale.fromJson(data, doc.id)];
   }
 
   Future<Sale?> getSaleById(String id) async {

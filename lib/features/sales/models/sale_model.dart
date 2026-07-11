@@ -24,6 +24,7 @@ class Sale {
   final bool warrantyClaimed;
   final String? newSerialNumber;
   final DateTime? claimDate;
+  final String? batchId;
 
   Sale({
     this.id = '',
@@ -49,6 +50,7 @@ class Sale {
     this.warrantyClaimed = false,
     this.newSerialNumber,
     this.claimDate,
+    this.batchId,
   })  : saleDate = saleDate ?? DateTime.now(),
         warrantyExpiryDate = warrantyExpiryDate ?? DateTime.now(),
         createdAt = createdAt ?? DateTime.now();
@@ -84,6 +86,7 @@ class Sale {
       warrantyClaimed: json['warrantyClaimed'] as bool? ?? false,
       newSerialNumber: json['newSerialNumber'] as String?,
       claimDate: (json['claimDate'] as Timestamp?)?.toDate(),
+      batchId: json['batchId'] as String?,
     );
   }
 
@@ -111,6 +114,7 @@ class Sale {
       'warrantyClaimed': warrantyClaimed,
       'newSerialNumber': newSerialNumber,
       'claimDate': claimDate != null ? Timestamp.fromDate(claimDate!) : null,
+      'batchId': batchId,
     };
   }
 
@@ -140,6 +144,7 @@ class Sale {
     bool? warrantyClaimed,
     String? newSerialNumber,
     DateTime? claimDate,
+    String? batchId,
   }) {
     return Sale(
       id: id ?? this.id,
@@ -165,6 +170,7 @@ class Sale {
       warrantyClaimed: warrantyClaimed ?? this.warrantyClaimed,
       newSerialNumber: newSerialNumber ?? this.newSerialNumber,
       claimDate: claimDate ?? this.claimDate,
+      batchId: batchId ?? this.batchId,
     );
   }
 }

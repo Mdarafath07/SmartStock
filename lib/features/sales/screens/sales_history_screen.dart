@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -27,7 +26,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   DateTime? _selectedDay;
   final _searchController = TextEditingController();
   String _searchQuery = '';
-  Timer? _searchDebounce;
+  String _lastSearchedSerial = '';
 
   @override
   void initState() {
@@ -38,7 +37,6 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   @override
   void dispose() {
     _searchController.dispose();
-    _searchDebounce?.cancel();
     super.dispose();
   }
 
@@ -93,12 +91,13 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
 
   void _onSearch(String query) {
     setState(() => _searchQuery = query);
-    _searchDebounce?.cancel();
     if (query.length >= 4) {
-      _searchDebounce = Timer(const Duration(milliseconds: 500), () {
+      if (query != _lastSearchedSerial) {
+        _lastSearchedSerial = query;
         context.read<SaleProvider>().searchSaleBySerialNumber(query);
-      });
+      }
     } else {
+      _lastSearchedSerial = '';
       context.read<SaleProvider>().searchSaleBySerialNumber('');
     }
   }

@@ -970,7 +970,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
           const SizedBox(height: 8),
           Expanded(
             child: _productId == null
-                ? _buildProductList(products, isDark)
+                ? _buildProductList(products.where((p) => p.availableQuantity > 0).toList(), isDark)
                 : _buildSerialSelection(isDark),
           ),
           Container(

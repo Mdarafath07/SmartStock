@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:smartstock/core/routes/app_routes.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/features/categories/providers/category_provider.dart';
@@ -9,6 +8,7 @@ import 'package:smartstock/features/products/providers/product_provider.dart';
 import 'package:smartstock/features/products/screens/product_details_screen.dart';
 import 'package:smartstock/features/products/widgets/barcode_scanner_screen.dart';
 import 'package:smartstock/features/products/widgets/product_card.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class ProductListScreen extends StatefulWidget {
   const ProductListScreen({super.key});
@@ -23,6 +23,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
   String _searchQuery = '';
   bool _sortNewestFirst = true;
   bool _isGridView = true;
+  double? _minPrice;
+  double? _maxPrice;
+  bool _sortPriceAsc = true;
+  bool get _priceFilterActive => _minPrice != null || _maxPrice != null;
 
   @override
   void initState() {
@@ -76,6 +80,116 @@ class _ProductListScreenState extends State<ProductListScreen> {
     );
   }
 
+  void _showPriceFilter(BuildContext context, bool isDark) {
+    final minController = TextEditingController(text: _minPrice?.toStringAsFixed(0) ?? '');
+    final maxController = TextEditingController(text: _maxPrice?.toStringAsFixed(0) ?? '');
+    final symbol = context.read<SettingsProvider>().currencySymbol;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.cardDark : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(width: 40, height: 4,
+                  decoration: BoxDecoration(color: isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB), borderRadius: BorderRadius.circular(2))),
+              ),
+              const SizedBox(height: 16),
+              Text('Price Filter', style: AppTextStyles.headlineSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+              const SizedBox(height: 4),
+              Text('Set a price range to filter products', style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: minController,
+                      decoration: InputDecoration(
+                        labelText: 'Min Price',
+                        prefixText: '$symbol ',
+                        filled: true,
+                        fillColor: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: maxController,
+                      decoration: InputDecoration(
+                        labelText: 'Max Price',
+                        prefixText: '$symbol ',
+                        filled: true,
+                        fillColor: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  if (_priceFilterActive)
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          setState(() { _minPrice = null; _maxPrice = null; });
+                          Navigator.pop(ctx);
+                        },
+                        child: const Text('Clear'),
+                      ),
+                    ),
+                  if (_priceFilterActive) const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () {
+                        setState(() {
+                          _minPrice = double.tryParse(minController.text);
+                          _maxPrice = double.tryParse(maxController.text);
+                          if (_minPrice != null && _maxPrice != null && _minPrice! > _maxPrice!) {
+                            final t = _minPrice; _minPrice = _maxPrice; _maxPrice = t;
+                          }
+                        });
+                        Navigator.pop(ctx);
+                      },
+                      child: const Text('Apply'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Product> _filterByPrice(List<Product> products) {
+    if (!_priceFilterActive) return products;
+    return products.where((p) {
+      if (_minPrice != null && p.sellingPrice < _minPrice!) return false;
+      if (_maxPrice != null && p.sellingPrice > _maxPrice!) return false;
+      return true;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -84,6 +198,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
     final products = productProvider.products;
     final sorted = List<Product>.from(products)
       ..sort((a, b) {
+        final cmp = a.sellingPrice.compareTo(b.sellingPrice);
+        if (_sortPriceAsc) return -cmp;
+        if (cmp != 0) return cmp;
         final da = a.createdAt;
         final db = b.createdAt;
         return _sortNewestFirst ? db.compareTo(da) : da.compareTo(db);
@@ -99,6 +216,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
           _buildFilterRow(categoryProvider, isDark),
           const SizedBox(height: 4),
           _buildStatsRow(sorted, isDark),
+          const SizedBox(height: 4),
+          _buildSortBar(isDark),
           const SizedBox(height: 8),
           Expanded(
             child: _buildContent(sorted, productProvider, isDark),
@@ -120,23 +239,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
             ),
           ),
           const Spacer(),
-          _IconBtn(
-            icon: Icons.category_rounded,
-            onTap: () => Navigator.pushNamed(context, AppRoutes.categories),
-            isDark: isDark,
-          ),
-          const SizedBox(width: 6),
-          _IconBtn(
-            icon: Icons.warehouse_rounded,
-            onTap: () => Navigator.pushNamed(context, AppRoutes.inventory),
-            isDark: isDark,
-          ),
-          const SizedBox(width: 6),
-          _IconBtn(
-            icon: _isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded,
-            onTap: () => setState(() => _isGridView = !_isGridView),
-            isDark: isDark,
-          ),
+          Container(width: 1, height: 24, color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(100)),
         ],
       ),
     );
@@ -220,14 +323,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          _FilterChip(
-            label: _sortNewestFirst ? 'Newest' : 'Oldest',
-            selected: false,
-            icon: _sortNewestFirst ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
-            onTap: () => setState(() => _sortNewestFirst = !_sortNewestFirst),
-            isDark: isDark,
-          ),
         ],
       ),
     );
@@ -254,6 +349,85 @@ class _ProductListScreenState extends State<ProductListScreen> {
     );
   }
 
+  Widget _buildSortBar(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => setState(() => _sortNewestFirst = !_sortNewestFirst),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(_sortNewestFirst ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded, size: 14, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
+                  const SizedBox(width: 4),
+                  Text(_sortNewestFirst ? 'Newest' : 'Oldest', style: AppTextStyles.labelSm.copyWith(color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => setState(() => _sortPriceAsc = !_sortPriceAsc),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(_sortPriceAsc ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded, size: 14, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
+                  const SizedBox(width: 4),
+                  Text('Price ${_sortPriceAsc ? "↑" : "↓"}', style: AppTextStyles.labelSm.copyWith(color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
+                ],
+              ),
+            ),
+          ),
+          const Spacer(),
+          GestureDetector(
+            onTap: () => _showPriceFilter(context, isDark),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: _priceFilterActive ? AppColors.primary.withAlpha(20) : (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
+                borderRadius: BorderRadius.circular(8),
+                border: _priceFilterActive ? Border.all(color: AppColors.primary.withAlpha(60), width: 0.5) : null,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.filter_list_rounded, size: 14, color: _priceFilterActive ? AppColors.primary : (isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
+                  const SizedBox(width: 4),
+                  Text('Filter', style: AppTextStyles.labelSm.copyWith(color: _priceFilterActive ? AppColors.primary : (isDark ? AppColors.textSecondary : const Color(0xFF6B7280)))),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => setState(() => _isGridView = !_isGridView),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(_isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded, size: 16, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   List<Product> _filterBySearch(List<Product> products) {
     if (_searchQuery.isEmpty) return products;
     final q = _searchQuery.toLowerCase();
@@ -266,6 +440,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
   Widget _buildContent(List<Product> products, ProductProvider productProvider, bool isDark) {
     products = _filterBySearch(products);
+    products = _filterByPrice(products);
     if (productProvider.isLoading && products.isEmpty) {
       return _buildSkeleton(isDark);
     }
@@ -319,7 +494,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
       onRefresh: () async => productProvider.loadProducts(categoryId: _selectedCategoryId),
       child: _isGridView
           ? GridView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 childAspectRatio: 0.72,
@@ -339,7 +514,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
               },
             )
           : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
               itemCount: products.length,
               itemBuilder: (context, index) {
                 return ProductCard(
@@ -357,7 +532,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
   Widget _buildSkeleton(bool isDark) {
     return GridView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         childAspectRatio: 0.72,
@@ -375,36 +550,13 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 }
 
-class _IconBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool isDark;
-  const _IconBtn({required this.icon, required this.onTap, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40, height: 40,
-        decoration: BoxDecoration(
-          color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(icon, size: 20, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
-      ),
-    );
-  }
-}
-
 class _FilterChip extends StatelessWidget {
   final String label;
   final bool selected;
-  final IconData? icon;
   final VoidCallback onTap;
   final bool isDark;
 
-  const _FilterChip({required this.label, required this.selected, this.icon, required this.onTap, required this.isDark});
+  const _FilterChip({required this.label, required this.selected, required this.onTap, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -424,20 +576,11 @@ class _FilterChip extends StatelessWidget {
             width: 0.5,
           ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 14, color: selected ? AppColors.primary : (isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
-              const SizedBox(width: 4),
-            ],
-            Text(
-              label,
-              style: AppTextStyles.labelSm.copyWith(
-                color: selected ? AppColors.primary : (isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
-              ),
-            ),
-          ],
+        child: Text(
+          label,
+          style: AppTextStyles.labelSm.copyWith(
+            color: selected ? AppColors.primary : (isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
+          ),
         ),
       ),
     );

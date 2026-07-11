@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/features/products/models/product_model.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -21,14 +23,15 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
 
     if (isGrid) {
-      return _buildGridCard(context, isDark);
+      return _buildGridCard(context, isDark, symbol);
     }
-    return _buildListCard(context, isDark);
+    return _buildListCard(context, isDark, symbol);
   }
 
-  Widget _buildGridCard(BuildContext context, bool isDark) {
+  Widget _buildGridCard(BuildContext context, bool isDark, String symbol) {
     final stockStatus = _getStockStatus();
     final stockColor = _getStockColor(stockStatus);
 
@@ -157,14 +160,14 @@ class ProductCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '\$${product.sellingPrice.toStringAsFixed(0)}',
+                            '$symbol${product.sellingPrice.toStringAsFixed(0)}',
                             style: AppTextStyles.amountSm.copyWith(
                               color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
                               fontSize: 16,
                             ),
                           ),
                           Text(
-                            'Cost: \$${product.purchasePrice.toStringAsFixed(0)}',
+                            'Cost: $symbol${product.purchasePrice.toStringAsFixed(0)}',
                             style: AppTextStyles.caption.copyWith(
                               color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
                             ),
@@ -201,7 +204,7 @@ class ProductCard extends StatelessWidget {
     );
   }
 
-  Widget _buildListCard(BuildContext context, bool isDark) {
+  Widget _buildListCard(BuildContext context, bool isDark, String symbol) {
     final stockStatus = _getStockStatus();
     final stockColor = _getStockColor(stockStatus);
 
@@ -278,7 +281,7 @@ class ProductCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        '\$${product.sellingPrice.toStringAsFixed(0)}',
+                        '$symbol${product.sellingPrice.toStringAsFixed(0)}',
                         style: AppTextStyles.titleSm.copyWith(
                           color: AppColors.primary,
                           fontWeight: FontWeight.w700,

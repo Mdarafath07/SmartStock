@@ -1114,31 +1114,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
               );
             }),
-          if (top.length >= 3)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Center(
-                child: TextButton(
-                  onPressed: () =>
-                      Navigator.pushNamed(context, AppRoutes.reports),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 4),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Text(
-                    'View All',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.blue,
-                    ),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );

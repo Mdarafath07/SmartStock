@@ -37,8 +37,9 @@ class DashboardService {
       _getTopSellingProducts(),
       _getRecentlyAddedProducts(),
       _getRecentlySoldProducts(),
-      _getDailySales(7),
+      _getDailySales(30),
       _countActiveWarranties(),
+      _countOpenProductIssues(),
       productsSnap,
       serialsSnap,
     ]);
@@ -59,8 +60,9 @@ class DashboardService {
     final recentlySold = results[6] as List<ProductSummary>;
     final dailyData = results[7] as Map<String, List<double>>;
     final activeWarranties = results[8] as int;
-    final productsData = results[9] as QuerySnapshot;
-    final serialsData = results[10] as QuerySnapshot;
+    final openIssueCount = results[9] as int;
+    final productsData = results[10] as QuerySnapshot;
+    final serialsData = results[11] as QuerySnapshot;
 
     final serialCount = <String, int>{};
     for (final doc in serialsData.docs) {
@@ -108,6 +110,7 @@ class DashboardService {
       recentlyAddedProducts: recentlyAdded,
       recentlySoldProducts: recentlySold,
       activeWarranties: activeWarranties,
+      openIssueCount: openIssueCount,
       dailySales: dailyData['sales'] ?? [],
       dailyProfit: dailyData['profit'] ?? [],
     );
@@ -117,6 +120,15 @@ class DashboardService {
     final snapshot = await _firestore
         .collection('serial_numbers')
         .where('status', isEqualTo: 'available')
+        .count()
+        .get();
+    return snapshot.count ?? 0;
+  }
+
+  Future<int> _countOpenProductIssues() async {
+    final snapshot = await _firestore
+        .collection('product_issues')
+        .where('status', isEqualTo: 'open')
         .count()
         .get();
     return snapshot.count ?? 0;

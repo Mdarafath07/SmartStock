@@ -109,7 +109,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildHeader(BuildContext context, DashboardProvider provider) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final symbol = context.watch<SettingsProvider>().currencySymbol;
+    final settings = context.watch<SettingsProvider>();
+    final symbol = settings.currencySymbol;
+    final storeName = settings.storeName;
 
     return Container(
       clipBehavior: Clip.antiAlias,
@@ -170,7 +172,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'SmartStock',
+                            storeName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontFamily: 'Hanken Grotesk',
                               fontSize: 26,
@@ -235,15 +239,19 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 color: Color(0xFFBFDBFE),
                               ),
                             ),
-                            const SizedBox(height: 6),
-                            Text(
-                              '$symbol${_fmt(provider.stats?.todaySalesAmount ?? 0)}',
-                              style: const TextStyle(
-                                fontFamily: 'Hanken Grotesk',
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                letterSpacing: -0.5,
+                            const SizedBox(height: 4),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                '$symbol${_fmtAmount(provider.stats?.todaySalesAmount ?? 0)}',
+                                style: const TextStyle(
+                                  fontFamily: 'Hanken Grotesk',
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  letterSpacing: -0.5,
+                                ),
                               ),
                             ),
                           ],
@@ -269,15 +277,19 @@ class _DashboardScreenState extends State<DashboardScreen>
                                   color: Color(0xFFBFDBFE),
                                 ),
                               ),
-                              const SizedBox(height: 6),
-                              Text(
-                                '$symbol${_fmt(provider.stats?.todayProfit ?? 0)}',
-                                style: const TextStyle(
-                                  fontFamily: 'Hanken Grotesk',
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                  letterSpacing: -0.5,
+                              const SizedBox(height: 4),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    '$symbol${_fmtAmount(provider.stats?.todayProfit ?? 0)}',
+                                  style: const TextStyle(
+                                    fontFamily: 'Hanken Grotesk',
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    letterSpacing: -0.5,
+                                  ),
                                 ),
                               ),
                             ],
@@ -319,13 +331,6 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  String _fmt(double v) {
-    if (v >= 10000000) return '${(v / 10000000).toStringAsFixed(1)}Cr';
-    if (v >= 100000) return '${(v / 100000).toStringAsFixed(1)}L';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}k';
-    return v.toStringAsFixed(0);
-  }
-
   String _fmtAmount(double v) {
     final neg = v < 0;
     final a = neg ? -v : v;
@@ -349,7 +354,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       children: [
         Expanded(
           child: _kpiCard(
-            icon: Icons.sell_rounded,
+            icon: null,
             iconColor: AppColors.blue,
             bgColor: AppColors.blueBg,
             label: 'Selling Value',
@@ -361,7 +366,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         const SizedBox(width: 10),
         Expanded(
           child: _kpiCard(
-            icon: Icons.shopping_bag_rounded,
+            icon: null,
             iconColor: AppColors.orange,
             bgColor: AppColors.orangeBg,
             label: 'Stock Cost',
@@ -375,7 +380,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _kpiCard({
-    required IconData icon,
+    required IconData? icon,
     required Color iconColor,
     required Color bgColor,
     required String label,
@@ -384,7 +389,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     required bool isDark,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isDark
@@ -409,43 +414,52 @@ class _DashboardScreenState extends State<DashboardScreen>
         ],
       ),
       child: Row(
+        mainAxisAlignment: icon == null ? MainAxisAlignment.center : MainAxisAlignment.start,
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [iconColor.withAlpha(30), iconColor.withAlpha(10)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+          if (icon != null) ...[
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [iconColor.withAlpha(30), iconColor.withAlpha(10)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
               ),
-              borderRadius: BorderRadius.circular(14),
+              child: Icon(icon, size: 18, color: iconColor),
             ),
-            child: Icon(icon, size: 20, color: iconColor),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
+            const SizedBox(width: 12),
+          ],
+          Flexible(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: icon == null ? CrossAxisAlignment.center : CrossAxisAlignment.start,
               children: [
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: 'Hanken Grotesk',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? AppColors.textPrimary : const Color(0xFF0F172A),
-                    letterSpacing: -0.5,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: icon == null ? Alignment.center : Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontFamily: 'Hanken Grotesk',
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: isDark ? AppColors.textPrimary : const Color(0xFF0F172A),
+                      letterSpacing: -0.5,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 1),
+                const SizedBox(height: 2),
                 Text(
                   label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: icon == null ? TextAlign.center : TextAlign.start,
                   style: TextStyle(
                     fontFamily: 'Inter',
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: FontWeight.w600,
                     color: isDark ? AppColors.textSecondary : const Color(0xFF475569),
                   ),
@@ -466,19 +480,19 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     final stockGroups = [
       _GroupData('Products', AppColors.blue, [
-        _ItemData(Icons.inventory_2_rounded, '${stats.totalProducts}', 'Product Types', AppColors.blue),
-        _ItemData(Icons.inventory_rounded, '${stats.totalAvailableStock}', 'Total Items', AppColors.teal),
+        _ItemData(Icons.inventory_2_rounded, '${stats.totalProducts}', 'Product Types', AppColors.blue, route: AppRoutes.products),
+        _ItemData(Icons.inventory_rounded, '${stats.totalAvailableStock}', 'Total Items', AppColors.teal, route: AppRoutes.products),
         _ItemData(Icons.add_circle_rounded, '${stats.recentlyAddedProducts.length}', 'Added Today', AppColors.primary, route: AppRoutes.dailyAdditions),
       ]),
       _GroupData('Stock Health', AppColors.green, [
-        _ItemData(Icons.check_circle_rounded, '${stats.totalAvailableStock}', 'In Stock', AppColors.green, barValue: (stats.totalAvailableStock / total * 100).clamp(0, 100)),
-        _ItemData(Icons.warning_rounded, '${stats.lowStockProducts}', 'Low Stock', AppColors.orange, barValue: (stats.lowStockProducts / total * 100).clamp(0, 100)),
-        _ItemData(Icons.error_outline_rounded, '${stats.outOfStockProducts}', 'Out of Stock', AppColors.red, barValue: (stats.outOfStockProducts / total * 100).clamp(0, 100)),
+        _ItemData(Icons.check_circle_rounded, '${stats.totalAvailableStock}', 'In Stock', AppColors.green, barValue: (stats.totalAvailableStock / total * 100).clamp(0, 100), route: AppRoutes.products),
+        _ItemData(Icons.warning_rounded, '${stats.lowStockProducts}', 'Low Stock', AppColors.orange, barValue: (stats.lowStockProducts / total * 100).clamp(0, 100), route: AppRoutes.products),
+        _ItemData(Icons.error_outline_rounded, '${stats.outOfStockProducts}', 'Out of Stock', AppColors.red, barValue: (stats.outOfStockProducts / total * 100).clamp(0, 100), route: AppRoutes.products),
       ]),
       _GroupData('Activity', AppColors.purple, [
-        _ItemData(Icons.shopping_cart_rounded, '${stats.todaySoldProducts}', 'Sold Today', AppColors.purple),
+        _ItemData(Icons.shopping_cart_rounded, '${stats.todaySoldProducts}', 'Sold Today', AppColors.purple, route: AppRoutes.salesToday),
         _ItemData(Icons.verified_rounded, '${stats.activeWarranties}', 'Warranties', AppColors.pink, route: AppRoutes.warranty),
-        _ItemData(Icons.assignment_rounded, '${stats.recentlySoldProducts.length}', 'Sold Items', AppColors.green, route: AppRoutes.salesHistory),
+        _ItemData(Icons.bug_report_rounded, '${stats.openIssueCount}', 'Product Issues', AppColors.orange, route: AppRoutes.productIssues),
       ]),
     ];
 
@@ -659,7 +673,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle(context, 'Analytics', '7-day sales & profit trends'),
+        _sectionTitle(context, 'Analytics', '30-day sales & profit trends'),
         const SizedBox(height: 12),
         Row(
           children: [

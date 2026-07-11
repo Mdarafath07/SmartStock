@@ -10,6 +10,7 @@ class DashboardStats {
   final int lowStockProducts;
   final int outOfStockProducts;
   final int activeWarranties;
+  final int openIssueCount;
   final List<TopSellingProduct> topSellingProducts;
   final List<ProductSummary> mostStockedProducts;
   final List<ProductSummary> recentlyAddedProducts;
@@ -29,6 +30,7 @@ class DashboardStats {
     this.lowStockProducts = 0,
     this.outOfStockProducts = 0,
     this.activeWarranties = 0,
+    this.openIssueCount = 0,
     this.topSellingProducts = const [],
     this.mostStockedProducts = const [],
     this.recentlyAddedProducts = const [],
@@ -51,6 +53,7 @@ class DashboardStats {
       lowStockProducts: (json['lowStockProducts'] as num?)?.toInt() ?? 0,
       outOfStockProducts: (json['outOfStockProducts'] as num?)?.toInt() ?? 0,
       activeWarranties: (json['activeWarranties'] as num?)?.toInt() ?? 0,
+      openIssueCount: (json['openIssueCount'] as num?)?.toInt() ?? 0,
       topSellingProducts:
           (json['topSellingProducts'] as List<dynamic>?)
                   ?.map((e) =>
@@ -99,6 +102,7 @@ class DashboardStats {
       'lowStockProducts': lowStockProducts,
       'outOfStockProducts': outOfStockProducts,
       'activeWarranties': activeWarranties,
+      'openIssueCount': openIssueCount,
       'topSellingProducts': topSellingProducts.map((e) => e.toJson()).toList(),
       'mostStockedProducts': mostStockedProducts.map((e) => e.toJson()).toList(),
       'recentlyAddedProducts':
@@ -122,6 +126,7 @@ class DashboardStats {
     int? lowStockProducts,
     int? outOfStockProducts,
     int? activeWarranties,
+    int? openIssueCount,
     List<TopSellingProduct>? topSellingProducts,
     List<ProductSummary>? mostStockedProducts,
     List<ProductSummary>? recentlyAddedProducts,
@@ -141,6 +146,7 @@ class DashboardStats {
       lowStockProducts: lowStockProducts ?? this.lowStockProducts,
       outOfStockProducts: outOfStockProducts ?? this.outOfStockProducts,
       activeWarranties: activeWarranties ?? this.activeWarranties,
+      openIssueCount: openIssueCount ?? this.openIssueCount,
       topSellingProducts: topSellingProducts ?? this.topSellingProducts,
       mostStockedProducts: mostStockedProducts ?? this.mostStockedProducts,
       recentlyAddedProducts:

@@ -241,37 +241,43 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   context.read<ReportProvider>().loadYearlyReport();
                 }
               },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: sel ? 1.0 : 0.0, end: sel ? 1.0 : 0.0),
+                duration: const Duration(milliseconds: 350),
                 curve: Curves.easeOutCubic,
-                padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
-                decoration: BoxDecoration(
-                  gradient: sel
-                      ? LinearGradient(
-                          colors: [item.color, item.color.withAlpha(180)],
-                          begin: Alignment.topLeft, end: Alignment.bottomRight,
-                        )
-                      : null,
-                  color: sel ? null : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: sel
-                      ? [BoxShadow(color: item.color.withAlpha(80), blurRadius: 12, offset: const Offset(0, 4))]
-                      : null,
-                ),
-                alignment: Alignment.center,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(item.icon, size: 16,
-                        color: sel ? Colors.white : const Color(0xFF94A3B8)),
-                    const SizedBox(width: 6),
-                    Text(item.label,
-                        style: AppTextStyles.labelMd.copyWith(
-                            color: sel ? Colors.white : const Color(0xFF94A3B8),
-                            fontWeight: sel ? FontWeight.w600 : FontWeight.w500)),
-                  ],
-                ),
+                builder: (context, anim, _) {
+                  final fgColor = ColorTween(
+                    begin: const Color(0xFF94A3B8),
+                    end: Colors.white,
+                  ).lerp(anim)!;
+                  final bgColor = ColorTween(
+                    begin: Colors.transparent,
+                    end: item.color.withAlpha(230),
+                  ).lerp(anim)!;
+                  return Container(
+                    padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: sel || anim > 0
+                          ? [BoxShadow(color: item.color.withAlpha((80 * anim).round()), blurRadius: 12, offset: const Offset(0, 4))]
+                          : null,
+                    ),
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(item.icon, size: 16, color: fgColor),
+                        const SizedBox(width: 6),
+                        Text(item.label,
+                            style: AppTextStyles.labelMd.copyWith(
+                                color: fgColor,
+                                fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           );

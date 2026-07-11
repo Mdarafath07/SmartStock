@@ -1,6 +1,5 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:smartstock/core/routes/app_routes.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/features/dashboard/screens/dashboard_screen.dart';
@@ -8,6 +7,20 @@ import 'package:smartstock/features/products/screens/product_list_screen.dart';
 import 'package:smartstock/features/sales/screens/new_sale_screen.dart';
 import 'package:smartstock/features/reports/screens/analytics_screen.dart';
 import 'package:smartstock/features/settings/screens/settings_screen.dart';
+
+class _Tab {
+  final IconData icon;
+  final String label;
+  const _Tab(this.icon, this.label);
+}
+
+const _tabs = [
+  _Tab(Icons.dashboard_rounded, 'Dashboard'),
+  _Tab(Icons.inventory_rounded, 'Products'),
+  _Tab(Icons.add_circle_rounded, 'Sale'),
+  _Tab(Icons.analytics_rounded, 'Analytics'),
+  _Tab(Icons.person_rounded, 'Profile'),
+];
 
 class ModernAppShell extends StatefulWidget {
   final int initialIndex;
@@ -26,6 +39,7 @@ class ModernAppShellState extends State<ModernAppShell>
   late int _currentIndex;
 
   late AnimationController _fabController;
+  late List<AnimationController> _slideControllers;
   bool _isFabOpen = false;
 
   final List<Widget> _pages = const [
@@ -43,17 +57,27 @@ class ModernAppShellState extends State<ModernAppShell>
     _fabController = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 200),
     );
+    _slideControllers = List.generate(5, (_) => AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutQuint,
+    ));
+    _slideControllers[_currentIndex].value = 1;
   }
 
   @override
   void dispose() {
+    for (final c in _slideControllers) c.dispose();
     _fabController.dispose();
     super.dispose();
   }
 
   void switchToTab(int index) {
     if (_currentIndex == index) return;
-    setState(() => _currentIndex = index);
+    _slideControllers[_currentIndex].reverse();
+    _currentIndex = index;
+    _slideControllers[_currentIndex].forward();
+    setState(() {});
     _isFabOpen = false;
     _fabController.reset();
   }
@@ -110,46 +134,54 @@ class ModernAppShellState extends State<ModernAppShell>
                 top: false,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-                  child: GNav(
-                    selectedIndex: _currentIndex,
-                    onTabChange: switchToTab,
-                    duration: const Duration(milliseconds: 350),
-                    haptic: true,
-                    curve: Curves.easeOutQuint,
-                    gap: 6,
-                    color: AppColors.grey,
-                    activeColor: AppColors.primary,
-                    iconSize: 22,
-                    tabBackgroundColor: AppColors.primaryBg,
-                    tabMargin: const EdgeInsets.symmetric(horizontal: 2),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    tabs: const [
-                      GButton(
-                        icon: Icons.dashboard_rounded,
-                        text: 'Dashboard',
-                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.2),
-                      ),
-                      GButton(
-                        icon: Icons.inventory_rounded,
-                        text: 'Products',
-                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.2),
-                      ),
-                      GButton(
-                        icon: Icons.add_circle_rounded,
-                        text: 'Sale',
-                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.2),
-                      ),
-                      GButton(
-                        icon: Icons.analytics_rounded,
-                        text: 'Analytics',
-                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.2),
-                      ),
-                      GButton(
-                        icon: Icons.person_rounded,
-                        text: 'Profile',
-                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.2),
-                      ),
-                    ],
+                  child: Row(
+                    children: List.generate(_tabs.length, (i) {
+                      final active = _currentIndex == i;
+                      return Expanded(
+                        child: GestureDetector(
+                          onTap: () => switchToTab(i),
+                          child: AnimatedBuilder(
+                            animation: _slideControllers[i],
+                            builder: (_, __) {
+                              final anim = _slideControllers[i].value;
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: active ? AppColors.primaryBg : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(_tabs[i].icon, size: 22,
+                                      color: active ? AppColors.primary : AppColors.grey),
+                                    if (anim > 0)
+                                      ClipRect(
+                                        child: Align(
+                                          widthFactor: anim,
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(left: 6),
+                                            child: Text(
+                                              _tabs[i].label,
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w700,
+                                                letterSpacing: 0.2,
+                                                color: active ? AppColors.primary : AppColors.grey,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      );
+                    }),
                   ),
                 ),
               ),

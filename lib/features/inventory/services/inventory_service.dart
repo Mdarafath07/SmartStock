@@ -7,7 +7,7 @@ class InventoryService {
   Future<List<InventoryItem>> getInventory({
     String? categoryId,
     String? brandFilter,
-    String? stockStatus,
+    Set<String>? stockStatuses,
   }) async {
     final bool filterByCategory =
         categoryId != null && categoryId.isNotEmpty;
@@ -46,7 +46,7 @@ class InventoryService {
       final soldCount = counts['sold']!;
       final status = InventoryItem.computeStockStatus(availableCount);
 
-      if (stockStatus != null && stockStatus.isNotEmpty && status != stockStatus) {
+      if (stockStatuses != null && stockStatuses.isNotEmpty && !stockStatuses.contains(status)) {
         continue;
       }
 

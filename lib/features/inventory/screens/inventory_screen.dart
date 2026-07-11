@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:smartstock/core/routes/app_routes.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/features/categories/providers/category_provider.dart';
@@ -79,7 +78,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
           const SizedBox(height: 8),
           _buildSummaryRow(inventoryProvider, isDark),
           const SizedBox(height: 8),
-          _buildFilters(inventoryProvider, categoryProvider, isDark),
+          _buildStatusFilters(inventoryProvider, isDark),
+          const SizedBox(height: 6),
+          _buildCategoryFilters(inventoryProvider, categoryProvider, isDark),
           const SizedBox(height: 4),
           if (_searchTerm.isNotEmpty)
             Padding(
@@ -99,30 +100,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   Widget _buildAppBar(bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Row(
-        children: [
-          Text('Inventory', style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
-          const Spacer(),
-          GestureDetector(
-            onTap: () => Navigator.pushNamed(context, AppRoutes.products),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.blue.withAlpha(20),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.add_rounded, size: 14, color: AppColors.blue),
-                  const SizedBox(width: 3),
-                  Text('Manage', style: AppTextStyles.labelSm.copyWith(color: AppColors.blue)),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+      child: Text('Inventory', style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
     );
   }
 
@@ -186,8 +164,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
-  Widget _buildFilters(InventoryProvider provider, CategoryProvider categoryProvider, bool isDark) {
-    final categories = categoryProvider.categories;
+  Widget _buildStatusFilters(InventoryProvider provider, bool isDark) {
     return SizedBox(
       height: 36,
       child: ListView(
@@ -196,30 +173,50 @@ class _InventoryScreenState extends State<InventoryScreen> {
         children: [
           _FilterBtn(
             label: 'All',
-            selected: provider.filter.categoryId == null && provider.filter.stockStatus == null,
+            selected: !provider.filter.hasAnyFilter,
             isDark: isDark,
             onTap: () => provider.clearFilters(),
           ),
           const SizedBox(width: 6),
           _FilterBtn(
             label: 'In Stock',
-            selected: provider.filter.stockStatus == 'in_stock',
+            selected: provider.filter.isStatusSelected('in_stock'),
             isDark: isDark,
-            onTap: () => provider.setStockStatusFilter('in_stock'),
+            onTap: () => provider.toggleStockStatus('in_stock'),
           ),
           const SizedBox(width: 6),
           _FilterBtn(
             label: 'Low Stock',
-            selected: provider.filter.stockStatus == 'low_stock',
+            selected: provider.filter.isStatusSelected('low_stock'),
             isDark: isDark,
-            onTap: () => provider.setStockStatusFilter('low_stock'),
+            onTap: () => provider.toggleStockStatus('low_stock'),
           ),
           const SizedBox(width: 6),
           _FilterBtn(
             label: 'Out of Stock',
-            selected: provider.filter.stockStatus == 'out_of_stock',
+            selected: provider.filter.isStatusSelected('out_of_stock'),
             isDark: isDark,
-            onTap: () => provider.setStockStatusFilter('out_of_stock'),
+            onTap: () => provider.toggleStockStatus('out_of_stock'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryFilters(InventoryProvider provider, CategoryProvider categoryProvider, bool isDark) {
+    final categories = categoryProvider.categories;
+    if (categories.isEmpty) return const SizedBox.shrink();
+    return SizedBox(
+      height: 36,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          _FilterBtn(
+            label: 'All Categories',
+            selected: provider.filter.categoryId == null,
+            isDark: isDark,
+            onTap: () => provider.setCategoryFilter(null),
           ),
           const SizedBox(width: 6),
           ...categories.map((cat) => Padding(

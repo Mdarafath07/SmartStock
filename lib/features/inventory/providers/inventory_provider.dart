@@ -8,26 +8,34 @@ import 'package:smartstock/features/inventory/repositories/inventory_repository.
 class InventoryFilter {
   String? categoryId;
   String? brandFilter;
-  String? stockStatus;
+  Set<String> stockStatuses = {};
 
-  InventoryFilter({
-    this.categoryId,
-    this.brandFilter,
-    this.stockStatus,
-  });
+  bool get hasAnyFilter => categoryId != null || stockStatuses.isNotEmpty;
+
+  InventoryFilter();
 
   InventoryFilter copy() {
-    return InventoryFilter(
-      categoryId: categoryId,
-      brandFilter: brandFilter,
-      stockStatus: stockStatus,
-    );
+    final f = InventoryFilter();
+    f.categoryId = categoryId;
+    f.brandFilter = brandFilter;
+    f.stockStatuses = Set.from(stockStatuses);
+    return f;
   }
 
   void clear() {
     categoryId = null;
     brandFilter = null;
-    stockStatus = null;
+    stockStatuses.clear();
+  }
+
+  bool isStatusSelected(String status) => stockStatuses.contains(status);
+
+  void toggleStatus(String status) {
+    if (stockStatuses.contains(status)) {
+      stockStatuses.remove(status);
+    } else {
+      stockStatuses.add(status);
+    }
   }
 }
 
@@ -65,7 +73,7 @@ class InventoryProvider extends ChangeNotifier {
       _items = await _repository.getInventory(
         categoryId: _filter.categoryId,
         brandFilter: _filter.brandFilter,
-        stockStatus: _filter.stockStatus,
+        stockStatuses: _filter.stockStatuses.isNotEmpty ? _filter.stockStatuses : null,
       );
     } catch (e) {
       _error = e.toString();
@@ -111,8 +119,8 @@ class InventoryProvider extends ChangeNotifier {
     loadInventory();
   }
 
-  void setStockStatusFilter(String? stockStatus) {
-    _filter.stockStatus = stockStatus;
+  void toggleStockStatus(String status) {
+    _filter.toggleStatus(status);
     loadInventory();
   }
 

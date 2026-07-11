@@ -9,13 +9,13 @@ class InventoryRepository {
   Future<List<InventoryItem>> getInventory({
     String? categoryId,
     String? brandFilter,
-    String? stockStatus,
+    Set<String>? stockStatuses,
   }) async {
     try {
       return await _service.getInventory(
         categoryId: categoryId,
         brandFilter: brandFilter,
-        stockStatus: stockStatus,
+        stockStatuses: stockStatuses,
       );
     } catch (e) {
       throw Exception('Failed to load inventory: $e');

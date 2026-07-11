@@ -54,7 +54,7 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
 
   Widget _buildContent(Map<String, dynamic> details) {
     final symbol = context.watch<SettingsProvider>().currencySymbol;
-    final currencyFormat = NumberFormat.currency(symbol: symbol);
+    final currencyFormat = NumberFormat.currency(symbol: symbol, decimalDigits: 0);
     final available = details['available'] as int? ?? 0;
     final sold = details['sold'] as int? ?? 0;
     final defective = details['defective'] as int? ?? 0;

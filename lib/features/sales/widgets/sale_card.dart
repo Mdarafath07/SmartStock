@@ -17,7 +17,7 @@ class SaleCard extends StatelessWidget {
     final theme = Theme.of(context);
     final timeFormatter = DateFormat('hh:mm a');
     final symbol = context.watch<SettingsProvider>().currencySymbol;
-    final priceFormatter = NumberFormat.currency(symbol: symbol);
+    final priceFormatter = NumberFormat.currency(symbol: symbol, decimalDigits: 0);
     final profitColor = sale.profit >= 0 ? Colors.green : Colors.red;
 
     return Card(

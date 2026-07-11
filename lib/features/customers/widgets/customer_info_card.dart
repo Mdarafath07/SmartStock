@@ -14,7 +14,7 @@ class CustomerInfoCard extends StatelessWidget {
     final theme = Theme.of(context);
     final dateFormatter = DateFormat('MMM dd, yyyy');
     final symbol = context.watch<SettingsProvider>().currencySymbol;
-    final priceFormatter = NumberFormat.currency(symbol: symbol);
+    final priceFormatter = NumberFormat.currency(symbol: symbol, decimalDigits: 0);
 
     return Card(
       child: Padding(

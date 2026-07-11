@@ -519,7 +519,7 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
 
   Widget _buildSaleSection(Warranty warranty, bool isDark) {
     final symbol = context.watch<SettingsProvider>().currencySymbol;
-    final currencyFormat = NumberFormat.currency(symbol: symbol);
+    final currencyFormat = NumberFormat.currency(symbol: symbol, decimalDigits: 0);
     return ModernCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

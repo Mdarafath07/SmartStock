@@ -323,8 +323,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
     return Column(
       children: [
-        _PickerRow(
-          label: '${_months[_month - 1]} $_year',
+        _HeroCard(
+          colors: _heroColors,
+          accent: _heroAccent,
+          icon: Icons.calendar_month_rounded,
+          badge: _months[_month - 1],
+          label: 'Monthly Revenue',
+          amount: AppFormatters.formatCurrency(r?.totalSales ?? 0, symbol: symbol),
           onPrev: () {
             setState(() {
               if (_month == 1) { _month = 12; _year--; }
@@ -339,15 +344,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             });
             context.read<ReportProvider>().loadMonthlyReportFor(_year, _month);
           },
-        ),
-        const SizedBox(height: 16),
-        _HeroCard(
-          colors: _heroColors,
-          accent: _heroAccent,
-          icon: Icons.calendar_month_rounded,
-          badge: _months[_month - 1],
-          label: 'Monthly Revenue',
-          amount: AppFormatters.formatCurrency(r?.totalSales ?? 0, symbol: symbol),
           stats: [
             _StatData(label: 'Stock Value', value: AppFormatters.formatCurrency(stockValue, symbol: symbol)),
             _StatData(label: 'Profit', value: AppFormatters.formatCurrency(r?.totalProfit ?? 0, symbol: symbol)),
@@ -376,8 +372,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
     return Column(
       children: [
-        _PickerRow(
-          label: '${provider.selectedYear}',
+        _HeroCard(
+          colors: _heroColors,
+          accent: _heroAccent,
+          icon: Icons.auto_graph_rounded,
+          badge: '${provider.selectedYear}',
+          label: 'Yearly Revenue',
+          amount: AppFormatters.formatCurrency(totalSales, symbol: symbol),
           onPrev: () {
             final ny = provider.selectedYear - 1;
             provider.setSelectedYear(ny);
@@ -388,15 +389,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             provider.setSelectedYear(ny);
             provider.loadYearlyReport(year: ny);
           },
-        ),
-        const SizedBox(height: 16),
-        _HeroCard(
-          colors: _heroColors,
-          accent: _heroAccent,
-          icon: Icons.auto_graph_rounded,
-          badge: '${provider.selectedYear}',
-          label: 'Yearly Revenue',
-          amount: AppFormatters.formatCurrency(totalSales, symbol: symbol),
           stats: [
             _StatData(label: 'Stock Value', value: AppFormatters.formatCurrency(stockValue, symbol: symbol)),
             _StatData(label: 'Profit', value: AppFormatters.formatCurrency(totalProfit, symbol: symbol)),
@@ -690,6 +682,8 @@ class _HeroCard extends StatefulWidget {
   final String label;
   final String amount;
   final List<_StatData> stats;
+  final VoidCallback? onPrev;
+  final VoidCallback? onNext;
 
   const _HeroCard({
     required this.colors,
@@ -699,6 +693,8 @@ class _HeroCard extends StatefulWidget {
     required this.label,
     required this.amount,
     required this.stats,
+    this.onPrev,
+    this.onNext,
   });
 
   @override
@@ -777,7 +773,7 @@ class _HeroCardState extends State<_HeroCard>
                           ),
                           const Spacer(),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: EdgeInsets.symmetric(horizontal: widget.onPrev != null ? 4 : 12, vertical: 6),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
@@ -792,11 +788,27 @@ class _HeroCardState extends State<_HeroCard>
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
+                                if (widget.onPrev != null)
+                                  GestureDetector(
+                                    onTap: widget.onPrev,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                                      child: Icon(Icons.chevron_left_rounded, size: 18, color: Colors.white.withAlpha(200)),
+                                    ),
+                                  ),
                                 Icon(Icons.calendar_today_rounded, size: 11, color: Colors.white.withAlpha(200)),
                                 const SizedBox(width: 5),
                                 Text(widget.badge,
                                     style: const TextStyle(
                                         fontFamily: 'Inter', fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)),
+                                if (widget.onNext != null)
+                                  GestureDetector(
+                                    onTap: widget.onNext,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                                      child: Icon(Icons.chevron_right_rounded, size: 18, color: Colors.white.withAlpha(200)),
+                                    ),
+                                  ),
                               ],
                             ),
                           ),
@@ -943,51 +955,6 @@ class _StatCard extends StatelessWidget {
                   fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w500,
                   color: Color(0xFF64748B), height: 1.2)),
         ],
-      ),
-    );
-  }
-}
-
-class _PickerRow extends StatelessWidget {
-  final String label;
-  final VoidCallback onPrev;
-  final VoidCallback onNext;
-  const _PickerRow({required this.label, required this.onPrev, required this.onNext});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _ArrowBtn(icon: Icons.chevron_left_rounded, onTap: onPrev),
-        const SizedBox(width: 14),
-        Text(label,
-            style: const TextStyle(
-                fontFamily: 'Inter', fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
-        const SizedBox(width: 14),
-        _ArrowBtn(icon: Icons.chevron_right_rounded, onTap: onNext),
-      ],
-    );
-  }
-}
-
-class _ArrowBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _ArrowBtn({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 38, height: 38,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(11),
-          border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-        ),
-        child: Icon(icon, size: 20, color: const Color(0xFF64748B)),
       ),
     );
   }

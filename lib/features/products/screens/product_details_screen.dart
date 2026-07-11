@@ -161,7 +161,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
   Widget _buildContent(Product product, bool isDark) {
     final symbol = context.watch<SettingsProvider>().currencySymbol;
-    final currencyFormat = NumberFormat.currency(symbol: symbol);
+    final currencyFormat = NumberFormat.currency(symbol: symbol, decimalDigits: 0);
     final dateFormat = DateFormat('MMM dd, yyyy');
     final stockStatus = _getStockStatus(product.availableQuantity);
     final stockColor = _getStockColor(stockStatus);

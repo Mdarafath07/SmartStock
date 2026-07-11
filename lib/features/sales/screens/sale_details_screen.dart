@@ -36,7 +36,7 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
     final saleProvider = context.watch<SaleProvider>();
     final sale = saleProvider.selectedSale;
     final symbol = context.watch<SettingsProvider>().currencySymbol;
-    final priceFormatter = NumberFormat.currency(symbol: symbol);
+    final priceFormatter = NumberFormat.currency(symbol: symbol, decimalDigits: 0);
     final dateFormatter = DateFormat('MMM dd, yyyy');
     final timeFormatter = DateFormat('hh:mm a');
 

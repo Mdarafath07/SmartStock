@@ -118,7 +118,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     }
 
     final symbol = context.watch<SettingsProvider>().currencySymbol;
-    final currencyFormat = NumberFormat.currency(symbol: symbol);
+    final currencyFormat = NumberFormat.currency(symbol: symbol, decimalDigits: 0);
     final dateFormat = DateFormat('MMM dd, yyyy');
 
     final filteredSales = _searchQuery.isEmpty

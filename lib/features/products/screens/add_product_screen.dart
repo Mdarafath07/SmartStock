@@ -64,7 +64,7 @@ class AddProductScreen extends StatelessWidget {
 
   void _showDuplicateDialog(
       BuildContext context, List<DuplicateSerialInfo> duplicates, String symbol) {
-    final currencyFormat = NumberFormat.currency(symbol: symbol);
+    final currencyFormat = NumberFormat.currency(symbol: symbol, decimalDigits: 0);
     final dateFormat = DateFormat('MMM dd, yyyy');
     showDialog(
       context: context,

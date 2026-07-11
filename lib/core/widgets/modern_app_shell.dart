@@ -122,46 +122,57 @@ class ModernAppShellState extends State<ModernAppShell>
               children: List.generate(_tabs.length, (i) {
                 final active = _currentIndex == i;
                 return Expanded(
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => switchToTab(i),
-                      borderRadius: BorderRadius.circular(16),
-                      splashColor: AppColors.primary.withAlpha(30),
-                      highlightColor: AppColors.primary.withAlpha(15),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeOut,
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        decoration: BoxDecoration(
-                          color: active ? AppColors.primaryBg : Colors.transparent,
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween(begin: active ? 1.0 : 0.0, end: active ? 1.0 : 0.0),
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, anim, _) {
+                      final iconColor = ColorTween(
+                        begin: AppColors.grey,
+                        end: AppColors.primary,
+                      ).lerp(anim)!;
+                      final bgColor = ColorTween(
+                        begin: Colors.transparent,
+                        end: AppColors.primaryBg,
+                      ).lerp(anim)!;
+                      return Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => switchToTab(i),
                           borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(_tabs[i].icon, size: 22,
-                              color: active ? AppColors.primary : AppColors.grey),
-                            AnimatedOpacity(
-                              duration: const Duration(milliseconds: 200),
-                              opacity: active ? 1 : 0,
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 3),
-                                child: Text(
-                                  _tabs[i].label,
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: active ? AppColors.primary : AppColors.grey,
+                          splashColor: AppColors.primary.withAlpha(30),
+                          highlightColor: AppColors.primary.withAlpha(15),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            decoration: BoxDecoration(
+                              color: bgColor,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(_tabs[i].icon, size: 22, color: iconColor),
+                                Opacity(
+                                  opacity: anim,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 3),
+                                    child: Text(
+                                      _tabs[i].label,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: iconColor,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 );
               }),

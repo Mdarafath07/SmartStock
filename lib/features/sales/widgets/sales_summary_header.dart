@@ -19,7 +19,7 @@ class SalesSummaryHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final symbol = context.watch<SettingsProvider>().currencySymbol;
-    final formatter = NumberFormat.currency(symbol: symbol);
+    final formatter = NumberFormat.currency(symbol: symbol, decimalDigits: 0);
 
     return Card(
       child: Container(

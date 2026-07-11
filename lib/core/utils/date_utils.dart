@@ -31,21 +31,21 @@ class AppDateUtils {
   }
 
   static String formatCurrency(double amount, {String symbol = r'$'}) {
-    final parts = amount.toStringAsFixed(2).split('.');
-    final intPart = parts[0];
-    final decimalPart = parts[1];
-
+    final isNegative = amount < 0;
+    final absAmount = isNegative ? -amount : amount;
+    final rounded = absAmount.round();
+    final str = rounded.toString();
     final buffer = StringBuffer();
     int count = 0;
-    for (int i = intPart.length - 1; i >= 0; i--) {
+    for (int i = str.length - 1; i >= 0; i--) {
       if (count > 0 && count % 3 == 0) {
         buffer.write(',');
       }
-      buffer.write(intPart[i]);
+      buffer.write(str[i]);
       count++;
     }
-
-    return '$symbol${buffer.toString().split('').reversed.join()}.$decimalPart';
+    final formatted = '$symbol${buffer.toString().split('').reversed.join()}';
+    return isNegative ? '-$formatted' : formatted;
   }
 
   static String getMonthName(int month) {

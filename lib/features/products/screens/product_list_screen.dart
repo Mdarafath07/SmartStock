@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
@@ -27,6 +29,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
   double? _maxPrice;
   bool _sortPriceAsc = true;
   bool get _priceFilterActive => _minPrice != null || _maxPrice != null;
+  Product? _serialSearchedProduct;
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -40,11 +44,25 @@ class _ProductListScreenState extends State<ProductListScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchDebounce?.cancel();
     super.dispose();
   }
 
   void _onSearch(String query) {
     setState(() => _searchQuery = query);
+    _debounceSerialSearch(query);
+  }
+
+  void _debounceSerialSearch(String query) {
+    _searchDebounce?.cancel();
+    if (query.trim().isEmpty) {
+      setState(() => _serialSearchedProduct = null);
+      return;
+    }
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () async {
+      final result = await context.read<ProductProvider>().findProductBySerialNumber(query.trim());
+      if (mounted) setState(() => _serialSearchedProduct = result?.$1);
+    });
   }
 
   void _onCategoryFilter(String? categoryId) {
@@ -429,13 +447,21 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 
   List<Product> _filterBySearch(List<Product> products) {
-    if (_searchQuery.isEmpty) return products;
+    if (_searchQuery.isEmpty) {
+      _serialSearchedProduct = null;
+      return products;
+    }
     final q = _searchQuery.toLowerCase();
-    return products.where((p) =>
+    final matched = products.where((p) =>
       p.productName.toLowerCase().contains(q) ||
       p.brandName.toLowerCase().contains(q) ||
       p.modelNumber.toLowerCase().contains(q)
     ).toList();
+    final matchedIds = matched.map((p) => p.id).toSet();
+    if (_serialSearchedProduct != null && !matchedIds.contains(_serialSearchedProduct!.id)) {
+      matched.add(_serialSearchedProduct!);
+    }
+    return matched;
   }
 
   Widget _buildContent(List<Product> products, ProductProvider productProvider, bool isDark) {

@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:smartstock/core/routes/app_routes.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/features/categories/providers/category_provider.dart';
@@ -18,6 +21,7 @@ class InventoryScreen extends StatefulWidget {
 class _InventoryScreenState extends State<InventoryScreen> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -31,8 +35,17 @@ class _InventoryScreenState extends State<InventoryScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
+
+  void _onSearch(String v) {
+    setState(() => _searchQuery = v);
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () {});
+  }
+
+  String get _searchTerm => _searchQuery.trim().toLowerCase();
 
   Future<void> _handleBarcodeScan() async {
     final code = await Navigator.push<String>(
@@ -63,18 +76,21 @@ class _InventoryScreenState extends State<InventoryScreen> {
           SizedBox(height: MediaQuery.of(context).padding.top + 8),
           _buildAppBar(isDark),
           _buildSearchBar(isDark),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           _buildSummaryRow(inventoryProvider, isDark),
           const SizedBox(height: 8),
           _buildFilters(inventoryProvider, categoryProvider, isDark),
-          const SizedBox(height: 8),
-          Expanded(child: _buildContent(inventoryProvider, filtered, isDark)),
-          if (_searchQuery.isNotEmpty)
+          const SizedBox(height: 4),
+          if (_searchTerm.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-              child: Text('${filtered.length} result(s)',
-                  style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text('${filtered.length} result(s)',
+                    style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+              ),
             ),
+          Expanded(child: _buildContent(inventoryProvider, filtered, isDark)),
         ],
       ),
     );
@@ -83,7 +99,30 @@ class _InventoryScreenState extends State<InventoryScreen> {
   Widget _buildAppBar(bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Text('Inventory', style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+      child: Row(
+        children: [
+          Text('Inventory', style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          const Spacer(),
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(context, AppRoutes.products),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.blue.withAlpha(20),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add_rounded, size: 14, color: AppColors.blue),
+                  const SizedBox(width: 3),
+                  Text('Manage', style: AppTextStyles.labelSm.copyWith(color: AppColors.blue)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -101,12 +140,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
               ),
               child: TextField(
                 controller: _searchController,
-                onChanged: (v) => setState(() => _searchQuery = v),
+                onChanged: _onSearch,
                 decoration: InputDecoration(
-                  hintText: 'Search inventory...',
+                  hintText: 'Search by name, model or category...',
                   prefixIcon: Icon(Icons.search_rounded, size: 20, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
                   suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(onPressed: () { _searchController.clear(); setState(() => _searchQuery = ''); },
+                      ? IconButton(onPressed: () { _searchController.clear(); _onSearch(''); },
                           icon: Icon(Icons.clear_rounded, size: 18, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)))
                       : null,
                   border: InputBorder.none,
@@ -197,6 +236,52 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
+  List<InventoryItem> _filteredItems(List<InventoryItem> items) {
+    if (_searchTerm.isEmpty) return items;
+    return items.where((i) =>
+        i.productName.toLowerCase().contains(_searchTerm) ||
+        i.modelNumber.toLowerCase().contains(_searchTerm) ||
+        i.categoryName.toLowerCase().contains(_searchTerm)).toList();
+  }
+
+  // ─── SECTIONED CONTENT ────────────────────────────────────
+
+  Map<String, List<InventoryItem>> _groupByStatus(List<InventoryItem> items) {
+    final grouped = <String, List<InventoryItem>>{};
+    for (final item in items) {
+      grouped.putIfAbsent(item.stockStatus, () => []).add(item);
+    }
+    final order = ['in_stock', 'low_stock', 'out_of_stock'];
+    final sorted = <String, List<InventoryItem>>{};
+    for (final key in order) {
+      if (grouped.containsKey(key)) sorted[key] = grouped[key]!;
+    }
+    for (final key in grouped.keys) {
+      if (!sorted.containsKey(key)) sorted[key] = grouped[key]!;
+    }
+    return sorted;
+  }
+
+  String _statusTitle(String status) {
+    switch (status) {
+      case 'in_stock': return 'In Stock';
+      case 'low_stock': return 'Low Stock';
+      case 'out_of_stock': return 'Out of Stock';
+      case 'overstock': return 'Overstock';
+      default: return status.split('_').map((w) => w[0].toUpperCase() + w.substring(1)).join(' ');
+    }
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'in_stock': return AppColors.green;
+      case 'low_stock': return AppColors.orange;
+      case 'out_of_stock': return AppColors.red;
+      case 'overstock': return AppColors.blue;
+      default: return AppColors.grey;
+    }
+  }
+
   Widget _buildContent(InventoryProvider provider, List<InventoryItem> items, bool isDark) {
     if (provider.isLoading && provider.items.isEmpty) {
       return ListView.builder(
@@ -238,28 +323,62 @@ class _InventoryScreenState extends State<InventoryScreen> {
       ));
     }
 
+    final grouped = _groupByStatus(items);
+
     return RefreshIndicator(
       onRefresh: () => provider.loadInventory(),
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          final item = items[index];
-          return _InventoryRow(item: item, isDark: isDark, onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => StockDetailsScreen(productId: item.productId)));
-          });
-        },
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+        children: [
+          for (final entry in grouped.entries) ...[
+            _SectionHeader(
+              title: _statusTitle(entry.key),
+              count: entry.value.length,
+              color: _statusColor(entry.key),
+              isDark: isDark,
+            ),
+            const SizedBox(height: 6),
+            ...entry.value.map((item) => _InventoryRow(item: item, isDark: isDark, onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => StockDetailsScreen(productId: item.productId)));
+            })),
+            const SizedBox(height: 12),
+          ],
+        ],
       ),
     );
   }
+}
 
-  List<InventoryItem> _filteredItems(List<InventoryItem> items) {
-    if (_searchQuery.isEmpty) return items;
-    final q = _searchQuery.toLowerCase();
-    return items.where((i) =>
-        i.productName.toLowerCase().contains(q) ||
-        i.modelNumber.toLowerCase().contains(q) ||
-        i.categoryName.toLowerCase().contains(q)).toList();
+// ─── PRIVATE WIDGETS ────────────────────────────────────────
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final int count;
+  final Color color;
+  final bool isDark;
+  const _SectionHeader({required this.title, required this.count, required this.color, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 2),
+      child: Row(
+        children: [
+          Container(width: 3, height: 16, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
+          const SizedBox(width: 8),
+          Text(title, style: AppTextStyles.labelMd.copyWith(
+            color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+            fontWeight: FontWeight.w700,
+          )),
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+            decoration: BoxDecoration(color: color.withAlpha(15), borderRadius: BorderRadius.circular(6)),
+            child: Text('$count', style: TextStyle(fontFamily: 'Geist', fontSize: 10, fontWeight: FontWeight.w700, color: color)),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -325,7 +444,7 @@ class _InventoryRow extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
+        margin: const EdgeInsets.only(bottom: 6),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: (isDark ? AppColors.cardDark : Colors.white).withAlpha(200),
@@ -349,6 +468,7 @@ class _InventoryRow extends StatelessWidget {
                 children: [
                   Text(item.productName, style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 2),
                   Row(
                     children: [
                       Text(item.modelNumber, style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),

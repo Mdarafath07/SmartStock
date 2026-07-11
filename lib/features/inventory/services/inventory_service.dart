@@ -11,26 +11,39 @@ class InventoryService {
   }) async {
     final bool filterByCategory =
         categoryId != null && categoryId.isNotEmpty;
-    late Query query;
 
-    if (filterByCategory) {
-      query = _firestore
-          .collection('products')
-          .where('categoryId', isEqualTo: categoryId);
-    } else {
-      query = _firestore
-          .collection('products')
-          .orderBy('createdAt', descending: true);
+    final productsQuery = filterByCategory
+        ? _firestore
+            .collection('products')
+            .where('categoryId', isEqualTo: categoryId)
+        : _firestore
+            .collection('products')
+            .orderBy('createdAt', descending: true);
+
+    final [productsSnap, serialsSnap] = await Future.wait([
+      productsQuery.get(),
+      _firestore.collection('serial_numbers').get(),
+    ]);
+
+    final serialCounts = <String, Map<String, int>>{};
+    for (final doc in serialsSnap.docs) {
+      final d = doc.data() as Map<String, dynamic>;
+      final pid = d['productId'] as String? ?? '';
+      if (pid.isEmpty) continue;
+      final status = d['status'] as String? ?? 'available';
+      serialCounts.putIfAbsent(pid, () => {'available': 0, 'sold': 0});
+      if (status == 'available') serialCounts[pid]!['available'] =
+          (serialCounts[pid]!['available'] ?? 0) + 1;
+      else if (status == 'sold') serialCounts[pid]!['sold'] =
+          (serialCounts[pid]!['sold'] ?? 0) + 1;
     }
 
-    final snapshot = await query.get();
     final items = <InventoryItem>[];
-
-    for (final doc in snapshot.docs) {
+    for (final doc in productsSnap.docs) {
       final data = doc.data() as Map<String, dynamic>;
-      final availableCount =
-          await _countSerialNumbers(doc.id, 'available');
-      final soldCount = await _countSerialNumbers(doc.id, 'sold');
+      final counts = serialCounts[doc.id] ?? {'available': 0, 'sold': 0};
+      final availableCount = counts['available']!;
+      final soldCount = counts['sold']!;
       final status = InventoryItem.computeStockStatus(availableCount);
 
       if (stockStatus != null && stockStatus.isNotEmpty && status != stockStatus) {
@@ -108,13 +121,5 @@ class InventoryService {
     };
   }
 
-  Future<int> _countSerialNumbers(String productId, String status) async {
-    final snapshot = await _firestore
-        .collection('serial_numbers')
-        .where('productId', isEqualTo: productId)
-        .where('status', isEqualTo: status)
-        .count()
-        .get();
-    return snapshot.count ?? 0;
-  }
+
 }

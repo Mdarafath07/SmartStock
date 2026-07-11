@@ -179,7 +179,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
             if (filteredSales.isNotEmpty)
               _buildSummaryCards(isDark, currencyFormat, filteredSales.length, filteredSales.fold(0.0, (s, e) => s + e.salePrice), filteredSales.fold(0.0, (s, e) => s + e.profit)),
             if (searchedSale != null)
-              _buildSerialSearchResult(isDark, currencyFormat, searchedSale),
+              _buildCustomerGroup(isDark, currencyFormat, searchedSale.customerName.isNotEmpty ? searchedSale.customerName : 'Unknown Customer', [searchedSale], searchedSale.salePrice),
             const SizedBox(height: 4),
             Expanded(
               child: filteredSales.isEmpty && searchedSale == null
@@ -421,75 +421,6 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSerialSearchResult(bool isDark, NumberFormat currencyFormat, Sale sale) {
-    final timeFormat = DateFormat('hh:mm a');
-    final dateFormat = DateFormat('MMM dd, yyyy');
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-      child: ModernCard(
-        padding: const EdgeInsets.all(12),
-        borderRadius: 12,
-        child: InkWell(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => SaleDetailsScreen(saleId: sale.id)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 3, height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withAlpha(20),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text('Serial Search',
-                            style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: AppColors.primary)),
-                        ),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(sale.productName,
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
-                              color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text('${sale.modelNumber} | ${sale.serialNumber}',
-                      style: TextStyle(fontSize: 11,
-                        color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
-                    Text('${sale.customerName} • ${dateFormat.format(sale.saleDate)} • ${timeFormat.format(sale.saleDate)}',
-                      style: TextStyle(fontSize: 10,
-                        color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(currencyFormat.format(sale.salePrice),
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700,
-                  color: AppColors.primary)),
-            ],
-          ),
-        ),
       ),
     );
   }

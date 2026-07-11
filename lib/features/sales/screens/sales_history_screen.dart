@@ -26,6 +26,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   DateTime? _selectedDay;
   final _searchController = TextEditingController();
   String _searchQuery = '';
+  String _prevSerialSearch = '';
   @override
   void initState() {
     super.initState();
@@ -99,6 +100,15 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     final sales = saleProvider.salesHistory;
 
     final searchedSales = saleProvider.searchedSales;
+
+    if (_searchQuery.length >= 4 && searchedSales.isEmpty && _searchQuery != _prevSerialSearch) {
+      _prevSerialSearch = _searchQuery;
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => context.read<SaleProvider>().searchSaleBySerialNumber(_searchQuery),
+      );
+    } else if (_searchQuery.length < 4) {
+      _prevSerialSearch = '';
+    }
 
     final symbol = context.watch<SettingsProvider>().currencySymbol;
     final currencyFormat = NumberFormat.currency(symbol: symbol);

@@ -170,6 +170,7 @@ class SaleProvider extends ChangeNotifier {
   List<Sale> _searchedSales = [];
   List<Sale> get searchedSales => _searchedSales;
   String _currentSerialSearch = '';
+  String get currentSerialSearch => _currentSerialSearch;
 
   Future<void> searchSaleBySerialNumber(String serial) async {
     if (serial.isEmpty) {

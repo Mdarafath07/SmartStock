@@ -30,7 +30,14 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _setToday());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _setToday();
+      final saved = context.read<SaleProvider>().currentSerialSearch;
+      if (saved.isNotEmpty && _searchController.text != saved) {
+        _searchController.text = saved;
+        _searchQuery = saved;
+      }
+    });
   }
 
   @override
@@ -574,11 +581,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                       builder: (_) => SaleDetailsScreen(saleId: sale.id)),
                 ),
                 builder: (context, isDisabled) => InkWell(
-                  onTap: isDisabled ? null : () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => SaleDetailsScreen(saleId: sale.id)),
-                  ),
+                  onTap: isDisabled ? null : () {},
                   child: Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 7),

@@ -145,13 +145,9 @@ class WarrantyService {
     // 2. Increment old product stock
     if (productId.isNotEmpty) {
       final productRef = _firestore.collection('products').doc(productId);
-      final productDoc = await productRef.get();
-      if (productDoc.exists) {
-        final currentQty = (productDoc.data()?['availableQuantity'] as num?)?.toInt() ?? 0;
-        batch.update(productRef, {
-          'availableQuantity': currentQty + 1,
-        });
-      }
+      batch.update(productRef, {
+        'availableQuantity': FieldValue.increment(1),
+      });
     }
 
     // 3. Find new serial and update to sold
@@ -170,15 +166,11 @@ class WarrantyService {
       newProductId = newSerialData['productId'] as String? ?? '';
 
       if (newProductId.isNotEmpty) {
-        final newProductDoc =
-            await _firestore.collection('products').doc(newProductId).get();
-        if (newProductDoc.exists) {
-          final npData = newProductDoc.data()!;
-          final currentQty = (npData['availableQuantity'] as num?)?.toInt() ?? 0;
-          batch.update(newProductDoc.reference, {
-            'availableQuantity': (currentQty - 1).clamp(0, 999999),
-          });
-        }
+        final newProductRef =
+            _firestore.collection('products').doc(newProductId);
+        batch.update(newProductRef, {
+          'availableQuantity': FieldValue.increment(-1),
+        });
       }
     }
 

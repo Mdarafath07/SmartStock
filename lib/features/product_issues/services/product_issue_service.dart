@@ -24,9 +24,18 @@ class ProductIssueService {
         .get();
 
     if (serialSnapshot.docs.isNotEmpty) {
-      batch.update(serialSnapshot.docs.first.reference, {
+      final serialDoc = serialSnapshot.docs.first;
+      final serialData = serialDoc.data();
+      final productId = serialData['productId'] as String? ?? '';
+      batch.update(serialDoc.reference, {
         'status': 'defective',
       });
+      if (productId.isNotEmpty) {
+        batch.update(
+          _firestore.collection('products').doc(productId),
+          {'availableQuantity': FieldValue.increment(-1)},
+        );
+      }
     }
 
     await batch.commit();
@@ -63,9 +72,18 @@ class ProductIssueService {
           .limit(1)
           .get();
       if (serialSnapshot.docs.isNotEmpty) {
-        batch.update(serialSnapshot.docs.first.reference, {
+        final serialDoc = serialSnapshot.docs.first;
+        final serialData = serialDoc.data();
+        final productId = serialData['productId'] as String? ?? '';
+        batch.update(serialDoc.reference, {
           'status': 'available',
         });
+        if (productId.isNotEmpty) {
+          batch.update(
+            _firestore.collection('products').doc(productId),
+            {'availableQuantity': FieldValue.increment(1)},
+          );
+        }
       }
     }
 

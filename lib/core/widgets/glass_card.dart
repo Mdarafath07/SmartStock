@@ -124,6 +124,10 @@ class ModernCard extends StatelessWidget {
       child: child,
     );
 
+    if (margin != null) {
+      card = Padding(padding: margin!, child: card);
+    }
+
     if (onTap != null) {
       return Material(
         color: Colors.transparent,

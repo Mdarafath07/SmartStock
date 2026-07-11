@@ -133,10 +133,8 @@ class SaleService {
 
     for (final entry in productStockUpdates.entries) {
       final productRef = _firestore.collection('products').doc(entry.key);
-      final productDoc = await productRef.get();
-      final currentQty = (productDoc.data()?['availableQuantity'] as num?)?.toInt() ?? 0;
       batch.update(productRef, {
-        'availableQuantity': (currentQty - entry.value).clamp(0, 999999),
+        'availableQuantity': FieldValue.increment(-entry.value),
       });
     }
 
@@ -185,13 +183,9 @@ class SaleService {
       {'status': 'available', 'saleId': FieldValue.delete()},
     );
 
-    final productDoc =
-        await _firestore.collection('products').doc(productId).get();
-    final currentQty =
-        (productDoc.data()?['availableQuantity'] as num?)?.toInt() ?? 0;
     batch.update(
       _firestore.collection('products').doc(productId),
-      {'availableQuantity': currentQty + 1},
+      {'availableQuantity': FieldValue.increment(1)},
     );
 
     batch.delete(_firestore.collection(_salesCollection).doc(saleId));
@@ -200,11 +194,9 @@ class SaleService {
   }
 
   Future<void> _decrementStock(String productId, WriteBatch batch) async {
-    final productDoc = await _firestore.collection('products').doc(productId).get();
-    final currentQty = (productDoc.data()?['availableQuantity'] as num?)?.toInt() ?? 0;
     batch.update(
       _firestore.collection('products').doc(productId),
-      {'availableQuantity': currentQty > 0 ? currentQty - 1 : 0},
+      {'availableQuantity': FieldValue.increment(-1)},
     );
   }
 

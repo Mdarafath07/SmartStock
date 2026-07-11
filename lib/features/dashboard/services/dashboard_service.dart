@@ -23,18 +23,24 @@ class DashboardService {
     final todayStart = DateTime(now.year, now.month, now.day);
     final todayEnd = todayStart.add(const Duration(days: 1));
 
+    final productsSnap = _firestore.collection('products').get();
+    final serialsSnap = _firestore
+        .collection('serial_numbers')
+        .where('status', isEqualTo: 'available')
+        .get();
+
     final results = await Future.wait([
       _firestore.collection('categories').count().get(),
       _firestore.collection('products').count().get(),
       _countAllAvailableSerials(),
       _getTodaySales(todayStart, todayEnd),
-      _computeLowStockProducts(),
-      _computeOutOfStockProducts(),
       _getTopSellingProducts(),
       _getRecentlyAddedProducts(),
       _getRecentlySoldProducts(),
       _getDailySales(7),
-      _computeTotalStockValue(),
+      _countActiveWarranties(),
+      productsSnap,
+      serialsSnap,
     ]);
 
     final totalCategories = (results[0] as AggregateQuerySnapshot).count ?? 0;
@@ -48,19 +54,50 @@ class DashboardService {
         (todaySalesData['totalProfit'] as num?)?.toDouble() ?? 0.0;
     final todaySoldProducts =
         (todaySalesData['totalQuantity'] as num?)?.toInt() ?? 0;
-    final lowStockProducts = results[4] as int;
-    final outOfStockProducts = results[5] as int;
-    final topSelling = results[6] as List<TopSellingProduct>;
-    final recentlyAdded = results[7] as List<ProductSummary>;
-    final recentlySold = results[8] as List<ProductSummary>;
-    final dailyData = results[9] as Map<String, List<double>>;
-    final totalStockValue = results[10] as double;
+    final topSelling = results[4] as List<TopSellingProduct>;
+    final recentlyAdded = results[5] as List<ProductSummary>;
+    final recentlySold = results[6] as List<ProductSummary>;
+    final dailyData = results[7] as Map<String, List<double>>;
+    final activeWarranties = results[8] as int;
+    final productsData = results[9] as QuerySnapshot;
+    final serialsData = results[10] as QuerySnapshot;
+
+    final serialCount = <String, int>{};
+    for (final doc in serialsData.docs) {
+      final d = doc.data() as Map<String, dynamic>?;
+      if (d == null) continue;
+      final pid = d['productId'] as String? ?? '';
+      if (pid.isNotEmpty) serialCount[pid] = (serialCount[pid] ?? 0) + 1;
+    }
+
+    double totalStockValue = 0;
+    double totalStockCost = 0;
+    int lowStockProducts = 0;
+    int outOfStockProducts = 0;
+
+    for (final doc in productsData.docs) {
+      final d = doc.data() as Map<String, dynamic>?;
+      if (d == null) continue;
+      final qty = serialCount[doc.id] ?? 0;
+      final sellingPrice = (d['sellingPrice'] as num?)?.toDouble() ?? 0.0;
+      final purchasePrice = (d['purchasePrice'] as num?)?.toDouble() ?? 0.0;
+
+      totalStockValue += sellingPrice * qty;
+      totalStockCost += purchasePrice * qty;
+
+      if (qty == 0) {
+        outOfStockProducts++;
+      } else if (qty <= AppConstants.lowStockThreshold) {
+        lowStockProducts++;
+      }
+    }
 
     return DashboardStats(
       totalCategories: totalCategories,
       totalProducts: totalProducts,
       totalAvailableStock: totalAvailableStock,
       totalStockValue: totalStockValue,
+      totalStockCost: totalStockCost,
       todaySalesAmount: todaySalesAmount,
       todayProfit: todayProfit,
       todaySoldProducts: todaySoldProducts,
@@ -70,23 +107,10 @@ class DashboardService {
       mostStockedProducts: recentlyAdded,
       recentlyAddedProducts: recentlyAdded,
       recentlySoldProducts: recentlySold,
+      activeWarranties: activeWarranties,
       dailySales: dailyData['sales'] ?? [],
       dailyProfit: dailyData['profit'] ?? [],
     );
-  }
-
-  Future<double> _computeTotalStockValue() async {
-    final snapshot = await _firestore
-        .collection('products')
-        .get();
-    double total = 0;
-    for (final doc in snapshot.docs) {
-      final data = doc.data();
-      final price = (data['sellingPrice'] as num?)?.toDouble() ?? 0.0;
-      final qty = (data['availableQuantity'] as num?)?.toInt() ?? 0;
-      total += price * qty;
-    }
-    return total;
   }
 
   Future<int> _countAllAvailableSerials() async {
@@ -155,26 +179,6 @@ class DashboardService {
     return {'sales': sales, 'profit': profits};
   }
 
-  Future<int> _computeLowStockProducts() async {
-    final snapshot = await _firestore
-        .collection('products')
-        .where('availableQuantity', isGreaterThan: 0)
-        .where('availableQuantity',
-            isLessThanOrEqualTo: AppConstants.lowStockThreshold)
-        .count()
-        .get();
-    return snapshot.count ?? 0;
-  }
-
-  Future<int> _computeOutOfStockProducts() async {
-    final snapshot = await _firestore
-        .collection('products')
-        .where('availableQuantity', isEqualTo: 0)
-        .count()
-        .get();
-    return snapshot.count ?? 0;
-  }
-
   Future<List<TopSellingProduct>> _getTopSellingProducts() async {
     final snapshot = await _firestore
         .collection('sales')
@@ -238,10 +242,16 @@ class DashboardService {
   }
 
   Future<List<ProductSummary>> _getRecentlyAddedProducts() async {
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final todayEnd = todayStart.add(const Duration(days: 1));
+
     final snapshot = await _firestore
         .collection('products')
+        .where('createdAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(todayStart))
+        .where('createdAt', isLessThan: Timestamp.fromDate(todayEnd))
         .orderBy('createdAt', descending: true)
-        .limit(AppConstants.recentlyAddedMaxItems)
         .get();
 
     return snapshot.docs.map((doc) {
@@ -256,6 +266,25 @@ class DashboardService {
         createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       );
     }).toList();
+  }
+
+  Future<int> _countActiveWarranties() async {
+    final now = DateTime.now();
+    final snapshot = await _firestore
+        .collection('sales')
+        .where('warrantyExpiryDate', isGreaterThanOrEqualTo: Timestamp.fromDate(now))
+        .orderBy('warrantyExpiryDate', descending: false)
+        .get();
+
+    int count = 0;
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      if (data['saleType'] == 'warranty_claim') continue;
+      if (data['warrantyClaimed'] == true) continue;
+      if (((data['warrantyMonths'] as num?)?.toInt() ?? 0) <= 0) continue;
+      count++;
+    }
+    return count;
   }
 
   Future<List<ProductSummary>> getProductsAddedOnDate(DateTime date) async {

@@ -3,11 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/routes/app_routes.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
-import 'package:smartstock/core/theme/text_styles.dart';
-
-import 'package:smartstock/core/widgets/glass_card.dart';
 import 'package:smartstock/features/dashboard/providers/dashboard_provider.dart';
 import 'package:smartstock/features/dashboard/models/dashboard_stats_model.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class DashboardScreen extends StatefulWidget {
   final bool insideShell;
@@ -78,17 +76,17 @@ class _DashboardScreenState extends State<DashboardScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildWelcomeHeader(context, provider),
+                _buildHeader(context, provider),
                 const SizedBox(height: 20),
-                _buildSummaryCards(context, provider.stats!),
+                _buildKpiRow(context, provider.stats!),
                 const SizedBox(height: 20),
-                _buildAnalyticsSection(context, provider.stats!),
+                _buildStatsGrid(context, provider.stats!),
                 const SizedBox(height: 20),
-                _buildBusinessHealth(context, provider.stats!),
+                _buildAnalyticsRow(context, provider.stats!),
                 const SizedBox(height: 20),
-                _buildActivitySection(context, provider.stats!),
+                _buildHealthAndTopSelling(context, provider.stats!),
                 const SizedBox(height: 20),
-                _buildTopSelling(context, provider.stats!),
+                _buildActivity(context, provider.stats!),
                 const SizedBox(height: 20),
                 _buildQuickActions(context),
                 const SizedBox(height: 40),
@@ -100,230 +98,557 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildWelcomeHeader(BuildContext context, DashboardProvider provider) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  String _timeGreeting() {
+    final h = DateTime.now().hour;
+    if (h < 12) return 'Morning';
+    if (h < 17) return 'Afternoon';
+    return 'Evening';
+  }
 
-    return ModernCard(
-      padding: const EdgeInsets.all(20),
-      gradient: LinearGradient(
-        colors: isDark
-            ? [const Color(0xFF1A1A2E), const Color(0xFF16213E)]
-            : [AppColors.primary, AppColors.primary.withAlpha(180)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
+  // ─── HEADER ───────────────────────────────────────────────
+
+  Widget _buildHeader(BuildContext context, DashboardProvider provider) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
+
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: (isDark ? const Color(0xFF0F172A) : const Color(0xFF1E3A8A))
+                .withAlpha(60),
+            blurRadius: 32,
+            offset: const Offset(0, 12),
+          ),
+        ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark
+                    ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+                    : [const Color(0xFF2563EB), const Color(0xFF1E3A8A)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Text(
-                      'Good ${_getTimeGreeting()},',
-                      style: AppTextStyles.bodyMd.copyWith(
-                        color: Colors.white.withAlpha(180),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF4ADE80),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Good ${_timeGreeting()}!',
+                                style: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF93C5FD),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'SmartStock',
+                            style: TextStyle(
+                              fontFamily: 'Hanken Grotesk',
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              height: 1.1,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Welcome Back!',
-                      style: AppTextStyles.displaySm.copyWith(
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withAlpha(30),
+                            Colors.white.withAlpha(10),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.white.withAlpha(25),
+                          width: 1,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.store_rounded,
                         color: Colors.white,
+                        size: 24,
                       ),
                     ),
                   ],
                 ),
-              ),
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(25),
-                  borderRadius: BorderRadius.circular(14),
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(15),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.white.withAlpha(12),
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Today's Revenue",
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFFBFDBFE),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              '$symbol${_fmt(provider.stats?.todaySalesAmount ?? 0)}',
+                              style: const TextStyle(
+                                fontFamily: 'Hanken Grotesk',
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        width: 1,
+                        height: 40,
+                        color: Colors.white.withAlpha(15),
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Today's Profit",
+                                style: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFFBFDBFE),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                '$symbol${_fmt(provider.stats?.todayProfit ?? 0)}',
+                                style: const TextStyle(
+                                  fontFamily: 'Hanken Grotesk',
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                child: const Icon(
-                  Icons.store_rounded,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _WelcomeStat(
-                label: "Today's Revenue",
-                value: '\$${provider.stats?.todaySalesAmount.toStringAsFixed(0) ?? '0'}',
-                icon: Icons.trending_up_rounded,
+          Positioned(
+            top: -30,
+            right: -30,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withAlpha(6),
               ),
-              const SizedBox(width: 16),
-              _WelcomeStat(
-                label: "Today's Profit",
-                value: provider.stats?.todayProfit != null ? '\$${provider.stats!.todayProfit.toStringAsFixed(0)}' : '\$0',
-                icon: Icons.trending_up_rounded,
+            ),
+          ),
+          Positioned(
+            bottom: -20,
+            left: -20,
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withAlpha(4),
               ),
-            ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryCards(BuildContext context, DashboardStats stats) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final instock = stats.totalProducts - stats.outOfStockProducts;
-    final stockedRatio = stats.totalProducts > 0 ? (instock / stats.totalProducts).clamp(0.05, 1.0) : 0.05;
-    final stockVsProducts = stats.totalProducts > 0 ? (stats.totalAvailableStock / (stats.totalProducts * 5)).clamp(0.05, 1.0) : 0.05;
-    final stockValueRatio = stats.totalStockValue > 0 ? (stats.totalStockValue / (stats.totalProducts * 5000)).clamp(0.05, 1.0) : 0.05;
-    final sellThrough = (stats.todaySoldProducts + stats.totalAvailableStock) > 0
-        ? (stats.todaySoldProducts / (stats.todaySoldProducts + stats.totalAvailableStock)).clamp(0.05, 1.0)
-        : 0.05;
-    final lowStockRatio = stats.totalProducts > 0 ? (stats.lowStockProducts / stats.totalProducts).clamp(0.05, 1.0) : 0.05;
-    final oosRatio = stats.totalProducts > 0 ? (stats.outOfStockProducts / stats.totalProducts).clamp(0.05, 1.0) : 0.05;
+  String _fmt(double v) {
+    if (v >= 10000000) return '${(v / 10000000).toStringAsFixed(1)}Cr';
+    if (v >= 100000) return '${(v / 100000).toStringAsFixed(1)}L';
+    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}k';
+    return v.toStringAsFixed(0);
+  }
 
-    final cards = <_OverviewCardData>[
-      _OverviewCardData(label: 'Total Products', value: '${stats.totalProducts}', icon: Icons.inventory_2_rounded, color: AppColors.blue, bar: stockedRatio, route: AppRoutes.products),
-      _OverviewCardData(label: 'Total Stock', value: '${stats.totalAvailableStock}', icon: Icons.warehouse_rounded, color: AppColors.primary, bar: stockVsProducts, route: AppRoutes.inventory),
-      _OverviewCardData(label: 'Stock Value', value: _formatValue(stats.totalStockValue), icon: Icons.account_balance_wallet_rounded, color: AppColors.green, bar: stockValueRatio, route: AppRoutes.inventory),
-      _OverviewCardData(label: 'Sold Today', value: '${stats.todaySoldProducts}', icon: Icons.shopping_cart_rounded, color: AppColors.purple, bar: sellThrough, route: AppRoutes.salesToday),
-      _OverviewCardData(label: 'Low Stock', value: '${stats.lowStockProducts}', icon: Icons.warning_rounded, color: AppColors.orange, bar: lowStockRatio, route: AppRoutes.inventory),
-      _OverviewCardData(label: 'Out of Stock', value: '${stats.outOfStockProducts}', icon: Icons.error_outline_rounded, color: AppColors.red, bar: oosRatio, route: AppRoutes.inventory),
-    ];
+  String _fmtAmount(double v) {
+    final neg = v < 0;
+    final a = neg ? -v : v;
+    final p = a.toStringAsFixed(0).split('.');
+    final b = StringBuffer();
+    int c = 0;
+    for (int i = p[0].length - 1; i >= 0; i--) {
+      if (c > 0 && c % 3 == 0) b.write(',');
+      b.write(p[0][i]);
+      c++;
+    }
+    final r = b.toString().split('').reversed.join();
+    return neg ? '-$r' : r;
+  }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  // ─── KPI ROW ──────────────────────────────────────────────
+
+  Widget _buildKpiRow(BuildContext context, DashboardStats stats) {
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
+    return Row(
       children: [
-        _buildSectionTitle(context, 'Overview', 'Your business at a glance'),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: cards.map((c) {
-            return SizedBox(
-              width: (MediaQuery.of(context).size.width - 42) / 2,
-              child: GestureDetector(
-                onTap: c.route != null ? () => Navigator.pushNamed(context, c.route!) : null,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.cardDark : Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withAlpha(6), blurRadius: 10, offset: const Offset(0, 3)),
-                      BoxShadow(color: c.color.withAlpha(6), blurRadius: 20, offset: const Offset(0, 6)),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Stack(
-                        children: [
-                          Positioned(
-                            right: -6, top: -6,
-                            child: Icon(c.icon, size: 48, color: c.color.withAlpha(10)),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  width: 28, height: 28,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [c.color.withAlpha(30), c.color.withAlpha(10)],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Icon(c.icon, size: 14, color: c.color),
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  c.value,
-                                  style: TextStyle(
-                                    fontFamily: 'Hanken Grotesk',
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: -0.5,
-                                    height: 0.95,
-                                    color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  c.label,
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
-                                    color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        height: 2.5,
-                        margin: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: c.color.withAlpha(15),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                        alignment: Alignment.centerLeft,
-                        child: FractionallySizedBox(
-                          widthFactor: c.bar,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [c.color, c.color.withAlpha(120)],
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                              ),
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
+        Expanded(
+          child: _kpiCard(
+            icon: Icons.sell_rounded,
+            iconColor: AppColors.blue,
+            bgColor: AppColors.blueBg,
+            label: 'Selling Value',
+            value: '$symbol${_fmtAmount(stats.totalStockValue)}',
+            subtitle: 'At customer price',
+            isDark: Theme.of(context).brightness == Brightness.dark,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _kpiCard(
+            icon: Icons.shopping_bag_rounded,
+            iconColor: AppColors.orange,
+            bgColor: AppColors.orangeBg,
+            label: 'Stock Cost',
+            value: '$symbol${_fmtAmount(stats.totalStockCost)}',
+            subtitle: 'Total invested',
+            isDark: Theme.of(context).brightness == Brightness.dark,
+          ),
         ),
       ],
     );
   }
 
-  String _formatValue(double value) {
-    if (value >= 10000000) {
-      return '${(value / 10000000).toStringAsFixed(1)}Cr';
-    } else if (value >= 100000) {
-      return '${(value / 100000).toStringAsFixed(1)}L';
-    } else if (value >= 1000) {
-      return '${(value / 1000).toStringAsFixed(1)}k';
-    }
-    return value.toStringAsFixed(0);
+  Widget _kpiCard({
+    required IconData icon,
+    required Color iconColor,
+    required Color bgColor,
+    required String label,
+    required String value,
+    required String subtitle,
+    required bool isDark,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF1E293B), const Color(0xFF162032)]
+              : [Colors.white, const Color(0xFFF8FAFC)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark
+              ? AppColors.greyDarker.withAlpha(60)
+              : iconColor.withAlpha(25),
+          width: 0.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: iconColor.withAlpha(10),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [iconColor.withAlpha(30), iconColor.withAlpha(10)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, size: 20, color: iconColor),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Hanken Grotesk',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? AppColors.textPrimary : const Color(0xFF0F172A),
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.textSecondary : const Color(0xFF475569),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  List<double> _normalizeBars(List<double> values) {
-    if (values.isEmpty) return List.filled(7, 0.1);
-    final max = values.reduce((a, b) => a > b ? a : b);
-    if (max == 0) return List.filled(values.length, 0.1);
-    return values.map((v) => (v / max).clamp(0.05, 1.0)).toList();
-  }
+  // ─── STATS GRID ───────────────────────────────────────────
 
-  Widget _buildAnalyticsSection(BuildContext context, DashboardStats stats) {
+  Widget _buildStatsGrid(BuildContext context, DashboardStats stats) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final salesBars = _normalizeBars(stats.dailySales);
-    final profitBars = _normalizeBars(stats.dailyProfit);
+    final total = stats.totalProducts > 0 ? stats.totalProducts : 1;
+
+    final stockGroups = [
+      _GroupData('Products', AppColors.blue, [
+        _ItemData(Icons.inventory_2_rounded, '${stats.totalProducts}', 'Product Types', AppColors.blue),
+        _ItemData(Icons.inventory_rounded, '${stats.totalAvailableStock}', 'Total Items', AppColors.teal),
+        _ItemData(Icons.add_circle_rounded, '${stats.recentlyAddedProducts.length}', 'Added Today', AppColors.primary, route: AppRoutes.dailyAdditions),
+      ]),
+      _GroupData('Stock Health', AppColors.green, [
+        _ItemData(Icons.check_circle_rounded, '${stats.totalAvailableStock}', 'In Stock', AppColors.green, barValue: (stats.totalAvailableStock / total * 100).clamp(0, 100)),
+        _ItemData(Icons.warning_rounded, '${stats.lowStockProducts}', 'Low Stock', AppColors.orange, barValue: (stats.lowStockProducts / total * 100).clamp(0, 100)),
+        _ItemData(Icons.error_outline_rounded, '${stats.outOfStockProducts}', 'Out of Stock', AppColors.red, barValue: (stats.outOfStockProducts / total * 100).clamp(0, 100)),
+      ]),
+      _GroupData('Activity', AppColors.purple, [
+        _ItemData(Icons.shopping_cart_rounded, '${stats.todaySoldProducts}', 'Sold Today', AppColors.purple),
+        _ItemData(Icons.verified_rounded, '${stats.activeWarranties}', 'Warranties', AppColors.pink, route: AppRoutes.warranty),
+        _ItemData(Icons.assignment_rounded, '${stats.recentlySoldProducts.length}', 'Sold Items', AppColors.green, route: AppRoutes.salesHistory),
+      ]),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle(context, 'Overview', 'Everything at a glance'),
+        const SizedBox(height: 14),
+        Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.cardDark : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDark
+                  ? AppColors.greyDarker.withAlpha(60)
+                  : const Color(0xFFE5E7EB).withAlpha(140),
+              width: 0.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(6),
+                blurRadius: 18,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: stockGroups.asMap().entries.map((entry) {
+              final i = entry.key;
+              final g = entry.value;
+              return _buildGroup(g, isDark, context,
+                  showBorder: i < stockGroups.length - 1);
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGroup(_GroupData g, bool isDark, BuildContext context,
+      {required bool showBorder}) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+      decoration: showBorder
+          ? BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: isDark
+                      ? AppColors.greyDarker.withAlpha(60)
+                      : const Color(0xFFE5E7EB).withAlpha(140),
+                  width: 0.5,
+                ),
+              ),
+            )
+          : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 3,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: g.accent,
+                  borderRadius: BorderRadius.circular(1.5),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                g.title,
+                style: TextStyle(
+                  fontFamily: 'Hanken Grotesk',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? AppColors.textPrimary : const Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: g.items.map((item) {
+              return Expanded(
+                child: _groupItem(item, isDark, context),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _groupItem(_ItemData item, bool isDark, BuildContext context) {
+    return GestureDetector(
+      onTap: item.route != null
+          ? () => Navigator.pushNamed(context, item.route!)
+          : null,
+      child: Column(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [item.color.withAlpha(25), item.color.withAlpha(8)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: item.color.withAlpha(15),
+                width: 0.5,
+              ),
+            ),
+            child: Icon(item.icon, size: 18, color: item.color),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            item.value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: 'Hanken Grotesk',
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: isDark ? AppColors.textPrimary : const Color(0xFF0F172A),
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 1),
+          Text(
+            item.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 9,
+              fontWeight: FontWeight.w500,
+              color: isDark ? AppColors.textMuted : const Color(0xFF64748B),
+            ),
+          ),
+          if (item.barValue != null) ...[
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: LinearProgressIndicator(
+                value: item.barValue! / 100,
+                minHeight: 3,
+                backgroundColor: isDark
+                    ? AppColors.greyDarker.withAlpha(80)
+                    : const Color(0xFFE5E7EB),
+                valueColor: AlwaysStoppedAnimation(item.color),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ─── ANALYTICS ────────────────────────────────────────────
+
+  Widget _buildAnalyticsRow(BuildContext context, DashboardStats stats) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
+
+    final salesBars = _normBars(stats.dailySales);
+    final profitBars = _normBars(stats.dailyProfit);
     final weeklyAvg = stats.dailySales.isNotEmpty
         ? stats.dailySales.reduce((a, b) => a + b) / stats.dailySales.length
         : 0.0;
@@ -334,58 +659,33 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle(context, 'Analytics', 'Sales & inventory insights'),
+        _sectionTitle(context, 'Analytics', '7-day sales & profit trends'),
         const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
-              child: _MiniChartCard(
-                title: 'Sales Trend',
-                value: '\$${stats.todaySalesAmount.toStringAsFixed(0)}',
-                percentage: '${todayVsAvg >= 0 ? '+' : ''}${todayVsAvg.toStringAsFixed(1)}%',
-                isUp: todayVsAvg >= 0,
+              child: _chartCard(
+                title: 'Sales',
+                value: '$symbol${_fmtAmount(stats.todaySalesAmount)}',
+                pct: todayVsAvg,
                 bars: salesBars,
-                color: AppColors.primary,
-                isDark: isDark,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _MiniChartCard(
-                title: 'Profit Trend',
-                value: '\$${stats.todayProfit.toStringAsFixed(0)}',
-                percentage: '+${stats.dailyProfit.isNotEmpty && stats.dailyProfit.length > 1 ? ((stats.dailyProfit.last - stats.dailyProfit.first) / (stats.dailyProfit.first.abs().clamp(1, double.infinity)) * 100).toStringAsFixed(1) : '0'}%',
-                isUp: stats.dailyProfit.isEmpty || stats.dailyProfit.last >= (stats.dailyProfit.length > 1 ? stats.dailyProfit.first : 0),
-                bars: profitBars,
                 color: AppColors.blue,
                 isDark: isDark,
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: _MiniChartCard(
-                title: 'Stock Growth',
-                value: '${stats.totalAvailableStock}',
-                percentage: '+${stats.recentlyAddedProducts.isNotEmpty ? ((stats.recentlyAddedProducts.length / stats.totalProducts.clamp(1, double.infinity)) * 100).toStringAsFixed(1) : '0'}%',
-                isUp: stats.recentlyAddedProducts.isNotEmpty,
-                bars: [0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6],
-                color: AppColors.purple,
-                isDark: isDark,
-              ),
-            ),
             const SizedBox(width: 10),
             Expanded(
-              child: _MiniChartCard(
-                title: 'Profit Margin',
-                value: '${_calculateProfitMargin(stats).toStringAsFixed(1)}%',
-                percentage: stats.todayProfit > 0 ? '+${(stats.todayProfit / stats.todaySalesAmount.clamp(1, double.infinity) * 100).toStringAsFixed(1)}%' : '0%',
-                isUp: stats.todayProfit > 0,
-                bars: profitBars.isNotEmpty ? profitBars.sublist(0, profitBars.length > 4 ? 4 : profitBars.length) : [0.1],
-                color: AppColors.orange,
+              child: _chartCard(
+                title: 'Profit',
+                value: '$symbol${_fmtAmount(stats.todayProfit)}',
+                pct: stats.dailyProfit.isNotEmpty &&
+                        stats.dailyProfit.length > 1
+                    ? ((stats.dailyProfit.last - stats.dailyProfit.first) /
+                            stats.dailyProfit.first.abs().clamp(1, 1.0))
+                        * 100
+                    : 0.0,
+                bars: profitBars,
+                color: AppColors.green,
                 isDark: isDark,
               ),
             ),
@@ -395,241 +695,657 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildBusinessHealth(BuildContext context, DashboardStats stats) {
-    final healthScore = _calculateHealthScore(stats);
+  Widget _chartCard({
+    required String title,
+    required String value,
+    required double pct,
+    required List<double> bars,
+    required Color color,
+    required bool isDark,
+  }) {
+    final isUp = pct >= 0;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? AppColors.greyDarker.withAlpha(60)
+              : const Color(0xFFE5E7EB).withAlpha(120),
+          width: 0.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(6),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: color.withAlpha(20),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  title == 'Sales'
+                      ? Icons.trending_up_rounded
+                      : Icons.show_chart_rounded,
+                  size: 15,
+                  color: color,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  color: (isUp ? AppColors.greenBg : AppColors.redBg)
+                      .withAlpha(200),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '${isUp ? '+' : ''}${pct.toStringAsFixed(1)}%',
+                  style: TextStyle(
+                    fontFamily: 'Geist',
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: isUp ? AppColors.green : AppColors.red,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: isDark ? AppColors.textMuted : const Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: 'Hanken Grotesk',
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: isDark ? AppColors.textPrimary : const Color(0xFF0F172A),
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: bars.map((b) {
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 1.5),
+                  child: Container(
+                    height: 36 * b,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [color.withAlpha(180), color.withAlpha(50)],
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                      ),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(growable: false),
+          ),
+        ],
+      ),
+    );
+  }
 
-    return Column(
+  List<double> _normBars(List<double> values) {
+    if (values.isEmpty) return List.filled(7, 0.08);
+    final max = values.reduce((a, b) => a > b ? a : b);
+    if (max == 0) return List.filled(values.length, 0.08);
+    return values.map((v) => (v / max).clamp(0.05, 1.0)).toList();
+  }
+
+  // ─── HEALTH + TOP SELLING ─────────────────────────────────
+
+  Widget _buildHealthAndTopSelling(
+      BuildContext context, DashboardStats stats) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final health = _calcHealth(stats);
+    final top = stats.topSellingProducts.take(3).toList();
+
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle(context, 'Business Health', 'Overall performance score'),
-        const SizedBox(height: 12),
-        ModernCard(
-          padding: const EdgeInsets.all(20),
-          child: Row(
+        Expanded(
+          flex: 2,
+          child: _healthCard(health, stats, isDark),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          flex: 3,
+          child: _topSellingCard(top, isDark, context),
+        ),
+      ],
+    );
+  }
+
+  Widget _healthCard(
+      double health, DashboardStats stats, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? AppColors.greyDarker.withAlpha(60)
+              : const Color(0xFFE5E7EB).withAlpha(120),
+          width: 0.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(6),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          SizedBox(
+            width: 68,
+            height: 68,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CircularProgressIndicator(
+                  value: health / 100,
+                  strokeWidth: 5,
+                  backgroundColor: isDark
+                      ? AppColors.greyDarker.withAlpha(80)
+                      : const Color(0xFFE5E7EB),
+                  valueColor: AlwaysStoppedAnimation(
+                    health >= 80
+                        ? AppColors.green
+                        : health >= 60
+                            ? AppColors.orange
+                            : AppColors.red,
+                  ),
+                ),
+                Text(
+                  health.toStringAsFixed(0),
+                  style: TextStyle(
+                    fontFamily: 'Hanken Grotesk',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: health >= 80
+                        ? AppColors.green
+                        : health >= 60
+                            ? AppColors.orange
+                            : AppColors.red,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            health >= 80
+                ? 'Excellent'
+                : health >= 60
+                    ? 'Good'
+                    : 'Needs Work',
+            style: TextStyle(
+              fontFamily: 'Hanken Grotesk',
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: isDark ? AppColors.textPrimary : const Color(0xFF0F172A),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _healthRow('Stock', _calcStockHealth(stats), isDark),
+          const SizedBox(height: 4),
+          _healthRow('Sales', _calcSalesMomentum(stats), isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _healthRow(String label, double value, bool isDark) {
+    return Row(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 10,
+            color: isDark ? AppColors.textMuted : const Color(0xFF64748B),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: LinearProgressIndicator(
+              value: value / 100,
+              minHeight: 5,
+              backgroundColor: isDark
+                  ? AppColors.greyDarker.withAlpha(80)
+                  : const Color(0xFFE5E7EB),
+              valueColor: AlwaysStoppedAnimation(
+                value >= 70
+                    ? AppColors.green
+                    : value >= 40
+                        ? AppColors.orange
+                        : AppColors.red,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
+        SizedBox(
+          width: 28,
+          child: Text(
+            '${value.toStringAsFixed(0)}%',
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              color: isDark ? AppColors.textSecondary : const Color(0xFF475569),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _topSellingCard(
+      List<TopSellingProduct> top, bool isDark, BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? AppColors.greyDarker.withAlpha(60)
+              : const Color(0xFFE5E7EB).withAlpha(120),
+          width: 0.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(6),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              SizedBox(
-                width: 80,
-                height: 80,
-                child: Stack(
-                  alignment: Alignment.center,
+              const Icon(Icons.trending_up_rounded,
+                  size: 16, color: AppColors.green),
+              const SizedBox(width: 6),
+              Text(
+                'Top Selling',
+                style: TextStyle(
+                  fontFamily: 'Hanken Grotesk',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? AppColors.textPrimary : const Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (top.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Center(
+                child: Text(
+                  'No sales data yet',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 11,
+                    color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8),
+                  ),
+                ),
+              ),
+            )
+          else
+            ...top.asMap().entries.map((e) {
+              final i = e.key;
+              final p = e.value;
+              final colors = [
+                AppColors.blue,
+                AppColors.purple,
+                AppColors.orange
+              ];
+              final c = colors[i];
+              return Padding(
+                padding: EdgeInsets.only(bottom: i < top.length - 1 ? 8 : 0),
+                child: Row(
                   children: [
-                    SizedBox(
-                      width: 80,
-                      height: 80,
-                      child: CircularProgressIndicator(
-                        value: healthScore / 100,
-                        strokeWidth: 6,
-                        backgroundColor: AppColors.greyDarker.withAlpha(60),
-                        valueColor: AlwaysStoppedAnimation(
-                          healthScore >= 80
-                              ? AppColors.green
-                              : healthScore >= 60
-                                  ? AppColors.orange
-                                  : AppColors.red,
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: c.withAlpha(15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${i + 1}',
+                          style: TextStyle(
+                            fontFamily: 'Hanken Grotesk',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: c,
+                          ),
                         ),
                       ),
                     ),
-                    Text(
-                      healthScore.toStringAsFixed(0),
-                      style: AppTextStyles.amountMd.copyWith(
-                        color: healthScore >= 80
-                            ? AppColors.green
-                            : healthScore >= 60
-                                ? AppColors.orange
-                                : AppColors.red,
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        p.productName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? AppColors.textPrimary
+                              : const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: c.withAlpha(15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '${p.totalSold} sold',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: c,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      healthScore >= 80
-                          ? 'Excellent Health'
-                          : healthScore >= 60
-                              ? 'Good Health'
-                              : 'Needs Attention',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.titleMd.copyWith(
-                        color: _getTextColor(context),
-                      ),
+              );
+            }),
+          if (top.length >= 3)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Center(
+                child: TextButton(
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.reports),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    'View All',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.blue,
                     ),
-                    const SizedBox(height: 8),
-                    _HealthMetric(
-                      label: 'Stock Health',
-                      value: _calculateStockHealth(stats),
-                      isDark: Theme.of(context).brightness == Brightness.dark,
-                    ),
-                    const SizedBox(height: 4),
-                    _HealthMetric(
-                      label: 'Sales Momentum',
-                      value: _calculateSalesMomentum(stats),
-                      isDark: Theme.of(context).brightness == Brightness.dark,
-                    ),
-                    const SizedBox(height: 4),
-                    _HealthMetric(
-                      label: 'Inventory Turnover',
-                      value: _calculateTurnover(stats),
-                      isDark: Theme.of(context).brightness == Brightness.dark,
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActivitySection(BuildContext context, DashboardStats stats) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle(context, 'Recent Activity', 'Latest updates from your shop'),
-        const SizedBox(height: 12),
-        ModernCard(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              _ActivityTile(
-                icon: Icons.add_circle_rounded,
-                title: 'Products Added Today',
-                value: '${stats.recentlyAddedProducts.length}',
-                color: AppColors.primary,
-                isDark: isDark,
-                onTap: () => Navigator.pushNamed(context, AppRoutes.dailyAdditions),
-              ),
-              const Divider(height: 1),
-              _ActivityTile(
-                icon: Icons.shopping_cart_rounded,
-                title: 'Products Sold Today',
-                value: '${stats.todaySoldProducts}',
-                color: AppColors.blue,
-                isDark: isDark,
-                onTap: () => Navigator.pushNamed(context, AppRoutes.salesToday),
-              ),
-              const Divider(height: 1),
-              _ActivityTile(
-                icon: Icons.warning_rounded,
-                title: 'Low Stock Warnings',
-                value: '${stats.lowStockProducts}',
-                color: AppColors.orange,
-                isDark: isDark,
-                onTap: () => Navigator.pushNamed(context, AppRoutes.inventory),
-              ),
-              const Divider(height: 1),
-              _ActivityTile(
-                icon: Icons.verified_rounded,
-                title: 'Active Warranties',
-                value: '${stats.totalProducts ~/ 2}',
-                color: AppColors.purple,
-                isDark: isDark,
-                onTap: () => Navigator.pushNamed(context, AppRoutes.warranty),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTopSelling(BuildContext context, DashboardStats stats) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle(context, 'Top Selling', 'Best performing products'),
-        const SizedBox(height: 12),
-        if (stats.topSellingProducts.isEmpty)
-          ModernCard(
-            padding: const EdgeInsets.all(24),
-            child: Center(
-              child: Column(
-                children: [
-                  Icon(Icons.trending_flat_rounded, size: 40, color: isDark ? AppColors.greyDarker : const Color(0xFFD1D5DB)),
-                  const SizedBox(height: 8),
-                  Text('No sales data yet', style: AppTextStyles.bodyMd.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
-                ],
               ),
             ),
-          )
-        else
-          ...stats.topSellingProducts.take(5).map((product) {
-            return _TopSellingRow(
-              product: product,
-              rank: stats.topSellingProducts.indexOf(product) + 1,
-              isDark: isDark,
-            );
-          }),
+        ],
+      ),
+    );
+  }
+
+  // ─── ACTIVITY ─────────────────────────────────────────────
+
+  Widget _buildActivity(BuildContext context, DashboardStats stats) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final activities = <_Activity>[
+      _Activity(
+        icon: Icons.add_circle_rounded,
+        title: 'Products Added Today',
+        value: '${stats.recentlyAddedProducts.length}',
+        color: AppColors.blue,
+        route: AppRoutes.dailyAdditions,
+      ),
+      _Activity(
+        icon: Icons.shopping_cart_rounded,
+        title: 'Products Sold Today',
+        value: '${stats.todaySoldProducts}',
+        color: AppColors.green,
+        route: AppRoutes.salesToday,
+      ),
+      _Activity(
+        icon: Icons.warning_rounded,
+        title: 'Low Stock Items',
+        value: '${stats.lowStockProducts}',
+        color: AppColors.orange,
+        route: AppRoutes.inventory,
+      ),
+      _Activity(
+        icon: Icons.verified_rounded,
+        title: 'Active Warranties',
+        value: '${stats.activeWarranties}',
+        color: AppColors.purple,
+        route: AppRoutes.warranty,
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle(context, 'Recent Activity', 'Today\'s updates'),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.cardDark : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark
+                  ? AppColors.greyDarker.withAlpha(60)
+                  : const Color(0xFFE5E7EB).withAlpha(120),
+              width: 0.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(6),
+                blurRadius: 12,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            children: activities.asMap().entries.map((e) {
+              final i = e.key;
+              final a = e.value;
+              return InkWell(
+                onTap: () => Navigator.pushNamed(context, a.route),
+                borderRadius: i == 0
+                    ? const BorderRadius.vertical(top: Radius.circular(16))
+                    : i == activities.length - 1
+                        ? const BorderRadius.vertical(
+                            bottom: Radius.circular(16))
+                        : null,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    border: i < activities.length - 1
+                        ? Border(
+                            bottom: BorderSide(
+                              color: isDark
+                                  ? AppColors.greyDarker.withAlpha(60)
+                                  : const Color(0xFFE5E7EB).withAlpha(100),
+                              width: 0.5,
+                            ),
+                          )
+                        : null,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: a.color.withAlpha(15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(a.icon, size: 18, color: a.color),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          a.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: isDark
+                                ? AppColors.textPrimary
+                                : const Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: a.color.withAlpha(12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          a.value,
+                          style: TextStyle(
+                            fontFamily: 'Hanken Grotesk',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: a.color,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
       ],
     );
   }
+
+  // ─── QUICK ACTIONS ────────────────────────────────────────
 
   Widget _buildQuickActions(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final actions = <_QuickAction>[
-      _QuickAction(icon: Icons.add_circle_rounded, label: 'Add Product', color: AppColors.primary, route: AppRoutes.productsAdd),
-      _QuickAction(icon: Icons.add_shopping_cart_rounded, label: 'New Sale', color: AppColors.green, route: AppRoutes.salesNew),
-      _QuickAction(icon: Icons.post_add_rounded, label: 'Add Stock', color: AppColors.orange, route: AppRoutes.dailyAdditions),
-      _QuickAction(icon: Icons.inventory_2_rounded, label: 'Products', color: AppColors.blue, route: AppRoutes.products),
-      _QuickAction(icon: Icons.warehouse_rounded, label: 'Inventory', color: AppColors.teal, route: AppRoutes.inventory),
-      _QuickAction(icon: Icons.category_rounded, label: 'Categories', color: AppColors.purple, route: AppRoutes.categories),
-      _QuickAction(icon: Icons.people_rounded, label: 'Customers', color: AppColors.pink, route: AppRoutes.customers),
-      _QuickAction(icon: Icons.history_rounded, label: 'Sales History', color: AppColors.purple, route: AppRoutes.salesHistory),
-      _QuickAction(icon: Icons.today_rounded, label: "Today's Sales", color: AppColors.orange, route: AppRoutes.salesToday),
-      _QuickAction(icon: Icons.assessment_rounded, label: 'Reports', color: AppColors.red, route: AppRoutes.reports),
-      _QuickAction(icon: Icons.verified_rounded, label: 'Warranty', color: AppColors.teal, route: AppRoutes.warranty),
-      _QuickAction(icon: Icons.bug_report_rounded, label: 'Issues', color: AppColors.red, route: AppRoutes.productIssues),
-      _QuickAction(icon: Icons.swap_horiz_rounded, label: 'Replacements', color: AppColors.orange, route: AppRoutes.replacements),
-      _QuickAction(icon: Icons.search_rounded, label: 'Search', color: AppColors.grey, route: AppRoutes.search),
-      _QuickAction(icon: Icons.settings_rounded, label: 'Settings', color: AppColors.greyDark, route: AppRoutes.settings),
+      _QuickAction(
+          icon: Icons.add_circle_rounded,
+          label: 'Add Product',
+          color: AppColors.blue,
+          route: AppRoutes.productsAdd),
+      _QuickAction(
+          icon: Icons.add_shopping_cart_rounded,
+          label: 'New Sale',
+          color: AppColors.green,
+          route: AppRoutes.salesNew),
+      _QuickAction(
+          icon: Icons.post_add_rounded,
+          label: 'Add Stock',
+          color: AppColors.orange,
+          route: AppRoutes.dailyAdditions),
+      _QuickAction(
+          icon: Icons.people_rounded,
+          label: 'Customers',
+          color: AppColors.purple,
+          route: AppRoutes.customers),
+      _QuickAction(
+          icon: Icons.history_rounded,
+          label: 'Sales History',
+          color: AppColors.teal,
+          route: AppRoutes.salesHistory),
+      _QuickAction(
+          icon: Icons.assessment_rounded,
+          label: 'Reports',
+          color: AppColors.red,
+          route: AppRoutes.reports),
+      _QuickAction(
+          icon: Icons.search_rounded,
+          label: 'Search',
+          color: AppColors.grey,
+          route: AppRoutes.search),
+      _QuickAction(
+          icon: Icons.settings_rounded,
+          label: 'Settings',
+          color: AppColors.greyDark,
+          route: AppRoutes.settings),
     ];
-    final itemWidth = (MediaQuery.of(context).size.width - 56) / 4;
-    final totalItems = actions.length;
-    final remainder = totalItems % 4;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle(context, 'Quick Actions', 'All app pages'),
+        _sectionTitle(context, 'Quick Actions', 'Frequently used tools'),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: [
-            ...actions.map((a) {
+          children: actions.map((a) {
+            final itemW = (MediaQuery.of(context).size.width - 56) / 4;
             return SizedBox(
-              width: itemWidth,
+              width: itemW,
               child: GestureDetector(
                 onTap: () => Navigator.pushNamed(context, a.route),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
                     color: isDark ? AppColors.cardDark : Colors.white,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: a.color.withAlpha(20),
                       width: 0.5,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: a.color.withAlpha(10),
+                        color: a.color.withAlpha(8),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withAlpha(6),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
                       ),
                     ],
                   ),
@@ -637,20 +1353,13 @@ class _DashboardScreenState extends State<DashboardScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        width: 32,
-                        height: 32,
+                        width: 34,
+                        height: 34,
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              a.color.withAlpha(30),
-                              a.color.withAlpha(10),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
+                          color: a.color.withAlpha(15),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Icon(a.icon, size: 16, color: a.color),
+                        child: Icon(a.icon, size: 17, color: a.color),
                       ),
                       const SizedBox(height: 6),
                       Text(
@@ -662,7 +1371,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                           fontFamily: 'Inter',
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
-                          color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280),
+                          color: isDark
+                              ? AppColors.textSecondary
+                              : const Color(0xFF475569),
                         ),
                       ),
                     ],
@@ -670,71 +1381,148 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
               ),
             );
-          }),
-          if (remainder > 0) ...[
-            ...List.generate(4 - remainder, (_) => SizedBox(width: itemWidth)),
-          ],
-        ],
-      ),
+          }).toList(),
+        ),
       ],
     );
   }
+
+  // ─── HELPERS ──────────────────────────────────────────────
+
+  Widget _sectionTitle(BuildContext context, String title, String subtitle) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'Hanken Grotesk',
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? AppColors.textPrimary : const Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  color: isDark ? AppColors.textMuted : const Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  double _calcHealth(DashboardStats s) {
+    double score = 70;
+    if (s.totalProducts > 0) score += 10;
+    if (s.totalAvailableStock > s.totalProducts) score += 5;
+    if (s.todaySalesAmount > 0) score += 10;
+    if (s.lowStockProducts == 0) score += 10;
+    if (s.outOfStockProducts == 0) score += 5;
+    return score.clamp(0, 100);
+  }
+
+  double _calcStockHealth(DashboardStats s) {
+    if (s.totalProducts == 0) return 0;
+    final h = s.totalProducts - s.lowStockProducts - s.outOfStockProducts;
+    return (h / s.totalProducts * 100).clamp(0, 100);
+  }
+
+  double _calcSalesMomentum(DashboardStats s) {
+    if (s.totalProducts == 0) return 0;
+    return (s.todaySoldProducts / s.totalProducts * 100).clamp(0, 100);
+  }
+
+  // ─── SKELETON ─────────────────────────────────────────────
 
   Widget _buildSkeletonLoading() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 12, 16, 100),
+      padding: EdgeInsets.fromLTRB(
+          16, MediaQuery.of(context).padding.top + 12, 16, 100),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SkeletonBlock(height: 120, isDark: isDark),
+          _skeleton(h: 130, isDark: isDark),
           const SizedBox(height: 20),
-          _buildSectionTitleSkeleton(isDark),
+          Row(children: [
+            Expanded(child: _skeleton(h: 90, isDark: isDark)),
+            const SizedBox(width: 10),
+            Expanded(child: _skeleton(h: 90, isDark: isDark)),
+            const SizedBox(width: 10),
+            Expanded(child: _skeleton(h: 90, isDark: isDark)),
+          ]),
+          const SizedBox(height: 20),
+          _skeleton(h: 16, w: 160, isDark: isDark),
           const SizedBox(height: 12),
           Row(children: [
-            Expanded(child: _SkeletonBlock(height: 100, isDark: isDark)),
+            Expanded(child: _skeleton(h: 72, isDark: isDark)),
             const SizedBox(width: 10),
-            Expanded(child: _SkeletonBlock(height: 100, isDark: isDark)),
+            Expanded(child: _skeleton(h: 72, isDark: isDark)),
           ]),
           const SizedBox(height: 10),
           Row(children: [
-            Expanded(child: _SkeletonBlock(height: 100, isDark: isDark)),
+            Expanded(child: _skeleton(h: 72, isDark: isDark)),
             const SizedBox(width: 10),
-            Expanded(child: _SkeletonBlock(height: 100, isDark: isDark)),
+            Expanded(child: _skeleton(h: 72, isDark: isDark)),
           ]),
           const SizedBox(height: 10),
           Row(children: [
-            Expanded(child: _SkeletonBlock(height: 100, isDark: isDark)),
+            Expanded(child: _skeleton(h: 72, isDark: isDark)),
             const SizedBox(width: 10),
-            Expanded(child: _SkeletonBlock(height: 100, isDark: isDark)),
+            Expanded(child: _skeleton(h: 72, isDark: isDark)),
           ]),
           const SizedBox(height: 20),
-          _buildSectionTitleSkeleton(isDark),
+          _skeleton(h: 16, w: 160, isDark: isDark),
           const SizedBox(height: 12),
           Row(children: [
-            Expanded(child: _SkeletonBlock(height: 140, isDark: isDark)),
+            Expanded(child: _skeleton(h: 150, isDark: isDark)),
             const SizedBox(width: 10),
-            Expanded(child: _SkeletonBlock(height: 140, isDark: isDark)),
+            Expanded(child: _skeleton(h: 150, isDark: isDark)),
           ]),
           const SizedBox(height: 20),
-          _buildSectionTitleSkeleton(isDark),
+          _skeleton(h: 16, w: 160, isDark: isDark),
           const SizedBox(height: 12),
-          _SkeletonBlock(height: 200, isDark: isDark),
+          _skeleton(h: 180, isDark: isDark),
+          const SizedBox(height: 20),
+          _skeleton(h: 16, w: 160, isDark: isDark),
+          const SizedBox(height: 12),
+          _skeleton(h: 100, isDark: isDark),
         ],
       ),
     );
   }
 
-  Widget _buildSectionTitleSkeleton(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _SkeletonBlock(height: 16, width: 160, isDark: isDark),
-        const SizedBox(height: 4),
-        _SkeletonBlock(height: 12, width: 120, isDark: isDark),
-      ],
+  Widget _skeleton({
+    required double h,
+    double? w,
+    required bool isDark,
+  }) {
+    return Container(
+      height: h,
+      width: w,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.shimmerBase : const Color(0xFFE5E7EB),
+        borderRadius: BorderRadius.circular(14),
+      ),
     );
   }
+
+  // ─── ERROR ────────────────────────────────────────────────
 
   Widget _buildErrorState(DashboardProvider provider) {
     return Center(
@@ -748,144 +1536,44 @@ class _DashboardScreenState extends State<DashboardScreen>
               height: 80,
               decoration: BoxDecoration(
                 color: AppColors.redBg,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
               ),
-              child: const Icon(Icons.cloud_off_rounded, size: 36, color: AppColors.red),
+              child: const Icon(Icons.cloud_off_rounded,
+                  size: 36, color: AppColors.red),
             ),
             const SizedBox(height: 20),
-            Text(
+            const Text(
               'Connection Error',
-              style: AppTextStyles.headlineMd.copyWith(color: AppColors.textPrimary),
+              style: TextStyle(
+                fontFamily: 'Hanken Grotesk',
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               provider.error ?? 'Something went wrong',
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.bodyMd.copyWith(color: AppColors.textSecondary),
               textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: () => provider.refresh(),
               icon: const Icon(Icons.refresh_rounded, size: 18),
               label: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(BuildContext context, String title, String subtitle) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: AppTextStyles.headlineSm.copyWith(
-            color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          subtitle,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: AppTextStyles.bodySm.copyWith(
-            color: isDark ? AppColors.textMuted : const Color(0xFF6B7280),
-          ),
-        ),
-      ],
-    );
-  }
-
-  String _getTimeGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Morning';
-    if (hour < 17) return 'Afternoon';
-    return 'Evening';
-  }
-
-  double _calculateHealthScore(DashboardStats stats) {
-    double score = 70;
-    if (stats.totalProducts > 0) score += 10;
-    if (stats.totalAvailableStock > stats.totalProducts) score += 5;
-    if (stats.todaySalesAmount > 0) score += 10;
-    if (stats.lowStockProducts == 0) score += 10;
-    if (stats.outOfStockProducts == 0) score += 5;
-    return score.clamp(0, 100);
-  }
-
-  double _calculateStockHealth(DashboardStats stats) {
-    if (stats.totalProducts == 0) return 0;
-    final healthyStock = stats.totalProducts - stats.lowStockProducts - stats.outOfStockProducts;
-    return (healthyStock / stats.totalProducts * 100).clamp(0, 100);
-  }
-
-  double _calculateSalesMomentum(DashboardStats stats) {
-    if (stats.totalProducts == 0) return 0;
-    return (stats.todaySoldProducts / stats.totalProducts * 100).clamp(0, 100);
-  }
-
-  double _calculateTurnover(DashboardStats stats) {
-    if (stats.totalAvailableStock == 0 && stats.todaySoldProducts == 0) return 0;
-    final total = stats.totalAvailableStock + stats.todaySoldProducts;
-    if (total == 0) return 0;
-    return (stats.todaySoldProducts / total * 100).clamp(0, 100);
-  }
-
-  double _calculateProfitMargin(DashboardStats stats) {
-    if (stats.todaySalesAmount == 0) return 0;
-    return (stats.todayProfit / stats.todaySalesAmount) * 100;
-  }
-
-  Color _getTextColor(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.dark
-        ? AppColors.textPrimary
-        : const Color(0xFF1A1A2E);
-  }
-}
-
-class _WelcomeStat extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-
-  const _WelcomeStat({required this.label, required this.value, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white.withAlpha(30),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white.withAlpha(25), width: 0.5),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 36, height: 36,
-              decoration: BoxDecoration(
-                color: Colors.white.withAlpha(25),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, size: 18, color: Colors.white),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: Colors.white.withAlpha(180), fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 2),
-                  Text(value, style: const TextStyle(fontFamily: 'Hanken Grotesk', fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5)),
-                ],
+              style: FilledButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24, vertical: 12),
               ),
             ),
           ],
@@ -895,278 +1583,45 @@ class _WelcomeStat extends StatelessWidget {
   }
 }
 
-class _MiniChartCard extends StatelessWidget {
+// ─── DATA CLASSES ─────────────────────────────────────────
+
+class _GroupData {
   final String title;
-  final String value;
-  final String percentage;
-  final bool isUp;
-  final List<double> bars;
-  final Color color;
-  final bool isDark;
+  final Color accent;
+  final List<_ItemData> items;
+  const _GroupData(this.title, this.accent, this.items);
+}
 
-  const _MiniChartCard({
-    required this.title,
-    required this.value,
-    required this.percentage,
-    required this.isUp,
-    required this.bars,
-    required this.color,
-    required this.isDark,
+class _ItemData {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+  final String? route;
+  final double? barValue;
+  const _ItemData(
+    this.icon,
+    this.value,
+    this.label,
+    this.color, {
+    this.route,
+    this.barValue,
   });
-
-  @override
-  Widget build(BuildContext context) {
-    return ModernCard(
-      padding: const EdgeInsets.all(16),
-      gradient: LinearGradient(
-        colors: [
-          color.withAlpha(12),
-          Colors.transparent,
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                width: 28, height: 28,
-                decoration: BoxDecoration(
-                  color: color.withAlpha(25),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  title == 'Sales Trend' ? Icons.trending_up_rounded :
-                  title == 'Revenue' ? Icons.attach_money_rounded :
-                  title == 'Stock Growth' ? Icons.inventory_2_rounded :
-                  Icons.pie_chart_rounded,
-                  size: 15, color: color,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                decoration: BoxDecoration(
-                  color: (isUp ? AppColors.greenBg : AppColors.redBg).withAlpha(200),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(isUp ? Icons.trending_up : Icons.trending_down, size: 10, color: isUp ? AppColors.green : AppColors.red),
-                    const SizedBox(width: 2),
-                    Text(percentage, style: TextStyle(fontFamily: 'Geist', fontSize: 9, fontWeight: FontWeight.w700, color: isUp ? AppColors.green : AppColors.red)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(title, style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
-          const SizedBox(height: 2),
-          Text(value, style: AppTextStyles.amountSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E), fontWeight: FontWeight.w700)),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: bars.map((bar) {
-              return Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 1.5),
-                  child: Container(
-                    height: 32 * bar,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [color.withAlpha(180), color.withAlpha(60)],
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                      ),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(growable: false),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
-class _HealthMetric extends StatelessWidget {
-  final String label;
-  final double value;
-  final bool isDark;
-
-  const _HealthMetric({required this.label, required this.value, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(label, style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
-        ),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 80,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: value / 100,
-              minHeight: 6,
-              backgroundColor: isDark ? AppColors.greyDarker.withAlpha(80) : const Color(0xFFE5E7EB),
-              valueColor: AlwaysStoppedAnimation(
-                value >= 70 ? AppColors.green : value >= 40 ? AppColors.orange : AppColors.red,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 36,
-          child: Text(
-            '${value.toStringAsFixed(0)}%',
-            style: AppTextStyles.labelSm.copyWith(color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
-            textAlign: TextAlign.right,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ActivityTile extends StatelessWidget {
+class _Activity {
   final IconData icon;
   final String title;
   final String value;
   final Color color;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _ActivityTile({
+  final String route;
+  const _Activity({
     required this.icon,
     required this.title,
     required this.value,
     required this.color,
-    required this.isDark,
-    required this.onTap,
+    required this.route,
   });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: color.withAlpha(25),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, size: 18, color: color),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.bodyMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(value, style: AppTextStyles.labelMd.copyWith(color: color, fontWeight: FontWeight.w700)),
-            ),
-          ],
-        ),
-      ),
-      ),
-    );
-  }
-}
-
-class _TopSellingRow extends StatelessWidget {
-  final TopSellingProduct product;
-  final int rank;
-  final bool isDark;
-
-  const _TopSellingRow({required this.product, required this.rank, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = [AppColors.primary, AppColors.blue, AppColors.purple, AppColors.orange, AppColors.green];
-    final color = colors[rank - 1];
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            (isDark ? AppColors.cardDark : Colors.white).withAlpha(200),
-            (isDark ? AppColors.cardDark : Colors.white).withAlpha(160),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withAlpha(25), width: 0.5),
-        boxShadow: [
-          BoxShadow(color: color.withAlpha(10), blurRadius: 8, offset: const Offset(0, 2)),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [color.withAlpha(30), color.withAlpha(15)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Center(
-              child: Text('$rank', style: AppTextStyles.labelMd.copyWith(color: color, fontWeight: FontWeight.w800)),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(product.productName, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.bodyMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E), fontWeight: FontWeight.w600)),
-                Text(product.modelNumber, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [color.withAlpha(30), color.withAlpha(15)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text('${product.totalSold} sold', style: AppTextStyles.labelSm.copyWith(color: color, fontWeight: FontWeight.w700)),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _QuickAction {
@@ -1174,35 +1629,10 @@ class _QuickAction {
   final String label;
   final Color color;
   final String route;
-  const _QuickAction({required this.icon, required this.label, required this.color, required this.route});
-}
-
-class _OverviewCardData {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-  final double bar;
-  final String? route;
-  const _OverviewCardData({required this.label, required this.value, required this.icon, required this.color, this.bar = 0.5, this.route});
-}
-
-class _SkeletonBlock extends StatelessWidget {
-  final double height;
-  final double? width;
-  final bool isDark;
-
-  const _SkeletonBlock({required this.height, this.width, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: height,
-      width: width,
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.shimmerBase : const Color(0xFFE5E7EB),
-        borderRadius: BorderRadius.circular(12),
-      ),
-    );
-  }
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.route,
+  });
 }

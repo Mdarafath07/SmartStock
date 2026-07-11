@@ -3,11 +3,13 @@ class DashboardStats {
   final int totalProducts;
   final int totalAvailableStock;
   final double totalStockValue;
+  final double totalStockCost;
   final double todaySalesAmount;
   final double todayProfit;
   final int todaySoldProducts;
   final int lowStockProducts;
   final int outOfStockProducts;
+  final int activeWarranties;
   final List<TopSellingProduct> topSellingProducts;
   final List<ProductSummary> mostStockedProducts;
   final List<ProductSummary> recentlyAddedProducts;
@@ -20,11 +22,13 @@ class DashboardStats {
     this.totalProducts = 0,
     this.totalAvailableStock = 0,
     this.totalStockValue = 0.0,
+    this.totalStockCost = 0.0,
     this.todaySalesAmount = 0.0,
     this.todayProfit = 0.0,
     this.todaySoldProducts = 0,
     this.lowStockProducts = 0,
     this.outOfStockProducts = 0,
+    this.activeWarranties = 0,
     this.topSellingProducts = const [],
     this.mostStockedProducts = const [],
     this.recentlyAddedProducts = const [],
@@ -40,11 +44,13 @@ class DashboardStats {
       totalAvailableStock:
           (json['totalAvailableStock'] as num?)?.toInt() ?? 0,
       totalStockValue: (json['totalStockValue'] as num?)?.toDouble() ?? 0.0,
+      totalStockCost: (json['totalStockCost'] as num?)?.toDouble() ?? 0.0,
       todaySalesAmount: (json['todaySalesAmount'] as num?)?.toDouble() ?? 0.0,
       todayProfit: (json['todayProfit'] as num?)?.toDouble() ?? 0.0,
       todaySoldProducts: (json['todaySoldProducts'] as num?)?.toInt() ?? 0,
       lowStockProducts: (json['lowStockProducts'] as num?)?.toInt() ?? 0,
       outOfStockProducts: (json['outOfStockProducts'] as num?)?.toInt() ?? 0,
+      activeWarranties: (json['activeWarranties'] as num?)?.toInt() ?? 0,
       topSellingProducts:
           (json['topSellingProducts'] as List<dynamic>?)
                   ?.map((e) =>
@@ -86,11 +92,13 @@ class DashboardStats {
       'totalProducts': totalProducts,
       'totalAvailableStock': totalAvailableStock,
       'totalStockValue': totalStockValue,
+      'totalStockCost': totalStockCost,
       'todaySalesAmount': todaySalesAmount,
       'todayProfit': todayProfit,
       'todaySoldProducts': todaySoldProducts,
       'lowStockProducts': lowStockProducts,
       'outOfStockProducts': outOfStockProducts,
+      'activeWarranties': activeWarranties,
       'topSellingProducts': topSellingProducts.map((e) => e.toJson()).toList(),
       'mostStockedProducts': mostStockedProducts.map((e) => e.toJson()).toList(),
       'recentlyAddedProducts':
@@ -107,11 +115,13 @@ class DashboardStats {
     int? totalProducts,
     int? totalAvailableStock,
     double? totalStockValue,
+    double? totalStockCost,
     double? todaySalesAmount,
     double? todayProfit,
     int? todaySoldProducts,
     int? lowStockProducts,
     int? outOfStockProducts,
+    int? activeWarranties,
     List<TopSellingProduct>? topSellingProducts,
     List<ProductSummary>? mostStockedProducts,
     List<ProductSummary>? recentlyAddedProducts,
@@ -124,11 +134,13 @@ class DashboardStats {
       totalProducts: totalProducts ?? this.totalProducts,
       totalAvailableStock: totalAvailableStock ?? this.totalAvailableStock,
       totalStockValue: totalStockValue ?? this.totalStockValue,
+      totalStockCost: totalStockCost ?? this.totalStockCost,
       todaySalesAmount: todaySalesAmount ?? this.todaySalesAmount,
       todayProfit: todayProfit ?? this.todayProfit,
       todaySoldProducts: todaySoldProducts ?? this.todaySoldProducts,
       lowStockProducts: lowStockProducts ?? this.lowStockProducts,
       outOfStockProducts: outOfStockProducts ?? this.outOfStockProducts,
+      activeWarranties: activeWarranties ?? this.activeWarranties,
       topSellingProducts: topSellingProducts ?? this.topSellingProducts,
       mostStockedProducts: mostStockedProducts ?? this.mostStockedProducts,
       recentlyAddedProducts:

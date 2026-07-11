@@ -208,6 +208,7 @@ class _SaleFormState extends State<SaleForm> {
   }
 
   void _showAddItemSheet() {
+    final cartProductIds = _cartItems.map((i) => i.product.id).toSet();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -228,6 +229,7 @@ class _SaleFormState extends State<SaleForm> {
               });
             },
             onBarcodeScan: _handleBarcodeScan,
+            cartProductIds: cartProductIds,
           ),
         ),
       ),
@@ -762,7 +764,12 @@ class _CartItem {
 class _AddItemSheet extends StatefulWidget {
   final void Function(Product product, List<SerialNumber> serials) onAddToCart;
   final VoidCallback? onBarcodeScan;
-  const _AddItemSheet({required this.onAddToCart, this.onBarcodeScan});
+  final Set<String> cartProductIds;
+  const _AddItemSheet({
+    required this.onAddToCart,
+    this.onBarcodeScan,
+    this.cartProductIds = const {},
+  });
 
   @override
   State<_AddItemSheet> createState() => _AddItemSheetState();
@@ -776,8 +783,12 @@ class _AddItemSheetState extends State<_AddItemSheet> {
   List<SerialNumber> _serialNumbers = [];
   final _salePriceController = TextEditingController();
   final _warrantyValueController = TextEditingController(text: '1');
+  final _serialSearchController = TextEditingController();
   String _warrantyUnit = 'month';
   bool _noWarranty = false;
+  String _serialQuery = '';
+  Product? _serialSearchedProduct;
+  Timer? _serialSearchDebounce;
 
   @override
   void initState() {
@@ -785,12 +796,31 @@ class _AddItemSheetState extends State<_AddItemSheet> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CategoryProvider>().loadCategories();
     });
+    _serialSearchController.addListener(() {
+      setState(() => _serialQuery = _serialSearchController.text.trim().toLowerCase());
+      _debounceSerialLookup();
+    });
+  }
+
+  void _debounceSerialLookup() {
+    _serialSearchDebounce?.cancel();
+    final query = _serialSearchController.text.trim();
+    if (query.isEmpty || _productId != null) {
+      setState(() => _serialSearchedProduct = null);
+      return;
+    }
+    _serialSearchDebounce = Timer(const Duration(milliseconds: 400), () async {
+      final result = await context.read<ProductProvider>().findProductBySerialNumber(query);
+      if (mounted) setState(() => _serialSearchedProduct = result?.$1);
+    });
   }
 
   @override
   void dispose() {
     _salePriceController.dispose();
     _warrantyValueController.dispose();
+    _serialSearchController.dispose();
+    _serialSearchDebounce?.cancel();
     super.dispose();
   }
 
@@ -827,7 +857,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
     final products = productProvider.products;
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.8,
+      height: MediaQuery.of(context).size.height * 0.85,
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardDark : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -842,12 +872,31 @@ class _AddItemSheetState extends State<_AddItemSheet> {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Add Item to Cart', style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+                Expanded(
+                  child: Text('Add Item', style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+                ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    SizedBox(
+                      width: 160,
+                      height: 36,
+                      child: TextField(
+                        controller: _serialSearchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search serial...',
+                          prefixIcon: Icon(Icons.search_rounded, size: 16, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                          filled: true,
+                          fillColor: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                          isDense: true,
+                        ),
+                        style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
                     if (widget.onBarcodeScan != null)
                       GestureDetector(
                         onTap: () {
@@ -861,7 +910,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                           ),
                           child: const Icon(Icons.qr_code_scanner_rounded, size: 18, color: AppColors.primary)),
                       ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
                       child: Container(width: 36, height: 36,
@@ -875,13 +924,14 @@ class _AddItemSheetState extends State<_AddItemSheet> {
           ),
           const SizedBox(height: 12),
           SizedBox(
-            height: 44,
+            height: 40,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
                 _CategoryChip(label: 'All', selected: _categoryId == null, isDark: isDark, onTap: () {
-                  setState(() { _categoryId = null; _productId = null; _product = null; _selectedSerialIds.clear(); _serialNumbers = []; });
+                  setState(() { _categoryId = null; _productId = null; _product = null; _selectedSerialIds.clear(); _serialNumbers = []; _serialSearchedProduct = null; });
+                  context.read<ProductProvider>().loadProducts();
                 }),
                 const SizedBox(width: 8),
                 ...categoryProvider.categories.map((cat) => Padding(
@@ -891,7 +941,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                     selected: _categoryId == cat.id,
                     isDark: isDark,
                     onTap: () {
-                      setState(() { _categoryId = cat.id; _productId = null; _product = null; _selectedSerialIds.clear(); _serialNumbers = []; });
+                      setState(() { _categoryId = cat.id; _productId = null; _product = null; _selectedSerialIds.clear(); _serialNumbers = []; _serialSearchedProduct = null; });
                       context.read<ProductProvider>().loadProducts(categoryId: cat.id);
                     },
                   ),
@@ -901,218 +951,345 @@ class _AddItemSheetState extends State<_AddItemSheet> {
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: products.isEmpty
-                ? Center(child: Text('No products in this category', style: AppTextStyles.bodyMd.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))))
-                : ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    children: [
-                      ...products.map((p) {
-                        final selected = _productId == p.id;
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          decoration: BoxDecoration(
-                            color: selected ? AppColors.primary.withAlpha(12) : (isDark ? AppColors.surfaceLight : const Color(0xFFF9FAFB)).withAlpha(180),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: selected ? AppColors.primary.withAlpha(80) : (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(60),
-                              width: selected ? 1.5 : 0.5,
-                            ),
-                          ),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(12),
-                            onTap: () {
-                              setState(() {
-                                _productId = p.id;
-                                _product = p;
-                                _selectedSerialIds.clear();
-                                _salePriceController.text = p.sellingPrice.toStringAsFixed(2);
-                                _setWarrantyFromProduct(p);
-                              });
-                              context.read<SaleProvider>().loadAvailableSerialNumbers(p.id);
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 48, height: 48,
-                                    decoration: BoxDecoration(
-                                      color: isDark ? AppColors.greyDarker.withAlpha(100) : const Color(0xFFE5E7EB),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: p.imageUrl.isNotEmpty
-                                        ? ClipRRect(borderRadius: BorderRadius.circular(10),
-                                            child: Image.network(p.imageUrl, fit: BoxFit.cover,
-                                              errorBuilder: (_, _, _) => Icon(Icons.inventory_2_rounded, size: 22, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))))
-                                        : Icon(Icons.inventory_2_rounded, size: 22, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(p.productName, style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
-                                            maxLines: 1, overflow: TextOverflow.ellipsis),
-                                        Text('${p.brandName} ${p.modelNumber}',
-                                            style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
-                                        const SizedBox(height: 4),
-                                        Text('\$${p.sellingPrice.toStringAsFixed(2)}',
-                                            style: AppTextStyles.labelMd.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)),
-                                      ],
-                                    ),
-                                  ),
-                                  if (selected)
-                                    Container(
-                                      width: 24, height: 24,
-                                      decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(6)),
-                                      child: const Icon(Icons.check_rounded, size: 16, color: Colors.black),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                      if (_productId != null && _product != null) ...[
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: (isDark ? AppColors.surfaceLight : const Color(0xFFF9FAFB)).withAlpha(180),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(60), width: 0.5),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _salePriceController,
-                                      decoration: InputDecoration(
-                                        labelText: 'Price',
-                                        prefixText: '\$ ',
-                                        prefixStyle: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
-                                        filled: true,
-                                        fillColor: isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6),
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                      ),
-                                      keyboardType: TextInputType.number,
-                                      style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _warrantyValueController,
-                                      readOnly: _noWarranty,
-                                      decoration: InputDecoration(
-                                        labelText: _noWarranty ? 'No Warranty' : 'Warranty',
-                                        filled: true,
-                                        fillColor: isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6),
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                      ),
-                                      keyboardType: _noWarranty ? TextInputType.none : TextInputType.number,
-                                      style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                                    decoration: BoxDecoration(
-                                      color: isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: DropdownButtonHideUnderline(
-                                      child: DropdownButton<String>(
-                                        value: _warrantyUnit,
-                                        isDense: true,
-                                        onChanged: _noWarranty ? null : (v) { if (v != null) setState(() => _warrantyUnit = v); },
-                                        items: const [
-                                          DropdownMenuItem(value: 'day', child: Text('Day(s)', style: TextStyle(fontFamily: 'Geist', fontSize: 12))),
-                                          DropdownMenuItem(value: 'month', child: Text('Month(s)', style: TextStyle(fontFamily: 'Geist', fontSize: 12))),
-                                          DropdownMenuItem(value: 'year', child: Text('Year(s)', style: TextStyle(fontFamily: 'Geist', fontSize: 12))),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Text('Select Serial Numbers', style: AppTextStyles.labelMd.copyWith(color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
-                              const SizedBox(height: 8),
-                              _buildSerialCheckboxList(isDark),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Text('${_selectedSerialIds.length} selected',
-                                      style: AppTextStyles.labelSm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
-                                  const Spacer(),
-                                  FilledButton(
-                                    onPressed: _selectedSerialIds.isEmpty
-                                        ? null
-                                        : () {
-                                            final salePrice = double.tryParse(_salePriceController.text) ?? _product!.sellingPrice;
-                                            final warrantyMonths = _noWarranty ? 0 : _parseWarrantyMonths();
-                                            final product = _product!.copyWith(sellingPrice: salePrice, warrantyMonths: warrantyMonths);
-                                            widget.onAddToCart(product, _serialNumbers.where((s) => _selectedSerialIds.contains(s.id)).toList());
-                                            Navigator.pop(context);
-                                          },
-                                    child: const Text('Add to Cart'),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                    ],
+            child: _productId == null
+                ? _buildProductList(products, isDark)
+                : _buildSerialSelection(isDark),
+          ),
+          Container(
+            padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.of(context).padding.bottom + 10),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.cardDark : Colors.white,
+              border: Border(top: BorderSide(color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(80))),
+            ),
+            child: Row(
+              children: [
+                if (_productId != null)
+                  GestureDetector(
+                    onTap: () => setState(() { _productId = null; _product = null; _selectedSerialIds.clear(); _serialNumbers = []; }),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.arrow_back_rounded, size: 16, color: isDark ? AppColors.textSecondary : const Color(0xFF475569)),
+                          const SizedBox(width: 4),
+                          Text('Back', style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: isDark ? AppColors.textSecondary : const Color(0xFF475569))),
+                        ],
+                      ),
+                    ),
                   ),
+                const Spacer(),
+                if (_productId != null)
+                  Text('${_selectedSerialIds.length} selected',
+                      style: AppTextStyles.labelSm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+                const SizedBox(width: 12),
+                FilledButton(
+                  onPressed: _selectedSerialIds.isEmpty
+                      ? null
+                      : () {
+                          final salePrice = double.tryParse(_salePriceController.text) ?? _product!.sellingPrice;
+                          final warrantyMonths = _noWarranty ? 0 : _parseWarrantyMonths();
+                          final product = _product!.copyWith(sellingPrice: salePrice, warrantyMonths: warrantyMonths);
+                          widget.onAddToCart(product, _serialNumbers.where((s) => _selectedSerialIds.contains(s.id)).toList());
+                          Navigator.pop(context);
+                        },
+                  child: Text('Add (${_selectedSerialIds.length})'),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSerialCheckboxList(bool isDark) {
-    final saleProvider = context.watch<SaleProvider>();
-    final serials = saleProvider.availableSerialNumbers;
-
-    if (saleProvider.isLoading) {
-      return const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()));
+  Widget _buildProductList(List<Product> products, bool isDark) {
+    List<Product> filtered;
+    if (_serialQuery.isNotEmpty) {
+      final nameModelMatch = products.where((p) =>
+          p.productName.toLowerCase().contains(_serialQuery) ||
+          p.modelNumber.toLowerCase().contains(_serialQuery)).toList();
+      final matchedIds = nameModelMatch.map((p) => p.id).toSet();
+      if (_serialSearchedProduct != null && !matchedIds.contains(_serialSearchedProduct!.id)) {
+        nameModelMatch.add(_serialSearchedProduct!);
+      }
+      filtered = nameModelMatch;
+    } else {
+      filtered = products;
     }
 
-    if (serials.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        child: Center(child: Text('No available serial numbers', style: AppTextStyles.bodySm.copyWith(color: AppColors.textMuted))),
+    if (filtered.isEmpty) {
+      return Center(
+        child: Text(
+          _serialQuery.isNotEmpty ? 'No matching products' : 'Select a category to see products',
+          style: AppTextStyles.bodyMd.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280)),
+        ),
       );
     }
 
-    _serialNumbers = serials;
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      children: filtered.map((p) {
+        final inCart = widget.cartProductIds.contains(p.id);
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            color: inCart
+                ? (isDark ? AppColors.greyDarker.withAlpha(60) : const Color(0xFFF3F4F6).withAlpha(200))
+                : (isDark ? AppColors.surfaceLight : const Color(0xFFF9FAFB)).withAlpha(180),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(60),
+              width: 0.5,
+            ),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: inCart
+                ? null
+                : () {
+                    setState(() {
+                      _productId = p.id;
+                      _product = p;
+                      _selectedSerialIds.clear();
+                      _salePriceController.text = p.sellingPrice.toStringAsFixed(2);
+                      _setWarrantyFromProduct(p);
+                    });
+                    context.read<SaleProvider>().loadAvailableSerialNumbers(p.id);
+                  },
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48, height: 48,
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.greyDarker.withAlpha(100) : const Color(0xFFE5E7EB),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: p.imageUrl.isNotEmpty
+                        ? ClipRRect(borderRadius: BorderRadius.circular(10),
+                            child: Image.network(p.imageUrl, fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => Icon(Icons.inventory_2_rounded, size: 22, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))))
+                        : Icon(Icons.inventory_2_rounded, size: 22, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(p.productName,
+                                  style: AppTextStyles.titleSm.copyWith(
+                                    color: inCart
+                                        ? (isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))
+                                        : (isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                                  ),
+                                  maxLines: 1, overflow: TextOverflow.ellipsis),
+                            ),
+                            if (inCart)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.green.withAlpha(20),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text('In Cart',
+                                    style: TextStyle(fontFamily: 'Geist', fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.green)),
+                              ),
+                          ],
+                        ),
+                        Text('${p.brandName} ${p.modelNumber}',
+                            style: AppTextStyles.caption.copyWith(
+                              color: inCart
+                                  ? (isDark ? AppColors.greyDarker : const Color(0xFFD1D5DB))
+                                  : (isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                            )),
+                        const SizedBox(height: 4),
+                        Text('\$${p.sellingPrice.toStringAsFixed(2)}',
+                            style: AppTextStyles.labelMd.copyWith(
+                              color: inCart ? AppColors.textMuted : AppColors.primary,
+                              fontWeight: FontWeight.w700)),
+                      ],
+                    ),
+                  ),
+                  if (inCart)
+                    Container(
+                      width: 24, height: 24,
+                      decoration: BoxDecoration(color: AppColors.green, borderRadius: BorderRadius.circular(6)),
+                      child: const Icon(Icons.check_rounded, size: 16, color: Colors.white),
+                    )
+                  else
+                    Icon(Icons.chevron_right_rounded, size: 20, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildSerialSelection(bool isDark) {
+    final saleProvider = context.watch<SaleProvider>();
+    final allSerials = saleProvider.availableSerialNumbers;
+
+    if (_serialQuery.isNotEmpty) {
+      final filteredSerials = allSerials.where((s) =>
+        s.serialNumber.toLowerCase().contains(_serialQuery)).toList();
+      if (_serialNumbers.length != filteredSerials.length ||
+          !_serialNumbers.every((e) => filteredSerials.contains(e))) {
+        _serialNumbers = filteredSerials;
+      }
+    } else if (_serialNumbers.length != allSerials.length ||
+        !_serialNumbers.every((e) => allSerials.contains(e))) {
+      _serialNumbers = allSerials;
+    }
 
     return ListView(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      children: serials.map((sn) => CheckboxListTile(
-        title: Text(sn.serialNumber, style: TextStyle(fontFamily: 'Geist', fontSize: 13, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
-        value: _selectedSerialIds.contains(sn.id),
-        onChanged: (checked) {
-          setState(() {
-            if (checked == true) { _selectedSerialIds.add(sn.id); }
-            else { _selectedSerialIds.remove(sn.id); }
-          });
-        },
-        controlAffinity: ListTileControlAffinity.leading,
-        dense: true,
-        contentPadding: EdgeInsets.zero,
-        activeColor: AppColors.primary,
-        checkColor: Colors.black,
-      )).toList(),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 48, height: 48,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.greyDarker.withAlpha(100) : const Color(0xFFE5E7EB),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: _product!.imageUrl.isNotEmpty
+                  ? ClipRRect(borderRadius: BorderRadius.circular(10),
+                      child: Image.network(_product!.imageUrl, fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Icon(Icons.inventory_2_rounded, size: 22, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))))
+                  : Icon(Icons.inventory_2_rounded, size: 22, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(_product!.productName, style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text('${_product!.brandName} ${_product!.modelNumber}',
+                      style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _salePriceController,
+                decoration: InputDecoration(
+                  labelText: 'Price',
+                  prefixText: '\$ ',
+                  prefixStyle: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                  filled: true,
+                  fillColor: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+                keyboardType: TextInputType.number,
+                style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                controller: _warrantyValueController,
+                readOnly: _noWarranty,
+                decoration: InputDecoration(
+                  labelText: _noWarranty ? 'No Warranty' : 'Warranty',
+                  filled: true,
+                  fillColor: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+                keyboardType: _noWarranty ? TextInputType.none : TextInputType.number,
+                style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              decoration: BoxDecoration(
+                color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _warrantyUnit,
+                  isDense: true,
+                  onChanged: _noWarranty ? null : (v) { if (v != null) setState(() => _warrantyUnit = v); },
+                  items: const [
+                    DropdownMenuItem(value: 'day', child: Text('Day(s)', style: TextStyle(fontFamily: 'Geist', fontSize: 12))),
+                    DropdownMenuItem(value: 'month', child: Text('Month(s)', style: TextStyle(fontFamily: 'Geist', fontSize: 12))),
+                    DropdownMenuItem(value: 'year', child: Text('Year(s)', style: TextStyle(fontFamily: 'Geist', fontSize: 12))),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            SizedBox(
+              height: 24,
+              child: Checkbox(
+                value: _noWarranty,
+                onChanged: (v) => setState(() => _noWarranty = v ?? false),
+                activeColor: AppColors.primary,
+                checkColor: Colors.black,
+              ),
+            ),
+            const SizedBox(width: 4),
+            GestureDetector(
+              onTap: () => setState(() => _noWarranty = !_noWarranty),
+              child: Text('No warranty', style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text('Serials (${_serialNumbers.length})', style: AppTextStyles.labelMd.copyWith(color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
+        const SizedBox(height: 8),
+        if (saleProvider.isLoading)
+          const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()))
+        else if (_serialNumbers.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(16),
+            child: Center(child: Text(
+              _serialQuery.isNotEmpty ? 'No serials match your search' : 'No available serial numbers',
+              style: AppTextStyles.bodySm.copyWith(color: AppColors.textMuted))),
+          )
+        else
+          ..._serialNumbers.map((sn) => CheckboxListTile(
+            title: Text(sn.serialNumber, style: TextStyle(fontFamily: 'Geist', fontSize: 13, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+            subtitle: Text('Serial #${sn.serialNumber}', style: TextStyle(fontFamily: 'Inter', fontSize: 10, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+            value: _selectedSerialIds.contains(sn.id),
+            onChanged: (checked) {
+              setState(() {
+                if (checked == true) { _selectedSerialIds.add(sn.id); }
+                else { _selectedSerialIds.remove(sn.id); }
+              });
+            },
+            controlAffinity: ListTileControlAffinity.leading,
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            activeColor: AppColors.primary,
+            checkColor: Colors.black,
+          )),
+        const SizedBox(height: 80),
+      ],
     );
   }
 }

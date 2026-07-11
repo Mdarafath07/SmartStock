@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
-import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/widgets/glass_card.dart';
 import 'package:smartstock/features/daily_additions/models/daily_addition_model.dart';
 import 'package:smartstock/features/daily_additions/providers/daily_addition_provider.dart';
 import 'package:smartstock/features/products/widgets/barcode_scanner_screen.dart';
 import 'package:smartstock/features/products/providers/product_provider.dart';
 import 'package:smartstock/features/products/screens/product_details_screen.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class DailyAdditionsScreen extends StatefulWidget {
   const DailyAdditionsScreen({super.key});
@@ -89,7 +89,7 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final currencySymbol = '\$';
+    final currencySymbol = context.watch<SettingsProvider>().currencySymbol;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.scaffoldBg : AppColors.whiteSoft,
@@ -97,19 +97,27 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 2),
               child: Row(
                 children: [
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Container(
-                      width: 38, height: 38,
-                      margin: const EdgeInsets.only(right: 8),
+                      width: 32, height: 32,
+                      margin: const EdgeInsets.only(right: 6),
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.glassBg : const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(11),
+                        color: isDark ? AppColors.surface : Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withAlpha(6),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
                       ),
-                      child: const Icon(Icons.arrow_back_rounded, size: 20, color: Color(0xFF475569)),
+                      child: Icon(Icons.arrow_back_rounded, size: 18,
+                          color: isDark ? AppColors.textPrimary : const Color(0xFF475569)),
                     ),
                   ),
                   Consumer<DailyAdditionProvider>(
@@ -125,29 +133,38 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                           children: [
                             Text(
                               isToday ? "Today's Additions" : 'Additions',
-                              style: AppTextStyles.headlineMd.copyWith(
+                              style: TextStyle(
+                                fontFamily: 'Hanken Grotesk',
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
                                 color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 6),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: isDark ? AppColors.glassBg : AppColors.glassBgDark,
+                                color: isDark ? AppColors.surface : const Color(0xFFF1F5F9),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
+                                  Icon(Icons.calendar_today_rounded, size: 11,
+                                      color: isDark ? AppColors.textMuted : const Color(0xFF6B7280)),
+                                  const SizedBox(width: 3),
                                   Text(
                                     DateFormat('MMM dd, yyyy').format(provider.selectedDate),
-                                    style: AppTextStyles.labelSm.copyWith(
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
                                       color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280),
                                     ),
                                   ),
-                                  const SizedBox(width: 4),
-                                  Icon(Icons.arrow_drop_down, size: 16,
-                                      color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
+                                  const SizedBox(width: 2),
+                                  Icon(Icons.keyboard_arrow_down_rounded, size: 14,
+                                      color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
                                 ],
                               ),
                             ),
@@ -159,16 +176,22 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                   const Spacer(),
                   Container(
                     decoration: BoxDecoration(
-                      color: AppColors.greenBg,
-                      borderRadius: BorderRadius.circular(12),
+                      gradient: LinearGradient(
+                        colors: [AppColors.green, AppColors.green.withAlpha(180)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: IconButton(
                       onPressed: _handleBarcodeScan,
-                      icon: const Icon(Icons.qr_code_scanner, color: AppColors.green),
+                      icon: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 18),
                       style: IconButton.styleFrom(
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                         ),
+                        padding: const EdgeInsets.all(6),
+                        fixedSize: const Size(32, 32),
                       ),
                       tooltip: 'Scan barcode',
                     ),
@@ -177,40 +200,44 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
               child: TextField(
                 controller: _searchController,
                 onChanged: (v) => setState(() => _searchQuery = v),
                 decoration: InputDecoration(
                   hintText: 'Search additions...',
-                  hintStyle: AppTextStyles.bodyMd.copyWith(
+                  hintStyle: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
                     color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
                   ),
                   prefixIcon: Icon(Icons.search_rounded,
-                      size: 20, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                      size: 18, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
                           onPressed: () {
                             _searchController.clear();
                             setState(() => _searchQuery = '');
                           },
-                          icon: Icon(Icons.clear_rounded, size: 18,
+                          icon: Icon(Icons.clear_rounded, size: 16,
                               color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
                         )
                       : null,
                   filled: true,
                   fillColor: isDark ? AppColors.surface : Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide.none,
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: AppColors.green.withAlpha(80), width: 1),
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: AppColors.green.withAlpha(100), width: 1),
                   ),
                 ),
-                style: AppTextStyles.bodyMd.copyWith(
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
                   color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
                 ),
               ),
@@ -231,15 +258,44 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.inbox_rounded,
-                              size: 56, color: isDark ? AppColors.greyDarker : const Color(0xFFD1D5DB)),
-                          const SizedBox(height: 16),
+                          Container(
+                            width: 72,
+                            height: 72,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppColors.green.withAlpha(20),
+                                  AppColors.green.withAlpha(5),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: Icon(Icons.inbox_rounded,
+                                size: 32, color: AppColors.green.withAlpha(100)),
+                          ),
+                          const SizedBox(height: 20),
                           Text(
                             _searchQuery.isNotEmpty
                                 ? 'No matches found'
                                 : 'No additions on this date',
-                            style: AppTextStyles.titleSm.copyWith(
+                            style: TextStyle(
+                              fontFamily: 'Hanken Grotesk',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                               color: isDark ? AppColors.textMuted : const Color(0xFF6B7280),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            _searchQuery.isNotEmpty
+                                ? 'Try a different search term'
+                                : 'Add stock to see items here',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 12,
+                              color: isDark ? AppColors.textMuted.withAlpha(120) : const Color(0xFF9CA3AF),
                             ),
                           ),
                         ],
@@ -259,29 +315,59 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                     onRefresh: () async =>
                         provider.loadAdditionsForDate(provider.selectedDate),
                     child: ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                       children: [
                         ModernCard(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.green.withAlpha(12),
+                              AppColors.green.withAlpha(4),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
                           onTap: null,
                           child: Row(
                             children: [
-                              const Icon(Icons.receipt_long, size: 20, color: AppColors.green),
+                              Container(
+                                width: 34,
+                                height: 34,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [AppColors.green, AppColors.green.withAlpha(180)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(Icons.receipt_long_rounded, size: 18, color: Colors.white),
+                              ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
                                   '$grandQty item${grandQty == 1 ? '' : 's'} · ${grouped.length} product${grouped.length == 1 ? '' : 's'}',
-                                  style: AppTextStyles.bodyMd.copyWith(
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: 'Hanken Grotesk',
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
                                     color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
                                   ),
                                 ),
                               ),
+                              const SizedBox(width: 8),
                               Text(
-                                '$currencySymbol${grandTotal.toStringAsFixed(2)}',
-                                style: AppTextStyles.amountSm.copyWith(
+                                '$currencySymbol${_formatAmount(grandTotal)}',
+                                maxLines: 1,
+                                style: TextStyle(
+                                  fontFamily: 'Hanken Grotesk',
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w900,
                                   color: AppColors.green,
-                                  fontSize: 16,
+                                  letterSpacing: -0.5,
                                 ),
                               ),
                             ],
@@ -306,90 +392,74 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
       BuildContext context, String name, List<DailyAddition> items, bool isDark, String symbol) {
     final totalQty = items.fold(0, (sum, e) => sum + e.quantity);
     final totalPrice = items.fold(0.0, (sum, e) => sum + e.totalPrice);
-    final unitPrice = items.isNotEmpty ? (totalPrice / totalQty) : 0.0;
     final first = items.first;
     final times = items.map((e) => DateFormat('h:mm a').format(e.dateAdded)).toList();
 
     return ModernCard(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
       onTap: null,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
-                  color: AppColors.greenBg,
-                  borderRadius: BorderRadius.circular(12),
+                  gradient: LinearGradient(
+                    colors: [AppColors.green.withAlpha(25), AppColors.green.withAlpha(8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.inventory_2, size: 20, color: AppColors.green),
+                child: const Icon(Icons.inventory_2_rounded, size: 18, color: AppColors.green),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(name,
-                        style: AppTextStyles.titleSm.copyWith(
+                    Text(name, maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: 'Hanken Grotesk',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
                           color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
                         )),
                     if (first.categoryName.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(first.categoryName,
-                            style: AppTextStyles.caption.copyWith(
-                              color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280),
-                            )),
-                      ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Qty: $totalQty × $symbol${unitPrice.toStringAsFixed(2)}',
-                      style: AppTextStyles.bodySm.copyWith(
-                        color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
-                      ),
-                    ),
-                    if (times.length > 1)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          'Added at: ${times.join(', ')}',
-                          style: AppTextStyles.caption.copyWith(
-                            color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+                      Text(first.categoryName, maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
                             fontSize: 10,
-                          ),
-                        ),
-                      )
-                    else
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          'Added at: ${times.first}',
-                          style: AppTextStyles.caption.copyWith(
                             color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
-                            fontSize: 10,
-                          ),
-                        ),
-                      ),
+                          )),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '$symbol${totalPrice.toStringAsFixed(2)}',
-                    style: AppTextStyles.amountSm.copyWith(color: AppColors.green),
+                    '$symbol${_formatAmount(totalPrice)}',
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontFamily: 'Hanken Grotesk',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.green,
+                      letterSpacing: -0.3,
+                    ),
                   ),
-                  const SizedBox(height: 4),
                   Text(
                     '$totalQty unit${totalQty == 1 ? '' : 's'}',
-                    style: AppTextStyles.caption.copyWith(
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 9,
                       color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
                     ),
                   ),
@@ -397,8 +467,65 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: (isDark ? AppColors.surfaceLight : const Color(0xFFF8FAFC)).withAlpha(180),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.schedule_rounded, size: 10, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                const SizedBox(width: 3),
+                Expanded(
+                  child: Text(
+                    times.join(', '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 9,
+                      color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '$symbol${_formatAmount(first.unitPrice, decimals: 2)} each',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.green,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  String _formatAmount(double value, {int decimals = 0}) {
+    final isNegative = value < 0;
+    final abs = isNegative ? -value : value;
+    final parts = abs.toStringAsFixed(decimals).split('.');
+    final intPart = parts[0];
+    final buffer = StringBuffer();
+    int count = 0;
+    for (int i = intPart.length - 1; i >= 0; i--) {
+      if (count > 0 && count % 3 == 0) buffer.write(',');
+      buffer.write(intPart[i]);
+      count++;
+    }
+    final formatted = buffer.toString().split('').reversed.join();
+    if (decimals > 0 && parts.length > 1) {
+      return '${isNegative ? '-' : ''}$formatted.${parts[1]}';
+    }
+    return isNegative ? '-$formatted' : formatted;
   }
 }

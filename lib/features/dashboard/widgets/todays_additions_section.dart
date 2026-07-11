@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/features/daily_additions/providers/daily_addition_provider.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class TodaysAdditionsSection extends StatefulWidget {
   const TodaysAdditionsSection({super.key});
@@ -23,6 +24,7 @@ class _TodaysAdditionsSectionState extends State<TodaysAdditionsSection> {
   Widget build(BuildContext context) {
     return Consumer<DailyAdditionProvider>(
       builder: (context, provider, _) {
+        final symbol = context.watch<SettingsProvider>().currencySymbol;
         final items = provider.todaysAdditions;
         final totalQty = items.fold(0, (s, i) => s + i.quantity);
         final totalValue = items.fold(0.0, (s, i) => s + i.totalPrice);
@@ -68,7 +70,7 @@ class _TodaysAdditionsSectionState extends State<TodaysAdditionsSection> {
                               style: const TextStyle(
                                   fontWeight: FontWeight.w500, fontSize: 14)),
                           subtitle: Text(
-                              'Qty: ${item.quantity} — \$${item.totalPrice.toStringAsFixed(2)}',
+                              'Qty: ${item.quantity} — $symbol${item.totalPrice.toStringAsFixed(2)}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodySmall),
@@ -95,7 +97,7 @@ class _TodaysAdditionsSectionState extends State<TodaysAdditionsSection> {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  'Total: $totalQty items — \$${totalValue.toStringAsFixed(2)}',
+                  'Total: $totalQty items — $symbol${totalValue.toStringAsFixed(2)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(

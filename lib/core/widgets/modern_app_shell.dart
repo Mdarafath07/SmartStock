@@ -130,11 +130,11 @@ class ModernAppShellState extends State<ModernAppShell>
                       splashColor: AppColors.primary.withAlpha(30),
                       highlightColor: AppColors.primary.withAlpha(15),
                       child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeOut,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOutCubic,
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         decoration: BoxDecoration(
-                          color: active ? AppColors.primaryBg : Colors.transparent,
+                          color: active ? AppColors.primaryBg : AppColors.surface,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Column(
@@ -143,17 +143,25 @@ class ModernAppShellState extends State<ModernAppShell>
                           children: [
                             Icon(_tabs[i].icon, size: 22,
                               color: active ? AppColors.primary : AppColors.grey),
-                            AnimatedOpacity(
-                              duration: const Duration(milliseconds: 200),
-                              opacity: active ? 1 : 0,
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 3),
-                                child: Text(
-                                  _tabs[i].label,
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: active ? AppColors.primary : AppColors.grey,
+                            ClipRect(
+                              child: AnimatedAlign(
+                                alignment: Alignment.topCenter,
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeOutCubic,
+                                heightFactor: active ? 1 : 0,
+                                child: Padding(
+                                  padding: EdgeInsets.only(top: active ? 3 : 0),
+                                  child: AnimatedOpacity(
+                                    duration: const Duration(milliseconds: 250),
+                                    opacity: active ? 1 : 0,
+                                    child: Text(
+                                      _tabs[i].label,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: active ? AppColors.primary : AppColors.grey,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),

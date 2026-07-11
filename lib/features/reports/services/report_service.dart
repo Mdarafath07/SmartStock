@@ -124,6 +124,7 @@ class ReportService {
         .get();
 
     final Map<String, _DailyAggregate> dailyMap = {};
+    final Map<String, Set<String>> dayBills = {};
 
     for (final doc in snapshot.docs) {
       final data = doc.data();
@@ -133,11 +134,15 @@ class ReportService {
           '${saleDate.year}-${saleDate.month.toString().padLeft(2, '0')}-${saleDate.day.toString().padLeft(2, '0')}';
 
       dailyMap.putIfAbsent(dayKey, () => _DailyAggregate(date: saleDate));
+      dayBills.putIfAbsent(dayKey, () => {});
       dailyMap[dayKey]!.totalSales +=
           (data['salePrice'] as num?)?.toDouble() ?? 0.0;
       dailyMap[dayKey]!.totalProfit +=
           (data['profit'] as num?)?.toDouble() ?? 0.0;
-      dailyMap[dayKey]!.totalTransactions += 1;
+      final billKey = (data['batchId'] as String?) ?? doc.id;
+      if (dayBills[dayKey]!.add(billKey)) {
+        dailyMap[dayKey]!.totalTransactions++;
+      }
     }
 
     return dailyMap.entries.map((e) {
@@ -163,6 +168,7 @@ class ReportService {
         .get();
 
     final Map<String, _DailyAggregate> monthlyMap = {};
+    final Map<String, Set<String>> monthBills = {};
 
     for (final doc in snapshot.docs) {
       final data = doc.data();
@@ -171,11 +177,15 @@ class ReportService {
       final monthKey = '${saleDate.year}-${saleDate.month.toString().padLeft(2, '0')}';
 
       monthlyMap.putIfAbsent(monthKey, () => _DailyAggregate(date: DateTime(saleDate.year, saleDate.month, 1)));
+      monthBills.putIfAbsent(monthKey, () => {});
       monthlyMap[monthKey]!.totalSales +=
           (data['salePrice'] as num?)?.toDouble() ?? 0.0;
       monthlyMap[monthKey]!.totalProfit +=
           (data['profit'] as num?)?.toDouble() ?? 0.0;
-      monthlyMap[monthKey]!.totalTransactions += 1;
+      final billKey = (data['batchId'] as String?) ?? doc.id;
+      if (monthBills[monthKey]!.add(billKey)) {
+        monthlyMap[monthKey]!.totalTransactions++;
+      }
     }
 
     return monthlyMap.entries.map((e) {
@@ -196,13 +206,17 @@ class ReportService {
     double totalSales = 0;
     double totalProfit = 0;
     int totalTransactions = 0;
+    final seenBills = <String>{};
 
     for (final doc in snapshot.docs) {
       final data = doc.data();
       if (data['saleType'] == 'warranty_claim') continue;
       totalSales += (data['salePrice'] as num?)?.toDouble() ?? 0.0;
       totalProfit += (data['profit'] as num?)?.toDouble() ?? 0.0;
-      totalTransactions += 1;
+      final billKey = (data['batchId'] as String?) ?? doc.id;
+      if (seenBills.add(billKey)) {
+        totalTransactions++;
+      }
     }
 
     return SalesReport(
@@ -218,6 +232,8 @@ class ReportService {
     double totalSales = 0;
     double totalProfit = 0;
     int totalProducts = 0;
+    int totalTransactions = 0;
+    final seenBills = <String>{};
 
     for (final doc in snapshot.docs) {
       final data = doc.data() as Map<String, dynamic>;
@@ -225,13 +241,17 @@ class ReportService {
       totalSales += (data['salePrice'] as num?)?.toDouble() ?? 0.0;
       totalProfit += (data['profit'] as num?)?.toDouble() ?? 0.0;
       totalProducts += 1;
+      final billKey = (data['batchId'] as String?) ?? doc.id;
+      if (seenBills.add(billKey)) {
+        totalTransactions++;
+      }
     }
 
     return SalesReport(
       date: date,
       totalSales: totalSales,
       totalProfit: totalProfit,
-      totalTransactions: snapshot.docs.length,
+      totalTransactions: totalTransactions,
       totalProductsSold: totalProducts,
     );
   }

@@ -79,9 +79,11 @@ class SyncProvider extends ChangeNotifier {
     });
   }
 
-  Future<void> syncAll() async {
-    if (_isSyncing) return;
-    if (_sheetsServiceAccountJson.isEmpty || _sheetsSpreadsheetId.isEmpty) return;
+  Future<String?> syncAll() async {
+    if (_isSyncing) return null;
+    if (_sheetsServiceAccountJson.isEmpty || _sheetsSpreadsheetId.isEmpty) {
+      return 'Google Sheets not configured. Enter Sheet ID and Service Account JSON.';
+    }
 
     _isSyncing = true;
     notifyListeners();
@@ -102,6 +104,7 @@ class SyncProvider extends ChangeNotifier {
 
     _isSyncing = false;
     notifyListeners();
+    return null;
   }
 
   void clearPendingChanges() {

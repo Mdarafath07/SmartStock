@@ -25,6 +25,10 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
       final s = context.read<SettingsProvider>();
       _sheetIdController.text = s.sheetsSpreadsheetId;
       _jsonController.text = s.sheetsServiceAccountJson;
+      context.read<SyncProvider>().configure(
+        s.sheetsServiceAccountJson,
+        s.sheetsSpreadsheetId,
+      );
     });
   }
 
@@ -295,7 +299,10 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
                   child: ElevatedButton.icon(
                     onPressed: syncProvider.isSyncing
                         ? null
-                        : () => syncProvider.syncAll(),
+                        : () async {
+                            final err = await syncProvider.syncAll();
+                            if (err != null && mounted) _showError(err);
+                          },
                     icon: syncProvider.isSyncing
                         ? const SizedBox(
                             width: 18,

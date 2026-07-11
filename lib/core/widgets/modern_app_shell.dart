@@ -86,60 +86,68 @@ class ModernAppShellState extends State<ModernAppShell>
       extendBody: true,
       bottomNavigationBar: Container(
         margin: EdgeInsets.only(
-          left: 12, right: 12,
-          bottom: MediaQuery.of(context).padding.bottom + 8,
+          left: 16, right: 16,
+          bottom: MediaQuery.of(context).padding.bottom + 10,
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(28),
           child: BackdropFilter(
-            filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
             child: Container(
               decoration: BoxDecoration(
-                color: AppColors.surface.withAlpha(230),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AppColors.greyLight.withAlpha(80), width: 0.5),
+                color: AppColors.surface.withAlpha(235),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: AppColors.greyLight.withAlpha(60), width: 0.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(20),
+                    blurRadius: 20,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
               ),
               child: SafeArea(
                 top: false,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
                   child: GNav(
                     selectedIndex: _currentIndex,
                     onTabChange: switchToTab,
-                    duration: const Duration(milliseconds: 300),
+                    duration: const Duration(milliseconds: 350),
                     haptic: true,
-                    curve: Curves.easeOutCubic,
-                    gap: 4,
+                    curve: Curves.easeOutQuint,
+                    gap: 6,
                     color: AppColors.grey,
                     activeColor: AppColors.primary,
                     iconSize: 22,
                     tabBackgroundColor: AppColors.primaryBg,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    tabMargin: const EdgeInsets.symmetric(horizontal: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     tabs: const [
                       GButton(
-                        icon: Icons.grid_view_rounded,
+                        icon: Icons.dashboard_rounded,
                         text: 'Dashboard',
-                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.2),
                       ),
                       GButton(
-                        icon: Icons.inventory_2_rounded,
+                        icon: Icons.inventory_rounded,
                         text: 'Products',
-                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.2),
                       ),
                       GButton(
                         icon: Icons.add_circle_rounded,
                         text: 'Sale',
-                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.2),
                       ),
                       GButton(
                         icon: Icons.analytics_rounded,
                         text: 'Analytics',
-                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.2),
                       ),
                       GButton(
                         icon: Icons.person_rounded,
                         text: 'Profile',
-                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.2),
                       ),
                     ],
                   ),

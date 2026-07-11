@@ -109,7 +109,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     final saleProvider = context.watch<SaleProvider>();
     final sales = saleProvider.salesHistory;
 
-    final searchedSale = saleProvider.searchedSale;
+    final searchedSales = saleProvider.searchedSales;
 
     final symbol = context.watch<SettingsProvider>().currencySymbol;
     final currencyFormat = NumberFormat.currency(symbol: symbol);
@@ -178,11 +178,13 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
             _buildDateBar(isDark, dateFormat),
             if (filteredSales.isNotEmpty)
               _buildSummaryCards(isDark, currencyFormat, filteredSales.length, filteredSales.fold(0.0, (s, e) => s + e.salePrice), filteredSales.fold(0.0, (s, e) => s + e.profit)),
-            if (searchedSale != null)
-              _buildCustomerGroup(isDark, currencyFormat, searchedSale.customerName.isNotEmpty ? searchedSale.customerName : 'Unknown Customer', [searchedSale], searchedSale.salePrice),
+            if (searchedSales.isNotEmpty) ...[
+              _buildCustomerGroup(isDark, currencyFormat, searchedSales.first.customerName.isNotEmpty ? searchedSales.first.customerName : 'Unknown Customer', searchedSales, searchedSales.fold(0.0, (s, e) => s + e.salePrice)),
+              const SizedBox(height: 8),
+            ],
             const SizedBox(height: 4),
             Expanded(
-              child: filteredSales.isEmpty && searchedSale == null
+              child: filteredSales.isEmpty && searchedSales.isEmpty
                   ? _buildEmptyState(isDark)
                   : RefreshIndicator(
                       onRefresh: () async => _load(),

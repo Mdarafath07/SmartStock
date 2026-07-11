@@ -167,19 +167,19 @@ class SaleProvider extends ChangeNotifier {
     }
   }
 
-  Sale? _searchedSale;
-  Sale? get searchedSale => _searchedSale;
+  List<Sale> _searchedSales = [];
+  List<Sale> get searchedSales => _searchedSales;
 
   Future<void> searchSaleBySerialNumber(String serial) async {
     if (serial.isEmpty) {
-      _searchedSale = null;
+      _searchedSales = [];
       notifyListeners();
       return;
     }
     _setLoading(true);
     _setError(null);
     try {
-      _searchedSale = await _repository.searchSaleBySerialNumber(serial);
+      _searchedSales = await _repository.searchSaleBySerialNumber(serial);
       notifyListeners();
     } catch (e) {
       _setError(e.toString());

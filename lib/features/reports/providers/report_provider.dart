@@ -38,13 +38,13 @@ class ReportProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> loadDailyReport() async {
+  Future<void> loadDailyReport({DateTime? date}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      _dailyReport = await _repository.getDailySalesReport(DateTime.now());
+      _dailyReport = await _repository.getDailySalesReport(date ?? DateTime.now());
     } catch (e) {
       _error = e.toString();
     } finally {

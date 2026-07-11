@@ -76,6 +76,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   int _tab = 0;
   int _month = DateTime.now().month;
   int _year = DateTime.now().year;
+  DateTime _selectedDay = DateTime.now();
 
   static const _months = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -229,6 +230,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             child: GestureDetector(
               onTap: () {
                 setState(() => _tab = i);
+                if (i == 0) {
+                  context.read<ReportProvider>().loadDailyReport(date: _selectedDay);
+                }
                 if (i == 1) {
                   context.read<ReportProvider>()
                       .loadMonthlyReportFor(DateTime.now().year, _month);
@@ -286,15 +290,31 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         ? r.totalSales / r.totalTransactions
         : 0.0;
 
+    final dateStr = '${_selectedDay.month}/${_selectedDay.day}/${_selectedDay.year}';
+    final isToday = _selectedDay.day == DateTime.now().day &&
+        _selectedDay.month == DateTime.now().month &&
+        _selectedDay.year == DateTime.now().year;
     return Column(
       children: [
         _HeroCard(
           colors: _heroColors,
           accent: _heroAccent,
           icon: Icons.today_rounded,
-          badge: '${DateTime.now().month}/${DateTime.now().day}/${DateTime.now().year}',
-          label: "Today's Revenue",
+          badge: dateStr,
+          label: isToday ? "Today's Revenue" : 'Revenue for $dateStr',
           amount: AppFormatters.formatCurrency(r?.totalSales ?? 0, symbol: symbol),
+          onPrev: () {
+            setState(() {
+              _selectedDay = _selectedDay.subtract(const Duration(days: 1));
+            });
+            context.read<ReportProvider>().loadDailyReport(date: _selectedDay);
+          },
+          onNext: () {
+            setState(() {
+              _selectedDay = _selectedDay.add(const Duration(days: 1));
+            });
+            context.read<ReportProvider>().loadDailyReport(date: _selectedDay);
+          },
           stats: [
             _StatData(label: 'Stock Value', value: AppFormatters.formatCurrency(stockValue, symbol: symbol)),
             _StatData(label: 'Profit', value: AppFormatters.formatCurrency(r?.totalProfit ?? 0, symbol: symbol)),

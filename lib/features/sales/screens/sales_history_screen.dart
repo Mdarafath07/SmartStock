@@ -26,8 +26,6 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   DateTime? _selectedDay;
   final _searchController = TextEditingController();
   String _searchQuery = '';
-  String _lastSearchedSerial = '';
-
   @override
   void initState() {
     super.initState();
@@ -91,15 +89,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
 
   void _onSearch(String query) {
     setState(() => _searchQuery = query);
-    if (query.length >= 4) {
-      if (query != _lastSearchedSerial) {
-        _lastSearchedSerial = query;
-        context.read<SaleProvider>().searchSaleBySerialNumber(query);
-      }
-    } else {
-      _lastSearchedSerial = '';
-      context.read<SaleProvider>().searchSaleBySerialNumber('');
-    }
+    context.read<SaleProvider>().searchSaleBySerialNumber(query.length >= 4 ? query : '');
   }
 
   @override

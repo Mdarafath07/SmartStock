@@ -10,6 +10,7 @@ import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/sales/models/sale_model.dart';
 import 'package:smartstock/features/sales/providers/sale_provider.dart';
 import 'package:smartstock/features/sales/screens/sale_details_screen.dart';
+import 'package:smartstock/features/sales/widgets/sale_receipt.dart';
 import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class SalesHistoryScreen extends StatefulWidget {
@@ -23,11 +24,19 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   DateTime? _startDate;
   DateTime? _endDate;
   DateTime? _selectedDay;
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _setToday());
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _setToday() {
@@ -79,27 +88,47 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
         );
   }
 
+  void _onSearch(String query) {
+    setState(() => _searchQuery = query);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final saleProvider = context.watch<SaleProvider>();
     final sales = saleProvider.salesHistory;
 
-    final totalSales = sales.length;
-    final totalRevenue = sales.fold(0.0, (s, e) => s + e.salePrice);
-    final totalProfit = sales.fold(0.0, (s, e) => s + e.profit);
-
     final symbol = context.watch<SettingsProvider>().currencySymbol;
     final currencyFormat = NumberFormat.currency(symbol: symbol);
     final dateFormat = DateFormat('MMM dd, yyyy');
 
+    final filteredSales = _searchQuery.isEmpty
+        ? sales
+        : sales.where((s) {
+            final q = _searchQuery.toLowerCase();
+            if (s.customerName.toLowerCase().contains(q)) return true;
+            if (s.productName.toLowerCase().contains(q)) return true;
+            if (s.serialNumber.toLowerCase().contains(q)) return true;
+            if (s.customerPhone.contains(q)) return true;
+            return false;
+          }).toList();
+
     final grouped = <String, List<Sale>>{};
-    for (final sale in sales) {
-      final key = sale.customerName.isNotEmpty
-          ? sale.customerName
-          : 'Unknown Customer';
-      grouped.putIfAbsent(key, () => []);
-      grouped[key]!.add(sale);
+    if (_searchQuery.isNotEmpty && filteredSales.length < sales.length) {
+      final matchedCustomerNames = filteredSales.map((s) => s.customerName).toSet();
+      for (final sale in sales) {
+        if (matchedCustomerNames.contains(sale.customerName)) {
+          final key = sale.customerName.isNotEmpty ? sale.customerName : 'Unknown Customer';
+          grouped.putIfAbsent(key, () => []);
+          grouped[key]!.add(sale);
+        }
+      }
+    } else {
+      for (final sale in filteredSales) {
+        final key = sale.customerName.isNotEmpty ? sale.customerName : 'Unknown Customer';
+        grouped.putIfAbsent(key, () => []);
+        grouped[key]!.add(sale);
+      }
     }
 
     return Scaffold(
@@ -132,12 +161,13 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                 ],
               ),
             ),
+            _buildSearchBar(isDark),
             _buildDateBar(isDark, dateFormat),
-            if (sales.isNotEmpty)
-              _buildSummaryCards(isDark, currencyFormat, totalSales, totalRevenue, totalProfit),
+            if (filteredSales.isNotEmpty)
+              _buildSummaryCards(isDark, currencyFormat, filteredSales.length, filteredSales.fold(0.0, (s, e) => s + e.salePrice), filteredSales.fold(0.0, (s, e) => s + e.profit)),
             const SizedBox(height: 4),
             Expanded(
-              child: sales.isEmpty
+              child: filteredSales.isEmpty
                   ? _buildEmptyState(isDark)
                   : RefreshIndicator(
                       onRefresh: () async => _load(),
@@ -158,6 +188,36 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                     ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: Container(
+        decoration: BoxDecoration(
+          color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(80), width: 0.5),
+        ),
+        child: TextField(
+          controller: _searchController,
+          onChanged: _onSearch,
+          decoration: InputDecoration(
+            hintText: 'Search by product, serial, or customer...',
+            prefixIcon: Icon(Icons.search_rounded, size: 20, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+            suffixIcon: _searchQuery.isNotEmpty
+                ? IconButton(
+                    onPressed: () { _searchController.clear(); _onSearch(''); },
+                    icon: Icon(Icons.clear_rounded, size: 18, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                  )
+                : null,
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          ),
+          style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
         ),
       ),
     );
@@ -453,6 +513,32 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                   ),
                 ),
                 const SizedBox(width: 6),
+                GestureDetector(
+                  onTap: () => showSaleReceipt(
+                    context,
+                    customerName: customerName,
+                    customerPhone: sales.isNotEmpty ? sales.first.customerPhone : '',
+                    items: sales.map((s) => ReceiptItem(
+                      productName: s.productName,
+                      modelNumber: s.modelNumber,
+                      serialNumber: s.serialNumber,
+                      price: s.salePrice,
+                      warrantyMonths: s.warrantyExpiryDate.isAfter(DateTime.now()) ? s.warrantyExpiryDate.difference(s.saleDate).inDays ~/ 30 : 0,
+                      warrantyExpiry: s.warrantyExpiryDate,
+                      saleDate: s.saleDate,
+                    )).toList(),
+                    onDone: () {},
+                  ),
+                  child: Container(
+                    width: 28, height: 28,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withAlpha(20),
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    child: Icon(Icons.receipt_long_rounded, size: 15, color: AppColors.primary),
+                  ),
+                ),
+                const SizedBox(width: 4),
                 Text(
                   currencyFormat.format(customerTotal),
                   style: TextStyle(

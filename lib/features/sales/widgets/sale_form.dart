@@ -12,6 +12,7 @@ import 'package:smartstock/features/products/providers/product_provider.dart';
 import 'package:smartstock/features/products/widgets/barcode_scanner_screen.dart';
 import 'package:smartstock/features/sales/providers/sale_provider.dart';
 import 'package:smartstock/features/sales/models/serial_number_model.dart';
+import 'package:smartstock/features/sales/widgets/sale_receipt.dart';
 
 class SaleForm extends StatefulWidget {
   final VoidCallback onSaleComplete;
@@ -92,17 +93,16 @@ class _SaleFormState extends State<SaleForm> {
     try {
       final customerName = _customerNameController.text.trim();
       final customerPhone = _customerPhoneController.text.trim();
+      final finalCustomerName = customerName.isEmpty ? 'Customer${Random().nextInt(900000) + 100000}' : customerName;
+      final finalCustomerPhone = customerPhone.isEmpty ? 'N/A' : customerPhone;
       await saleProvider.bulkCreateSales(
         items: items,
         customerId: '',
-        customerName: customerName.isEmpty ? 'Customer${Random().nextInt(900000) + 100000}' : customerName,
-        customerPhone: customerPhone.isEmpty ? 'N/A' : customerPhone,
+        customerName: finalCustomerName,
+        customerPhone: finalCustomerPhone,
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Sale completed successfully')),
-        );
-        widget.onSaleComplete();
+        _showReceipt(finalCustomerName, finalCustomerPhone, items);
       }
     } catch (e) {
       if (mounted) {
@@ -113,6 +113,24 @@ class _SaleFormState extends State<SaleForm> {
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  void _showReceipt(String customerName, String customerPhone, List<Map<String, dynamic>> items) {
+    showSaleReceipt(
+      context,
+      customerName: customerName,
+      customerPhone: customerPhone,
+      items: items.map((i) => ReceiptItem(
+        productName: i['productName'] as String,
+        modelNumber: i['modelNumber'] as String,
+        serialNumber: i['serialNumber'] as String,
+        price: i['salePrice'] as double,
+        warrantyMonths: i['warrantyMonths'] as int,
+        warrantyExpiry: i['warrantyExpiryDate'] as DateTime,
+        saleDate: DateTime.now(),
+      )).toList(),
+      onDone: widget.onSaleComplete,
+    );
   }
 
   Future<void> _handleBarcodeScan() async {

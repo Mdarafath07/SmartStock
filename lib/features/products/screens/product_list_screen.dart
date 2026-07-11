@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:smartstock/core/routes/app_routes.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/features/categories/providers/category_provider.dart';
@@ -199,6 +200,47 @@ class _ProductListScreenState extends State<ProductListScreen> {
     );
   }
 
+  void _showAddOptions(BuildContext context, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.cardDark : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Container(width: 40, height: 4,
+                decoration: BoxDecoration(color: isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB), borderRadius: BorderRadius.circular(2))),
+            ),
+            const SizedBox(height: 20),
+            _OptionTile(
+              icon: Icons.add_box_rounded,
+              title: 'Add Product',
+              subtitle: 'Create a new product',
+              color: AppColors.primary,
+              isDark: isDark,
+              onTap: () { Navigator.pop(ctx); Navigator.pushNamed(context, AppRoutes.productsAdd); },
+            ),
+            const SizedBox(height: 8),
+            _OptionTile(
+              icon: Icons.category_rounded,
+              title: 'Add Category',
+              subtitle: 'Create a new category',
+              color: AppColors.purple,
+              isDark: isDark,
+              onTap: () { Navigator.pop(ctx); Navigator.pushNamed(context, AppRoutes.categoriesAdd); },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   List<Product> _filterByPrice(List<Product> products) {
     if (!_priceFilterActive) return products;
     return products.where((p) {
@@ -225,6 +267,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
       });
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddOptions(context, isDark),
+        child: const Icon(Icons.add_rounded),
+      ),
       body: Column(
         children: [
           SizedBox(height: MediaQuery.of(context).padding.top + 8),
@@ -257,7 +303,24 @@ class _ProductListScreenState extends State<ProductListScreen> {
             ),
           ),
           const Spacer(),
-          Container(width: 1, height: 24, color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(100)),
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(context, AppRoutes.inventory),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withAlpha(20),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.inventory_rounded, size: 16, color: AppColors.primary),
+                  const SizedBox(width: 4),
+                  Text('Inventory', style: AppTextStyles.labelSm.copyWith(color: AppColors.primary)),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -607,6 +670,55 @@ class _FilterChip extends StatelessWidget {
           style: AppTextStyles.labelSm.copyWith(
             color: selected ? AppColors.primary : (isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OptionTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _OptionTile({required this.icon, required this.title, required this.subtitle, required this.color, required this.isDark, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color.withAlpha(10),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44, height: 44,
+              decoration: BoxDecoration(
+                color: color.withAlpha(20),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, size: 22, color: color),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: AppTextStyles.labelMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E), fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, size: 20, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+          ],
         ),
       ),
     );

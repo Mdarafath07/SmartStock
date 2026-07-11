@@ -2,7 +2,6 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
-import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class ReceiptItem {
@@ -31,293 +30,210 @@ void showSaleReceipt(BuildContext context, {
   required List<ReceiptItem> items,
   required VoidCallback onDone,
 }) {
-  final isDark = Theme.of(context).brightness == Brightness.dark;
-  final settings = context.read<SettingsProvider>();
-  final symbol = settings.currencySymbol;
-  final storeName = settings.storeName;
-  final dateStr = DateFormat('MMM dd, yyyy').format(items.first.saleDate);
-  final timeStr = DateFormat('hh:mm a').format(items.first.saleDate);
-  final total = items.fold(0.0, (s, i) => s + i.price);
-
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (ctx) => Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.9),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 12, bottom: 4),
-            child: Container(width: 40, height: 4,
-              decoration: BoxDecoration(color: isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB), borderRadius: BorderRadius.circular(2))),
-          ),
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-              child: Column(
-                children: [
-                  _ReceiptHeader(storeName: storeName, dateStr: dateStr, timeStr: timeStr, isDark: isDark),
-                  const SizedBox(height: 14),
-                  _ReceiptDivider(isDark: isDark),
-                  const SizedBox(height: 12),
-                  _CustomerSection(customerName: customerName, customerPhone: customerPhone, isDark: isDark),
-                  const SizedBox(height: 12),
-                  _ReceiptDivider(isDark: isDark),
-                  const SizedBox(height: 8),
-                  _ItemsSection(items: items, symbol: symbol, isDark: isDark),
-                  const SizedBox(height: 12),
-                  _ReceiptDivider(isDark: isDark),
-                  const SizedBox(height: 10),
-                  _TotalSection(total: total, symbol: symbol, isDark: isDark),
-                  const SizedBox(height: 8),
-                  _WarrantySection(items: items, isDark: isDark),
-                  const SizedBox(height: 12),
-                  Text('Thank you for your purchase!', style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF), fontStyle: FontStyle.italic)),
-                  const SizedBox(height: 16),
-                ],
-              ),
-            ),
-          ),
-          Container(
-            padding: EdgeInsets.fromLTRB(20, 8, 20, MediaQuery.of(ctx).padding.bottom + 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () { Navigator.pop(ctx); onDone(); },
-                    icon: const Icon(Icons.check_rounded, size: 18),
-                    label: const Text('Done'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => _ReceiptScreen(
+        customerName: customerName,
+        customerPhone: customerPhone,
+        items: items,
+        onDone: onDone,
       ),
     ),
   );
 }
 
-class _ReceiptHeader extends StatelessWidget {
-  final String storeName;
-  final String dateStr;
-  final String timeStr;
-  final bool isDark;
-
-  const _ReceiptHeader({required this.storeName, required this.dateStr, required this.timeStr, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withAlpha(15),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(Icons.receipt_long_rounded, size: 24, color: AppColors.primary),
-        ),
-        const SizedBox(height: 8),
-        Text(storeName, style: AppTextStyles.headlineMd.copyWith(color: AppColors.primary, fontWeight: FontWeight.w800, fontSize: 20)),
-        const SizedBox(height: 2),
-        Text('INVOICE', style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF), letterSpacing: 3, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.calendar_today_rounded, size: 12, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
-            const SizedBox(width: 4),
-            Text('$dateStr  $timeStr', style: TextStyle(fontFamily: 'Geist', fontSize: 11, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _ReceiptDivider extends StatelessWidget {
-  final bool isDark;
-  const _ReceiptDivider({required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 1,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(30),
-            (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(120),
-            (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(30),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CustomerSection extends StatelessWidget {
+class _ReceiptScreen extends StatelessWidget {
   final String customerName;
   final String customerPhone;
-  final bool isDark;
+  final List<ReceiptItem> items;
+  final VoidCallback onDone;
 
-  const _CustomerSection({required this.customerName, required this.customerPhone, required this.isDark});
+  const _ReceiptScreen({
+    required this.customerName,
+    required this.customerPhone,
+    required this.items,
+    required this.onDone,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: (isDark ? AppColors.surfaceLight : const Color(0xFFF8FAFC)).withAlpha(200),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(50), width: 0.5),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final settings = context.read<SettingsProvider>();
+    final symbol = settings.currencySymbol;
+    final storeName = settings.storeName;
+    final dateStr = DateFormat('MMM dd, yyyy').format(items.first.saleDate);
+    final timeStr = DateFormat('hh:mm a').format(items.first.saleDate);
+    final total = items.fold(0.0, (s, i) => s + i.price);
+
+    return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF1A1A2E) : const Color(0xFFF5F0EB),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.close_rounded, color: isDark ? Colors.white : const Color(0xFF475569)),
+          onPressed: () { Navigator.pop(context); onDone(); },
+        ),
+        title: Text('Receipt', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF475569))),
+        centerTitle: true,
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 36, height: 36,
-            decoration: BoxDecoration(color: AppColors.primary.withAlpha(20), borderRadius: BorderRadius.circular(9)),
-            child: Center(child: Text(customerName.isNotEmpty ? customerName[0].toUpperCase() : '?', style: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary))),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(customerName, style: TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
-                Text(customerPhone, style: TextStyle(fontFamily: 'Geist', fontSize: 11, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Container(
+            width: 320,
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF2A2A3E) : Colors.white,
+              borderRadius: BorderRadius.circular(4),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(20),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
+                ),
               ],
             ),
-          ),
-          Icon(Icons.person_outline_rounded, size: 18, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
-        ],
-      ),
-    );
-  }
-}
-
-class _ItemsSection extends StatelessWidget {
-  final List<ReceiptItem> items;
-  final String symbol;
-  final bool isDark;
-
-  const _ItemsSection({required this.items, required this.symbol, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 6),
-          child: Text('ITEMS', style: TextStyle(fontFamily: 'Geist', fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 2, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
-        ),
-        ...items.asMap().entries.map((e) {
-          final item = e.value;
-          final isLast = e.key == items.length - 1;
-          return Container(
-            margin: EdgeInsets.only(bottom: isLast ? 0 : 8),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: (isDark ? AppColors.surfaceLight : const Color(0xFFFAFAFA)).withAlpha(isDark ? 80 : 150),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 24, height: 24,
-                  decoration: BoxDecoration(color: AppColors.primary.withAlpha(20), borderRadius: BorderRadius.circular(6)),
-                  child: Center(child: Text('${e.key + 1}', style: TextStyle(fontFamily: 'Geist', fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary))),
+                Text(storeName, style: TextStyle(fontFamily: 'Geist', fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: 1, color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+                const SizedBox(height: 4),
+                Text('INVOICE', style: TextStyle(fontFamily: 'Geist', fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 4, color: isDark ? Colors.white38 : const Color(0xFF9CA3AF))),
+                const SizedBox(height: 16),
+                _dashedLine(isDark),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Date', style: TextStyle(fontFamily: 'Geist', fontSize: 10, color: isDark ? Colors.white54 : const Color(0xFF6B7280))),
+                    Text(dateStr, style: TextStyle(fontFamily: 'Geist', fontSize: 10, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Time', style: TextStyle(fontFamily: 'Geist', fontSize: 10, color: isDark ? Colors.white54 : const Color(0xFF6B7280))),
+                    Text(timeStr, style: TextStyle(fontFamily: 'Geist', fontSize: 10, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Customer', style: TextStyle(fontFamily: 'Geist', fontSize: 10, color: isDark ? Colors.white54 : const Color(0xFF6B7280))),
+                    Text(customerName, style: TextStyle(fontFamily: 'Geist', fontSize: 10, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+                  ],
+                ),
+                if (customerPhone.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(item.productName, style: TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
-                      Text(item.modelNumber, style: TextStyle(fontFamily: 'Geist', fontSize: 10, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
-                      Text('SN: ${item.serialNumber}', style: TextStyle(fontFamily: 'Geist', fontSize: 9, color: AppColors.primary)),
-                      if (item.warrantyMonths > 0)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Row(
-                            children: [
-                              Icon(Icons.verified_rounded, size: 10, color: AppColors.orange),
-                              const SizedBox(width: 3),
-                              Text('${item.warrantyMonths}mo warranty (till ${DateFormat('MMM dd, yyyy').format(item.warrantyExpiry)})', style: TextStyle(fontFamily: 'Geist', fontSize: 9, color: AppColors.orange)),
-                            ],
-                          ),
-                        ),
+                      Text('Phone', style: TextStyle(fontFamily: 'Geist', fontSize: 10, color: isDark ? Colors.white54 : const Color(0xFF6B7280))),
+                      Text(customerPhone, style: TextStyle(fontFamily: 'Geist', fontSize: 10, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
                     ],
                   ),
+                ],
+                const SizedBox(height: 12),
+                _dashedLine(isDark),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(flex: 3, child: Text('ITEM', style: TextStyle(fontFamily: 'Geist', fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1, color: isDark ? Colors.white54 : const Color(0xFF6B7280)))),
+                    Expanded(flex: 1, child: Text('QTY', textAlign: TextAlign.center, style: TextStyle(fontFamily: 'Geist', fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1, color: isDark ? Colors.white54 : const Color(0xFF6B7280)))),
+                    Expanded(flex: 2, child: Text('PRICE', textAlign: TextAlign.right, style: TextStyle(fontFamily: 'Geist', fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1, color: isDark ? Colors.white54 : const Color(0xFF6B7280)))),
+                  ],
                 ),
-                const SizedBox(width: 6),
-                Text('$symbol${item.price.toStringAsFixed(0)}', style: TextStyle(fontFamily: 'Hanken Grotesk', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                const SizedBox(height: 6),
+                ...items.asMap().entries.map((e) {
+                  final item = e.value;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(flex: 3, child: Text(item.productName, style: TextStyle(fontFamily: 'Geist', fontSize: 10, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF1A1A2E)))),
+                            Expanded(flex: 1, child: Text('1', textAlign: TextAlign.center, style: TextStyle(fontFamily: 'Geist', fontSize: 10, color: isDark ? Colors.white : const Color(0xFF1A1A2E)))),
+                            Expanded(flex: 2, child: Text('$symbol${item.price.toStringAsFixed(2)}', textAlign: TextAlign.right, style: TextStyle(fontFamily: 'Geist', fontSize: 10, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF1A1A2E)))),
+                          ],
+                        ),
+                        Text('SN: ${item.serialNumber}', style: TextStyle(fontFamily: 'Geist', fontSize: 8, color: isDark ? Colors.white38 : const Color(0xFF9CA3AF))),
+                        Text(item.modelNumber, style: TextStyle(fontFamily: 'Geist', fontSize: 8, color: isDark ? Colors.white38 : const Color(0xFF9CA3AF))),
+                      ],
+                    ),
+                  );
+                }),
+                const SizedBox(height: 8),
+                _dashedLine(isDark),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('TOTAL', style: TextStyle(fontFamily: 'Geist', fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 1, color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+                    Text('$symbol${total.toStringAsFixed(2)}', style: TextStyle(fontFamily: 'Geist', fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () { Navigator.pop(context); onDone(); },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: const Text('Done', style: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w600)),
+                  ),
+                ),
               ],
             ),
-          );
-        }),
-      ],
-    );
-  }
-}
-
-class _TotalSection extends StatelessWidget {
-  final double total;
-  final String symbol;
-  final bool isDark;
-
-  const _TotalSection({required this.total, required this.symbol, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text('Total Amount', style: AppTextStyles.titleMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
-        const Spacer(),
-        Text('$symbol${total.toStringAsFixed(2)}', style: AppTextStyles.amountLg.copyWith(color: AppColors.primary, fontSize: 24)),
-      ],
-    );
-  }
-}
-
-class _WarrantySection extends StatelessWidget {
-  final List<ReceiptItem> items;
-  final bool isDark;
-
-  const _WarrantySection({required this.items, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    final hasWarranty = items.any((i) => i.warrantyMonths > 0);
-    if (!hasWarranty) return const SizedBox.shrink();
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: AppColors.orange.withAlpha(10),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.orange.withAlpha(30), width: 0.5),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.info_outline_rounded, size: 16, color: AppColors.orange),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Items with warranty are covered. Keep this receipt for warranty claims.',
-              style: TextStyle(fontFamily: 'Geist', fontSize: 10, color: AppColors.orange),
-            ),
           ),
-        ],
+        ),
       ),
     );
   }
+
+  Widget _dashedLine(bool isDark) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SizedBox(
+          width: constraints.maxWidth,
+          child: CustomPaint(
+            painter: _DashedLinePainter(isDark: isDark),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _DashedLinePainter extends CustomPainter {
+  final bool isDark;
+  _DashedLinePainter({required this.isDark});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = isDark ? Colors.white24 : const Color(0xFFD1D5DB)
+      ..strokeWidth = 1;
+
+    const dashWidth = 8.0;
+    const dashGap = 4.0;
+    double startX = 0;
+
+    while (startX < size.width) {
+      canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
+      startX += dashWidth + dashGap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

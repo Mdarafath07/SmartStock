@@ -40,6 +40,7 @@ class ModernAppShellState extends State<ModernAppShell>
 
   late AnimationController _fabController;
   late List<AnimationController> _slideControllers;
+  late List<CurvedAnimation> _slideCurves;
   bool _isFabOpen = false;
 
   final List<Widget> _pages = const [
@@ -60,14 +61,18 @@ class ModernAppShellState extends State<ModernAppShell>
     _slideControllers = List.generate(5, (_) => AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 350),
-      curve: Curves.easeOutQuint,
     ));
+    _slideCurves = _slideControllers.map((c) => CurvedAnimation(
+      parent: c,
+      curve: Curves.easeOutQuint,
+    )).toList();
     _slideControllers[_currentIndex].value = 1;
   }
 
   @override
   void dispose() {
-    for (final c in _slideControllers) c.dispose();
+    for (final c in _slideCurves) { c.dispose(); }
+    for (final c in _slideControllers) { c.dispose(); }
     _fabController.dispose();
     super.dispose();
   }
@@ -141,9 +146,9 @@ class ModernAppShellState extends State<ModernAppShell>
                         child: GestureDetector(
                           onTap: () => switchToTab(i),
                           child: AnimatedBuilder(
-                            animation: _slideControllers[i],
-                            builder: (_, __) {
-                              final anim = _slideControllers[i].value;
+                            animation: _slideCurves[i],
+                            builder: (context, _) {
+                              final anim = _slideCurves[i].value;
                               return Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
                                 decoration: BoxDecoration(

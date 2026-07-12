@@ -146,7 +146,8 @@ class ProductProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> addProduct(Product product, List<String> serialNumbers) async {
+  Future<void> addProduct(Product product, List<String> serialNumbers,
+      {DateTime? stockDate}) async {
     _isLoading = true;
     notifyListeners();
 
@@ -159,6 +160,7 @@ class ProductProvider extends ChangeNotifier {
       final batch = _firestore.batch();
       final productRef = _firestore.collection('products').doc();
       final now = FieldValue.serverTimestamp();
+      final dateAdded = stockDate ?? DateTime.now();
 
       batch.set(productRef, {
         ...product.toMap(),
@@ -173,6 +175,7 @@ class ProductProvider extends ChangeNotifier {
           'serialNumber': serial,
           'status': 'available',
           'createdAt': now,
+          'dateAdded': Timestamp.fromDate(dateAdded),
         });
       }
 
@@ -184,7 +187,8 @@ class ProductProvider extends ChangeNotifier {
         'unitPrice': product.purchasePrice,
         'totalPrice': qty * product.purchasePrice,
         'notes': '',
-        'dateAdded': now,
+        'serialNumbers': serialNumbers,
+        'dateAdded': Timestamp.fromDate(dateAdded),
         'createdAt': now,
         'reminderEnabled': false,
         'reminderTime': null,
@@ -202,7 +206,8 @@ class ProductProvider extends ChangeNotifier {
   }
 
   Future<void> addSerialNumbers(
-      String productId, List<String> serialNumbers) async {
+      String productId, List<String> serialNumbers,
+      {DateTime? stockDate}) async {
     _isLoading = true;
     notifyListeners();
 
@@ -220,6 +225,7 @@ class ProductProvider extends ChangeNotifier {
       final purchasePrice =
           (productData['purchasePrice'] as num?)?.toDouble() ?? 0.0;
       final qty = serialNumbers.length;
+      final dateAdded = stockDate ?? DateTime.now();
 
       final batch = _firestore.batch();
       for (final serial in serialNumbers) {
@@ -229,6 +235,7 @@ class ProductProvider extends ChangeNotifier {
           'serialNumber': serial.trim(),
           'status': 'available',
           'createdAt': FieldValue.serverTimestamp(),
+          'dateAdded': Timestamp.fromDate(dateAdded),
         });
       }
       batch.update(_firestore.collection('products').doc(productId), {
@@ -241,7 +248,8 @@ class ProductProvider extends ChangeNotifier {
         'unitPrice': purchasePrice,
         'totalPrice': qty * purchasePrice,
         'notes': '',
-        'dateAdded': FieldValue.serverTimestamp(),
+        'serialNumbers': serialNumbers,
+        'dateAdded': Timestamp.fromDate(dateAdded),
         'createdAt': FieldValue.serverTimestamp(),
         'reminderEnabled': false,
         'reminderTime': null,

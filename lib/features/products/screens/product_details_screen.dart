@@ -668,7 +668,7 @@ class _SerialTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = serial['status'] as String;
     final isAvailable = status == 'available';
-    final created = serial['createdAt'] as dynamic;
+    final created = serial['dateAdded'] as dynamic ?? serial['createdAt'] as dynamic;
     final hasSale = onTap != null;
 
     return Container(

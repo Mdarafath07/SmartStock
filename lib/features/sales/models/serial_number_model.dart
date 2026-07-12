@@ -8,6 +8,7 @@ class SerialNumber {
   final String? saleId;
   final String? returnType;
   final DateTime createdAt;
+  final DateTime dateAdded;
 
   SerialNumber({
     this.id = '',
@@ -17,7 +18,9 @@ class SerialNumber {
     this.saleId,
     this.returnType,
     DateTime? createdAt,
-  }) : createdAt = createdAt ?? DateTime.now();
+    DateTime? dateAdded,
+  })  : createdAt = createdAt ?? DateTime.now(),
+        dateAdded = dateAdded ?? DateTime.now();
 
   factory SerialNumber.fromJson(Map<String, dynamic> json, String id) {
     return SerialNumber(
@@ -28,6 +31,7 @@ class SerialNumber {
       saleId: json['saleId'] as String?,
       returnType: json['returnType'] as String?,
       createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      dateAdded: (json['dateAdded'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
@@ -39,6 +43,7 @@ class SerialNumber {
       'saleId': saleId,
       'returnType': returnType,
       'createdAt': Timestamp.fromDate(createdAt),
+      'dateAdded': Timestamp.fromDate(dateAdded),
     };
   }
 

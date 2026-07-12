@@ -25,6 +25,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
   final _serialInputController = TextEditingController();
   final _pendingSerials = <String>[];
+  DateTime _stockDate = DateTime.now();
   bool _isStockSubmitting = false;
 
   @override
@@ -241,7 +242,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
               product: provider.selectedProduct,
               isEdit: true,
               hideSerials: true,
-              onSave: (Product product, List<String> serialNumbers) {
+              onSave: (Product product, List<String> serialNumbers, {DateTime? stockDate}) {
                 return _handleEditSave(context, product, symbol);
               },
             );
@@ -311,6 +312,36 @@ class _EditProductScreenState extends State<EditProductScreen> {
                 fontWeight: FontWeight.w600,
                 color: AppColors.onSurface,
               )),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.calendar_today, size: 14, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Text('Stock Date: ', style: TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant)),
+              GestureDetector(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _stockDate,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2030),
+                  );
+                  if (picked != null) setState(() => _stockDate = picked);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    DateFormat('MMM dd, yyyy').format(_stockDate),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary),
+                  ),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 10),
           Row(
             children: [
@@ -479,10 +510,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
               )),
           const SizedBox(height: 10),
           _summaryRow('Total Items', '$count unit${count == 1 ? '' : 's'}'),
-          _summaryRow('Purchase Total', '$symbol${totalPurchase.toStringAsFixed(2)}'),
-          _summaryRow('Selling Total', '$symbol${totalSelling.toStringAsFixed(2)}'),
+          _summaryRow('Purchase Total', '$symbol${totalPurchase.toStringAsFixed(0)}'),
+          _summaryRow('Selling Total', '$symbol${totalSelling.toStringAsFixed(0)}'),
           const Divider(height: 18),
-          _summaryRow('Est. Profit', '$symbol${(totalSelling - totalPurchase).toStringAsFixed(2)}',
+          _summaryRow('Est. Profit', '$symbol${(totalSelling - totalPurchase).toStringAsFixed(0)}',
               valueColor: AppColors.green),
         ],
       ),
@@ -545,7 +576,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
     setState(() => _isStockSubmitting = true);
     try {
-      await provider.addSerialNumbers(widget.productId, _pendingSerials);
+      await provider.addSerialNumbers(widget.productId, _pendingSerials, stockDate: _stockDate);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${_pendingSerials.length} serial(s) added successfully')),

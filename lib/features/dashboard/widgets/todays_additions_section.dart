@@ -4,14 +4,14 @@ import 'package:provider/provider.dart';
 import 'package:smartstock/features/daily_additions/providers/daily_addition_provider.dart';
 import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
-class TodaysAdditionsSection extends StatefulWidget {
-  const TodaysAdditionsSection({super.key});
+class AdditionHistorySection extends StatefulWidget {
+  const AdditionHistorySection({super.key});
 
   @override
-  State<TodaysAdditionsSection> createState() => _TodaysAdditionsSectionState();
+  State<AdditionHistorySection> createState() => _AdditionHistorySectionState();
 }
 
-class _TodaysAdditionsSectionState extends State<TodaysAdditionsSection> {
+class _AdditionHistorySectionState extends State<AdditionHistorySection> {
   @override
   void initState() {
     super.initState();
@@ -32,7 +32,7 @@ class _TodaysAdditionsSectionState extends State<TodaysAdditionsSection> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Today's Additions",
+            Text('Addition History',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     )),
@@ -69,11 +69,27 @@ class _TodaysAdditionsSectionState extends State<TodaysAdditionsSection> {
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                   fontWeight: FontWeight.w500, fontSize: 14)),
-                          subtitle: Text(
-                              'Qty: ${item.quantity} — $symbol${item.totalPrice.toStringAsFixed(2)}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodySmall),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Qty: ${item.quantity} — $symbol${item.totalPrice.toStringAsFixed(0)}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                              if (item.serialNumbers.isNotEmpty)
+                                Text(
+                                  item.serialNumbers.join(', '),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                            ],
+                          ),
                           trailing: Text(
                             DateFormat('h:mm a').format(item.dateAdded),
                             style: Theme.of(context).textTheme.bodySmall,
@@ -97,7 +113,7 @@ class _TodaysAdditionsSectionState extends State<TodaysAdditionsSection> {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  'Total: $totalQty items — $symbol${totalValue.toStringAsFixed(2)}',
+                  'Total: $totalQty items — $symbol${totalValue.toStringAsFixed(0)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(

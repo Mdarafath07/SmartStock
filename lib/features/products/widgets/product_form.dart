@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/features/categories/providers/category_provider.dart';
@@ -7,12 +8,13 @@ import 'package:smartstock/features/products/providers/product_provider.dart';
 import 'package:smartstock/features/products/screens/product_details_screen.dart';
 import 'package:smartstock/features/products/widgets/barcode_scanner_screen.dart';
 import 'package:smartstock/features/products/widgets/image_picker_widget.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class ProductForm extends StatefulWidget {
   final Product? product;
   final bool isEdit;
   final bool hideSerials;
-  final Future<void> Function(Product product, List<String> serialNumbers) onSave;
+  final Future<void> Function(Product product, List<String> serialNumbers, {DateTime? stockDate}) onSave;
 
   const ProductForm({
     super.key,
@@ -36,6 +38,7 @@ class _ProductFormState extends State<ProductForm> {
   final _descriptionController = TextEditingController();
   final _serialInputController = TextEditingController();
   final _pendingSerials = <String>[];
+  DateTime _stockDate = DateTime.now();
   bool _isSubmitting = false;
 
   String? _selectedCategoryId;
@@ -312,7 +315,7 @@ class _ProductFormState extends State<ProductForm> {
         soldQuantity: widget.product?.soldQuantity ?? 0,
       );
 
-      await widget.onSave(product, serialNumbers);
+      await widget.onSave(product, serialNumbers, stockDate: _stockDate);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -413,6 +416,36 @@ class _ProductFormState extends State<ProductForm> {
                   fontWeight: FontWeight.w500,
                   color: AppColors.onSurface,
                 )),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.calendar_today, size: 14, color: AppColors.primary),
+                const SizedBox(width: 6),
+                Text('Stock Date: ', style: TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant)),
+                GestureDetector(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _stockDate,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2030),
+                    );
+                    if (picked != null) setState(() => _stockDate = picked);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      DateFormat('MMM dd, yyyy').format(_stockDate),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 10),
             Row(
               children: [
@@ -668,6 +701,7 @@ class _ProductFormState extends State<ProductForm> {
   }
 
   Widget _buildSummary() {
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
     final serialCount = _pendingSerials.length;
     final purchasePrice = double.tryParse(_purchasePriceController.text) ?? 0;
     final sellingPrice = double.tryParse(_sellingPriceController.text) ?? 0;
@@ -693,10 +727,10 @@ class _ProductFormState extends State<ProductForm> {
               )),
           const SizedBox(height: 10),
           _summaryRow('Total Items', '$serialCount unit${serialCount == 1 ? '' : 's'}'),
-          _summaryRow('Purchase Total', '\$${totalPurchase.toStringAsFixed(2)}'),
-          _summaryRow('Selling Total', '\$${totalSelling.toStringAsFixed(2)}'),
+          _summaryRow('Purchase Total', '$symbol${totalPurchase.toStringAsFixed(0)}'),
+          _summaryRow('Selling Total', '$symbol${totalSelling.toStringAsFixed(0)}'),
           const Divider(height: 18),
-          _summaryRow('Est. Profit', '\$${(totalSelling - totalPurchase).toStringAsFixed(2)}',
+          _summaryRow('Est. Profit', '$symbol${(totalSelling - totalPurchase).toStringAsFixed(0)}',
               valueColor: AppColors.green),
         ],
       ),

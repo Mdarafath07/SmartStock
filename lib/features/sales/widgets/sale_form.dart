@@ -13,6 +13,7 @@ import 'package:smartstock/features/products/widgets/barcode_scanner_screen.dart
 import 'package:smartstock/features/sales/providers/sale_provider.dart';
 import 'package:smartstock/features/sales/models/serial_number_model.dart';
 import 'package:smartstock/features/sales/widgets/sale_receipt.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class SaleForm extends StatefulWidget {
   final VoidCallback onSaleComplete;
@@ -169,7 +170,7 @@ class _SaleFormState extends State<SaleForm> {
     }
     if (!mounted) return;
 
-    var salePriceText = product.sellingPrice.toStringAsFixed(2);
+    var salePriceText = product.sellingPrice.toStringAsFixed(0);
     var warrantyValueText = (product.warrantyMonths > 0)
         ? product.warrantyMonths.toString()
         : (product.warrantyDays > 0 ? product.warrantyDays.toString() : '0');
@@ -184,7 +185,7 @@ class _SaleFormState extends State<SaleForm> {
         productName: product.productName,
         serialNumber: serialNumber,
         modelNumber: product.modelNumber,
-        initialPrice: product.sellingPrice.toStringAsFixed(2),
+        initialPrice: product.sellingPrice.toStringAsFixed(0),
         onPriceChanged: (v) => salePriceText = v,
         initialWarrantyValue: warrantyValueText,
         initialWarrantyUnit: warrantyUnit,
@@ -257,6 +258,7 @@ class _SaleFormState extends State<SaleForm> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
 
     return Form(
       key: _formKey,
@@ -264,7 +266,7 @@ class _SaleFormState extends State<SaleForm> {
         children: [
           _buildTopBar(isDark),
           Expanded(
-            child: _currentPage == 0 ? _buildCustomerStep(isDark) : _buildCartStep(isDark),
+            child: _currentPage == 0 ? _buildCustomerStep(isDark) : _buildCartStep(isDark, symbol),
           ),
           _buildBottomBar(isDark),
         ],
@@ -371,7 +373,7 @@ class _SaleFormState extends State<SaleForm> {
     );
   }
 
-  Widget _buildCartStep(bool isDark) {
+  Widget _buildCartStep(bool isDark, String symbol) {
     return Column(
       children: [
         if (_cartItems.isEmpty)
@@ -444,7 +446,7 @@ class _SaleFormState extends State<SaleForm> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('$_totalItems items', style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
-                      Text('\$${_cartTotal.toStringAsFixed(2)}',
+                      Text('$symbol${_cartTotal.toStringAsFixed(0)}',
                           style: AppTextStyles.amountLg.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E), fontSize: 24)),
                     ],
                   ),
@@ -530,6 +532,7 @@ class _CartItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -566,7 +569,7 @@ class _CartItemTile extends StatelessWidget {
                 Expanded(
                   child: Text(s.serialNumber, style: TextStyle(fontFamily: 'Geist', fontSize: 12, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
                 ),
-                Text('\$${item.product.sellingPrice.toStringAsFixed(0)}',
+                Text('$symbol${item.product.sellingPrice.toStringAsFixed(0)}',
                     style: AppTextStyles.labelMd.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)),
                 const SizedBox(width: 8),
                 GestureDetector(
@@ -583,7 +586,7 @@ class _CartItemTile extends StatelessWidget {
           if (item.serials.length > 1)
             Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: Text('${item.serials.length} items × \$${item.product.sellingPrice.toStringAsFixed(0)}',
+              child: Text('${item.serials.length} items × $symbol${item.product.sellingPrice.toStringAsFixed(0)}',
                   style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
             ),
         ],
@@ -648,6 +651,7 @@ class _PriceDialogState extends State<_PriceDialog> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
@@ -669,7 +673,7 @@ class _PriceDialogState extends State<_PriceDialog> {
               controller: _priceController,
               decoration: InputDecoration(
                 labelText: 'Sale Price',
-                prefixText: '\$ ',
+                prefixText: '$symbol ',
                 prefixStyle: TextStyle(fontFamily: 'Inter', fontSize: 16, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
               ),
               keyboardType: TextInputType.number,
@@ -870,6 +874,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
     final categoryProvider = context.watch<CategoryProvider>();
     final productProvider = context.watch<ProductProvider>();
     final products = productProvider.products;
@@ -970,8 +975,8 @@ class _AddItemSheetState extends State<_AddItemSheet> {
           const SizedBox(height: 8),
           Expanded(
             child: _productId == null
-                ? _buildProductList(products.where((p) => p.availableQuantity > 0).toList(), isDark)
-                : _buildSerialSelection(isDark),
+                ? _buildProductList(products.where((p) => p.availableQuantity > 0).toList(), isDark, symbol)
+                : _buildSerialSelection(isDark, symbol),
           ),
           Container(
             padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.of(context).padding.bottom + 10),
@@ -1025,7 +1030,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
     );
   }
 
-  Widget _buildProductList(List<Product> products, bool isDark) {
+  Widget _buildProductList(List<Product> products, bool isDark, String symbol) {
     List<Product> filtered;
     if (_serialQuery.isNotEmpty) {
       final nameModelMatch = products.where((p) =>
@@ -1074,7 +1079,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                       _productId = p.id;
                       _product = p;
                       _selectedSerialIds.clear();
-                      _salePriceController.text = p.sellingPrice.toStringAsFixed(2);
+                      _salePriceController.text = p.sellingPrice.toStringAsFixed(0);
                       _setWarrantyFromProduct(p);
                     });
                     context.read<SaleProvider>().loadAvailableSerialNumbers(p.id);
@@ -1130,7 +1135,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                   : (isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
                             )),
                         const SizedBox(height: 4),
-                        Text('\$${p.sellingPrice.toStringAsFixed(2)}',
+                        Text('$symbol${p.sellingPrice.toStringAsFixed(0)}',
                             style: AppTextStyles.labelMd.copyWith(
                               color: inCart ? AppColors.textMuted : AppColors.primary,
                               fontWeight: FontWeight.w700)),
@@ -1154,7 +1159,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
     );
   }
 
-  Widget _buildSerialSelection(bool isDark) {
+  Widget _buildSerialSelection(bool isDark, String symbol) {
     final saleProvider = context.watch<SaleProvider>();
     final allSerials = saleProvider.availableSerialNumbers;
 
@@ -1209,7 +1214,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                 controller: _salePriceController,
                 decoration: InputDecoration(
                   labelText: 'Price',
-                  prefixText: '\$ ',
+                  prefixText: '$symbol ',
                   prefixStyle: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
                   filled: true,
                   fillColor: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),

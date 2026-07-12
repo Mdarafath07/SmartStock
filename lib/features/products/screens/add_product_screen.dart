@@ -32,17 +32,17 @@ class AddProductScreen extends StatelessWidget {
         elevation: 0,
       ),
       body: ProductForm(
-        onSave: (Product product, List<String> serialNumbers) {
-          return _handleSave(context, product, serialNumbers, symbol);
+        onSave: (Product product, List<String> serialNumbers, {DateTime? stockDate}) {
+          return _handleSave(context, product, serialNumbers, symbol, stockDate: stockDate);
         },
       ),
     );
   }
 
   Future<void> _handleSave(
-      BuildContext context, Product product, List<String> serialNumbers, String symbol) async {
+      BuildContext context, Product product, List<String> serialNumbers, String symbol, {DateTime? stockDate}) async {
     try {
-      await context.read<ProductProvider>().addProduct(product, serialNumbers);
+      await context.read<ProductProvider>().addProduct(product, serialNumbers, stockDate: stockDate);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Product added successfully')),

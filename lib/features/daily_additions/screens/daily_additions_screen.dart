@@ -122,17 +122,12 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                   ),
                   Consumer<DailyAdditionProvider>(
                     builder: (context, provider, _) {
-                      final today = DateTime.now();
-                      final sel = provider.selectedDate;
-                      final isToday = sel.year == today.year &&
-                          sel.month == today.month &&
-                          sel.day == today.day;
                       return GestureDetector(
                         onTap: _pickDate,
                         child: Row(
                           children: [
                             Text(
-                              isToday ? "Today's Additions" : 'Additions',
+                              'Addition History',
                               style: TextStyle(
                                 fontFamily: 'Hanken Grotesk',
                                 fontSize: 17,
@@ -393,13 +388,13 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
     final totalQty = items.fold(0, (sum, e) => sum + e.quantity);
     final totalPrice = items.fold(0.0, (sum, e) => sum + e.totalPrice);
     final first = items.first;
-    final times = items.map((e) => DateFormat('h:mm a').format(e.dateAdded)).toList();
 
     return ModernCard(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(10),
       onTap: null,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
@@ -468,43 +463,70 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
             ],
           ),
           const SizedBox(height: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: (isDark ? AppColors.surfaceLight : const Color(0xFFF8FAFC)).withAlpha(180),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.schedule_rounded, size: 10, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
-                const SizedBox(width: 3),
-                Expanded(
-                  child: Text(
-                    times.join(', '),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 9,
-                      color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+          for (final item in items) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              margin: const EdgeInsets.only(bottom: 4),
+              decoration: BoxDecoration(
+                color: (isDark ? AppColors.surfaceLight : const Color(0xFFF8FAFC)).withAlpha(180),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.schedule_rounded, size: 10, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                      const SizedBox(width: 3),
+                      Text(
+                        DateFormat('h:mm a').format(item.dateAdded),
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280),
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '$symbol${_formatAmount(item.unitPrice, decimals: 2)} each',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.green,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (item.serialNumbers.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 4,
+                      runSpacing: 2,
+                      children: item.serialNumbers.map((sn) => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.green.withAlpha(15),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: AppColors.green.withAlpha(30), width: 0.5),
+                        ),
+                        child: Text(
+                          sn,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 8,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.green,
+                          ),
+                        ),
+                      )).toList(),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '$symbol${_formatAmount(first.unitPrice, decimals: 2)} each',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.green,
-                  ),
-                ),
-              ],
+                  ],
+                ],
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

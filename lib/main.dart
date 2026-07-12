@@ -25,9 +25,13 @@ import 'package:smartstock/firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (_) {
+    // Already initialized via native google-services.json
+  }
   runApp(const SmartStockApp());
 }
 

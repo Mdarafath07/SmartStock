@@ -6,6 +6,7 @@ class DailyAddition {
   final double unitPrice;
   final double totalPrice;
   final String notes;
+  final List<String> serialNumbers;
   final DateTime dateAdded;
   final DateTime createdAt;
   final bool reminderEnabled;
@@ -19,6 +20,7 @@ class DailyAddition {
     this.unitPrice = 0.0,
     this.totalPrice = 0.0,
     this.notes = '',
+    this.serialNumbers = const [],
     DateTime? dateAdded,
     DateTime? createdAt,
     this.reminderEnabled = false,
@@ -35,6 +37,10 @@ class DailyAddition {
       unitPrice: (json['unitPrice'] as num?)?.toDouble() ?? 0.0,
       totalPrice: (json['totalPrice'] as num?)?.toDouble() ?? 0.0,
       notes: json['notes'] as String? ?? '',
+      serialNumbers: (json['serialNumbers'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       dateAdded: (json['dateAdded'] as dynamic)?.toDate() ?? DateTime.now(),
       createdAt: (json['createdAt'] as dynamic)?.toDate() ?? DateTime.now(),
       reminderEnabled: json['reminderEnabled'] as bool? ?? false,
@@ -51,6 +57,10 @@ class DailyAddition {
       unitPrice: (map['unitPrice'] as num?)?.toDouble() ?? 0.0,
       totalPrice: (map['totalPrice'] as num?)?.toDouble() ?? 0.0,
       notes: map['notes'] as String? ?? '',
+      serialNumbers: (map['serialNumbers'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       dateAdded: (map['dateAdded'] as dynamic)?.toDate() ?? DateTime.now(),
       createdAt: (map['createdAt'] as dynamic)?.toDate() ?? DateTime.now(),
       reminderEnabled: map['reminderEnabled'] as bool? ?? false,
@@ -66,6 +76,7 @@ class DailyAddition {
       'unitPrice': unitPrice,
       'totalPrice': totalPrice,
       'notes': notes,
+      'serialNumbers': serialNumbers,
       'dateAdded': dateAdded,
       'createdAt': createdAt,
       'reminderEnabled': reminderEnabled,
@@ -83,6 +94,7 @@ class DailyAddition {
     double? unitPrice,
     double? totalPrice,
     String? notes,
+    List<String>? serialNumbers,
     DateTime? dateAdded,
     DateTime? createdAt,
     bool? reminderEnabled,
@@ -96,6 +108,7 @@ class DailyAddition {
       unitPrice: unitPrice ?? this.unitPrice,
       totalPrice: totalPrice ?? this.totalPrice,
       notes: notes ?? this.notes,
+      serialNumbers: serialNumbers ?? this.serialNumbers,
       dateAdded: dateAdded ?? this.dateAdded,
       createdAt: createdAt ?? this.createdAt,
       reminderEnabled: reminderEnabled ?? this.reminderEnabled,

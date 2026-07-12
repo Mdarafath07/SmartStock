@@ -6,6 +6,7 @@ import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/features/dashboard/providers/dashboard_provider.dart';
 import 'package:smartstock/features/dashboard/models/dashboard_stats_model.dart';
 import 'package:smartstock/features/settings/providers/settings_provider.dart';
+import 'package:smartstock/core/widgets/animated_counter.dart';
 
 class DashboardScreen extends StatefulWidget {
   final bool insideShell;
@@ -243,8 +244,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                             FittedBox(
                               fit: BoxFit.scaleDown,
                               alignment: Alignment.centerLeft,
-                              child: Text(
-                                '$symbol${_fmtAmount(provider.stats?.todaySalesAmount ?? 0)}',
+                              child: AnimatedCounter(
+                                target: provider.stats?.todaySalesAmount ?? 0,
+                                prefix: symbol,
                                 style: const TextStyle(
                                   fontFamily: 'Hanken Grotesk',
                                   fontSize: 24,
@@ -281,8 +283,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                               FittedBox(
                                 fit: BoxFit.scaleDown,
                                 alignment: Alignment.centerLeft,
-                                  child: Text(
-                                    '$symbol${_fmtAmount(provider.stats?.todayProfit ?? 0)}',
+                                child: AnimatedCounter(
+                                  target: provider.stats?.todayProfit ?? 0,
+                                  prefix: symbol,
                                   style: const TextStyle(
                                     fontFamily: 'Hanken Grotesk',
                                     fontSize: 24,

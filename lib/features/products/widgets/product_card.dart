@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
-import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/features/products/models/product_model.dart';
 import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
@@ -31,27 +30,55 @@ class ProductCard extends StatelessWidget {
     return _buildListCard(context, isDark, symbol);
   }
 
-  Widget _buildGridCard(BuildContext context, bool isDark, String symbol) {
-    final stockStatus = _getStockStatus();
-    final stockColor = _getStockColor(stockStatus);
+  String get stockStatus {
+    final qty = product.availableQuantity;
+    if (qty <= 0) return 'Out';
+    if (qty <= 5) return 'Low';
+    return 'In Stock';
+  }
 
+  Color get stockColor {
+    switch (stockStatus) {
+      case 'In Stock':
+        return AppColors.statusInStock;
+      case 'Low':
+        return AppColors.statusLowStock;
+      case 'Out':
+        return AppColors.statusOutOfStock;
+      default:
+        return AppColors.grey;
+    }
+  }
+
+  Color get stockBg {
+    switch (stockStatus) {
+      case 'In Stock':
+        return AppColors.statusInStockBg;
+      case 'Low':
+        return AppColors.statusLowStockBg;
+      case 'Out':
+        return AppColors.statusOutOfStockBg;
+      default:
+        return AppColors.greyLight;
+    }
+  }
+
+  double get profitMargin {
+    if (product.purchasePrice <= 0) return 0;
+    return ((product.sellingPrice - product.purchasePrice) / product.purchasePrice) * 100;
+  }
+
+  Widget _buildGridCard(BuildContext context, bool isDark, String symbol) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: (isDark ? AppColors.cardDark : Colors.white).withAlpha(220),
+          color: isDark ? AppColors.surfaceContainer : AppColors.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(80),
+            color: isDark ? AppColors.outline.withAlpha(30) : AppColors.outline.withAlpha(50),
             width: 0.5,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(isDark ? 30 : 8),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
-            ),
-          ],
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -60,10 +87,39 @@ class ProductCard extends StatelessWidget {
             Stack(
               children: [
                 Container(
-                  height: 110,
+                  height: 100,
                   width: double.infinity,
-                  color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primaryBg,
+                        isDark ? AppColors.surfaceContainerHigh : AppColors.surfaceContainerLow,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
                   child: _buildProductImage(context),
+                ),
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryContainer,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      product.categoryName.isNotEmpty ? product.categoryName : 'General',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 8,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.onPrimaryContainer,
+                      ),
+                    ),
+                  ),
                 ),
                 Positioned(
                   top: 8,
@@ -71,26 +127,24 @@ class ProductCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                     decoration: BoxDecoration(
-                      color: stockColor.withAlpha(30),
+                      color: stockBg,
                       borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: stockColor.withAlpha(60), width: 0.5),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          width: 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: stockColor,
-                            shape: BoxShape.circle,
-                          ),
+                          width: 5,
+                          height: 5,
+                          decoration: BoxDecoration(color: stockColor, shape: BoxShape.circle),
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 3),
                         Text(
-                          stockStatus,
+                          stockStatus == 'In Stock' ? 'In Stock' : stockStatus,
                           style: TextStyle(
-                            fontFamily: 'Geist',
-                            fontSize: 9,
+                            fontFamily: 'Inter',
+                            fontSize: 8,
                             fontWeight: FontWeight.w600,
                             color: stockColor,
                           ),
@@ -99,59 +153,79 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (product.categoryName.isNotEmpty)
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppColors.purpleBg,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        product.categoryName,
-                        style: const TextStyle(
-                          fontFamily: 'Geist',
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.purple,
-                        ),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    height: 16,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, isDark ? AppColors.surfaceContainer : AppColors.surface],
                       ),
                     ),
                   ),
+                ),
               ],
             ),
             Padding(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.fromLTRB(10, 6, 10, 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    product.productName,
-                    style: AppTextStyles.titleSm.copyWith(
-                      color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    product.modelNumber,
-                    style: AppTextStyles.caption.copyWith(
-                      color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  if (product.brandName.isNotEmpty)
-                    Text(
-                      product.brandName,
-                      style: AppTextStyles.caption.copyWith(
-                        color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          product.productName,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? AppColors.textPrimary : AppColors.onSurface,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
+                    ],
+                  ),
+                  const SizedBox(height: 1),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          product.modelNumber,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 10,
+                            color: isDark ? AppColors.textMuted : AppColors.onSurfaceVariant,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (product.brandName.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryContainer,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            product.brandName,
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 7,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.onPrimaryContainer,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -161,35 +235,41 @@ class ProductCard extends StatelessWidget {
                         children: [
                           Text(
                             '$symbol${product.sellingPrice.toStringAsFixed(0)}',
-                            style: AppTextStyles.amountSm.copyWith(
-                              color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                            style: TextStyle(
+                              fontFamily: 'Inter',
                               fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? AppColors.textPrimary : AppColors.onSurface,
+                              letterSpacing: -0.3,
                             ),
                           ),
                           Text(
-                            'Cost: $symbol${product.purchasePrice.toStringAsFixed(0)}',
-                            style: AppTextStyles.caption.copyWith(
-                              color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+                            'Cost $symbol${product.purchasePrice.toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 9,
+                              color: isDark ? AppColors.textMuted : AppColors.onSurfaceVariant,
                             ),
                           ),
                         ],
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        width: 30,
+                        height: 30,
                         decoration: BoxDecoration(
-                          color: (stockStatus == 'In Stock'
-                                  ? AppColors.greenBg
-                                  : stockStatus == 'Low Stock'
-                                      ? AppColors.orangeBg
-                                      : AppColors.redBg)
-                              .withAlpha(180),
-                          borderRadius: BorderRadius.circular(6),
+                          color: stockBg,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: stockColor.withAlpha(50), width: 0.5),
                         ),
-                        child: Text(
-                          '${product.availableQuantity}',
-                          style: AppTextStyles.labelSm.copyWith(
-                            color: stockColor,
-                            fontWeight: FontWeight.w700,
+                        child: Center(
+                          child: Text(
+                            '${product.availableQuantity}',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: stockColor,
+                            ),
                           ),
                         ),
                       ),
@@ -205,131 +285,178 @@ class ProductCard extends StatelessWidget {
   }
 
   Widget _buildListCard(BuildContext context, bool isDark, String symbol) {
-    final stockStatus = _getStockStatus();
-    final stockColor = _getStockColor(stockStatus);
-
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: (isDark ? AppColors.cardDark : Colors.white).withAlpha(200),
+          color: isDark ? AppColors.surfaceContainer : AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(60),
+            color: isDark ? AppColors.outline.withAlpha(30) : AppColors.outline.withAlpha(50),
             width: 0.5,
           ),
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: _buildProductImage(context),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
                 children: [
-                  Text(
-                    product.productName,
-                    style: AppTextStyles.titleSm.copyWith(
-                      color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primaryBg,
+                          isDark ? AppColors.surfaceContainerHigh : AppColors.surfaceContainerLow,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    clipBehavior: Clip.antiAlias,
+                    child: _buildProductImage(context),
                   ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      Text(
-                        product.modelNumber,
-                        style: AppTextStyles.caption.copyWith(
-                          color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
-                        ),
-                      ),
-                      if (product.categoryName.isNotEmpty) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: AppColors.purpleBg,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            product.categoryName,
-                            style: const TextStyle(
-                              fontFamily: 'Geist',
-                              fontSize: 9,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.purple,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Text(
-                        '$symbol${product.sellingPrice.toStringAsFixed(0)}',
-                        style: AppTextStyles.titleSm.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: stockColor.withAlpha(25),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
                           children: [
-                            Container(
-                              width: 5,
-                              height: 5,
-                              decoration: BoxDecoration(
-                                color: stockColor,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 3),
-                            Text(
-                              '$stockStatus · ${product.availableQuantity}',
-                              style: TextStyle(
-                                fontFamily: 'Geist',
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: stockColor,
+                            Expanded(
+                              child: Text(
+                                product.productName,
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? AppColors.textPrimary : AppColors.onSurface,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                product.modelNumber,
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 11,
+                                  color: isDark ? AppColors.textMuted : AppColors.onSurfaceVariant,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (product.categoryName.isNotEmpty)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryContainer,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  product.categoryName,
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.onPrimaryContainer,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Text(
+                              '$symbol${product.sellingPrice.toStringAsFixed(0)}',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '/ $symbol${product.purchasePrice.toStringAsFixed(0)}',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 10,
+                                color: isDark ? AppColors.textMuted : AppColors.onSurfaceVariant,
+                              ),
+                            ),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: stockBg,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: stockColor.withAlpha(50), width: 0.5),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(color: stockColor, shape: BoxShape.circle),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    stockStatus == 'In Stock' ? 'In Stock' : stockStatus,
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: stockColor,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    '· ${product.availableQuantity}',
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: stockColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 18,
+                    color: isDark ? AppColors.outline : AppColors.outline,
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 20,
-              color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -342,8 +469,8 @@ class ProductCard extends StatelessWidget {
           Icons.inventory_2_rounded,
           size: 28,
           color: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.greyDarker
-              : const Color(0xFFD1D5DB),
+              ? AppColors.outline
+              : AppColors.outline,
         ),
       );
     }
@@ -352,37 +479,17 @@ class ProductCard extends StatelessWidget {
       fit: BoxFit.cover,
       placeholder: (_, _) => Center(
         child: SizedBox(
-          width: 20,
-          height: 20,
+          width: 18,
+          height: 18,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: AppColors.textMuted.withAlpha(100),
+            color: AppColors.primary.withAlpha(100),
           ),
         ),
       ),
       errorWidget: (_, _, _) => Center(
-        child: Icon(Icons.inventory_2_rounded, size: 28, color: AppColors.textMuted.withAlpha(100)),
+        child: Icon(Icons.inventory_2_rounded, size: 28, color: AppColors.outline),
       ),
     );
-  }
-
-  String _getStockStatus() {
-    final qty = product.availableQuantity;
-    if (qty <= 0) return 'Out of Stock';
-    if (qty <= 5) return 'Low Stock';
-    return 'In Stock';
-  }
-
-  Color _getStockColor(String status) {
-    switch (status) {
-      case 'In Stock':
-        return AppColors.green;
-      case 'Low Stock':
-        return AppColors.orange;
-      case 'Out of Stock':
-        return AppColors.red;
-      default:
-        return AppColors.grey;
-    }
   }
 }

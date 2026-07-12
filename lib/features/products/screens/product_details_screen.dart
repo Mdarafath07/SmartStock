@@ -7,7 +7,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:smartstock/core/routes/app_routes.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
-import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/core/widgets/glass_card.dart';
 import 'package:smartstock/features/product_issues/models/product_issue_model.dart';
 import 'package:smartstock/features/product_issues/services/product_issue_service.dart';
@@ -57,41 +56,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _confirmDelete() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Product'),
-        content: const Text('Are you sure you want to delete this product?'),
-        actions: [
-          Debounced(
-            onPressed: () => Navigator.pop(ctx),
-            builder: (_, isDisabled) => TextButton(
-              onPressed: isDisabled ? null : () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-          ),
-          Debounced(
-            onPressed: () {
-              Navigator.pop(ctx);
-              context.read<ProductProvider>().deleteProduct(widget.productId);
-              Navigator.pop(context);
-            },
-            builder: (context, isDisabled) => FilledButton(
-              onPressed: isDisabled ? null : () {
-                Navigator.pop(ctx);
-                context.read<ProductProvider>().deleteProduct(widget.productId);
-                Navigator.pop(context);
-              },
-              style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-              child: const Text('Delete'),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -294,11 +258,15 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(product.productName, style: AppTextStyles.headlineMd.copyWith(color: Colors.white)),
+              Text(product.productName, style: AppTextStyles.headlineMd.copyWith(
+                color: product.imageUrl.isNotEmpty ? Colors.white : (isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+              )),
               const SizedBox(height: 2),
               Text('${product.brandName.isNotEmpty ? '${product.brandName} · ' : ''}${product.modelNumber}',
-                  style: AppTextStyles.bodySm.copyWith(color: Colors.white.withValues(alpha: 0.85))),
-              const SizedBox(height: 16),
+                  style: AppTextStyles.bodySm.copyWith(
+                    color: product.imageUrl.isNotEmpty ? Colors.white.withValues(alpha: 0.85) : (isDark ? AppColors.textMuted : const Color(0xFF6B7280)),
+                  )),
+              SizedBox(height: product.imageUrl.isNotEmpty ? 16 : 8),
             ],
           ),
         ),
@@ -309,12 +277,17 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   Widget _buildPlaceholder(bool isDark) {
     return Center(
       child: Container(
-        width: 80, height: 80,
+        width: 100, height: 100,
         decoration: BoxDecoration(
-          color: (isDark ? AppColors.surfaceLight : Colors.white).withAlpha(180),
-          borderRadius: BorderRadius.circular(20),
+          color: (isDark ? Colors.white.withAlpha(15) : AppColors.primary.withAlpha(10)),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: (isDark ? Colors.white.withAlpha(20) : AppColors.primary.withAlpha(30)),
+            width: 1,
+          ),
         ),
-        child: Icon(Icons.inventory_2_rounded, size: 40, color: isDark ? AppColors.greyDarker : const Color(0xFFD1D5DB)),
+        child: Icon(Icons.inventory_2_rounded, size: 48,
+            color: isDark ? Colors.white.withAlpha(60) : AppColors.primary.withAlpha(80)),
       ),
     );
   }

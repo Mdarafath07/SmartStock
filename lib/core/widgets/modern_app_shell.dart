@@ -79,6 +79,7 @@ class ModernAppShellState extends State<ModernAppShell>
     _toggleFab();
     final routes = {
       'add_product': AppRoutes.productsAdd,
+      'add_category': AppRoutes.categoriesAdd,
       'warranty': AppRoutes.warranty,
       'issue': AppRoutes.productIssues,
     };
@@ -141,7 +142,7 @@ class ModernAppShellState extends State<ModernAppShell>
                           mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(_tabs[i].icon, size: 22,
+                            Icon(_tabs[i].icon, size: 20,
                               color: active ? AppColors.primary : AppColors.grey),
                             ClipRect(
                               child: AnimatedAlign(
@@ -150,7 +151,7 @@ class ModernAppShellState extends State<ModernAppShell>
                                 curve: Curves.easeOutCubic,
                                 heightFactor: active ? 1 : 0,
                                 child: Padding(
-                                  padding: EdgeInsets.only(top: active ? 3 : 0),
+                                  padding: EdgeInsets.only(top: active ? 1 : 0),
                                   child: AnimatedOpacity(
                                     duration: const Duration(milliseconds: 250),
                                     opacity: active ? 1 : 0,
@@ -189,6 +190,8 @@ class ModernAppShellState extends State<ModernAppShell>
       children: [
         if (_isFabOpen) ...[
           _fabItem(Icons.add_box_rounded, 'Add Product', AppColors.primary, () => _quickAction('add_product')),
+          const SizedBox(height: 10),
+          _fabItem(Icons.category_rounded, 'Add Category', AppColors.purple, () => _quickAction('add_category')),
           const SizedBox(height: 10),
           _fabItem(Icons.verified_rounded, 'Warranty', AppColors.blue, () => _quickAction('warranty')),
           const SizedBox(height: 10),

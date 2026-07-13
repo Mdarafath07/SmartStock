@@ -12,6 +12,7 @@ class ReceiptItem {
   final int warrantyMonths;
   final DateTime warrantyExpiry;
   final DateTime saleDate;
+  final int quantity;
 
   const ReceiptItem({
     required this.productName,
@@ -21,6 +22,7 @@ class ReceiptItem {
     this.warrantyMonths = 0,
     required this.warrantyExpiry,
     required this.saleDate,
+    this.quantity = 1,
   });
 }
 
@@ -64,7 +66,7 @@ class _ReceiptScreen extends StatelessWidget {
     final storeName = settings.storeName;
     final dateStr = DateFormat('MMM dd, yyyy').format(items.first.saleDate);
     final timeStr = DateFormat('hh:mm a').format(items.first.saleDate);
-    final total = items.fold(0.0, (s, i) => s + i.price);
+    final total = items.fold(0.0, (s, i) => s + (i.price * i.quantity));
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF1A1A2E) : const Color(0xFFF5F0EB),
@@ -158,11 +160,12 @@ class _ReceiptScreen extends StatelessWidget {
                         Row(
                           children: [
                             Expanded(flex: 3, child: Text(item.productName, style: TextStyle(fontFamily: 'Geist', fontSize: 10, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF1A1A2E)))),
-                            Expanded(flex: 1, child: Text('1', textAlign: TextAlign.center, style: TextStyle(fontFamily: 'Geist', fontSize: 10, color: isDark ? Colors.white : const Color(0xFF1A1A2E)))),
-                            Expanded(flex: 2, child: Text('$symbol${item.price.toStringAsFixed(2)}', textAlign: TextAlign.right, style: TextStyle(fontFamily: 'Geist', fontSize: 10, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF1A1A2E)))),
+                            Expanded(flex: 1, child: Text('${item.quantity}', textAlign: TextAlign.center, style: TextStyle(fontFamily: 'Geist', fontSize: 10, color: isDark ? Colors.white : const Color(0xFF1A1A2E)))),
+                            Expanded(flex: 2, child: Text('$symbol${(item.price * item.quantity).toStringAsFixed(0)}', textAlign: TextAlign.right, style: TextStyle(fontFamily: 'Geist', fontSize: 10, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF1A1A2E)))),
                           ],
                         ),
-                        Text('SN: ${item.serialNumber}', style: TextStyle(fontFamily: 'Geist', fontSize: 8, color: isDark ? Colors.white38 : const Color(0xFF9CA3AF))),
+                        if (item.serialNumber.isNotEmpty)
+                          Text('SN: ${item.serialNumber}', style: TextStyle(fontFamily: 'Geist', fontSize: 8, color: isDark ? Colors.white38 : const Color(0xFF9CA3AF))),
                         Text(item.modelNumber, style: TextStyle(fontFamily: 'Geist', fontSize: 8, color: isDark ? Colors.white38 : const Color(0xFF9CA3AF))),
                       ],
                     ),
@@ -175,7 +178,7 @@ class _ReceiptScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('TOTAL', style: TextStyle(fontFamily: 'Geist', fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 1, color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
-                    Text('$symbol${total.toStringAsFixed(2)}', style: TextStyle(fontFamily: 'Geist', fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                    Text('$symbol${total.toStringAsFixed(0)}', style: TextStyle(fontFamily: 'Geist', fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primary)),
                   ],
                 ),
                 const SizedBox(height: 16),

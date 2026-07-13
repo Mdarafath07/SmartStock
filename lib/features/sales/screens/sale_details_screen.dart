@@ -198,10 +198,12 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    _buildInfoRow(theme, 'Purchase Price',
-                        _mask(priceFormatter.format(sale.purchasePrice))),
-                    _buildInfoRow(theme, 'Sale Price',
+                    _buildInfoRow(theme, 'Quantity',
+                        '${sale.quantity}'),
+                    _buildInfoRow(theme, 'Unit Price',
                         priceFormatter.format(sale.salePrice)),
+                    _buildInfoRow(theme, 'Total Amount',
+                        priceFormatter.format(sale.salePrice * sale.quantity)),
                     const Divider(),
                     _buildInfoRow(
                       theme,
@@ -214,7 +216,7 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                       theme,
                       'Profit Margin',
                       _mask(sale.salePrice > 0
-                          ? '${(sale.profit / sale.salePrice * 100).toStringAsFixed(1)}%'
+                          ? '${((sale.salePrice - sale.purchasePrice) / sale.salePrice * 100).toStringAsFixed(1)}%'
                           : '0.0%'),
                       valueColor:
                           sale.profit >= 0 ? Colors.green : Colors.red,

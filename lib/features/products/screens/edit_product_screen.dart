@@ -27,6 +27,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
   final _pendingSerials = <String>[];
   DateTime _stockDate = DateTime.now();
   bool _isStockSubmitting = false;
+  int _addQty = 1;
 
   @override
   void initState() {
@@ -256,11 +257,13 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
   Widget _buildAddStockTab(BuildContext context, ProductProvider provider, String symbol) {
     final product = provider.selectedProduct!;
+    final isSerialized = product.isSerialized;
     final serialCount = _pendingSerials.length;
+    final addQty = isSerialized ? serialCount : _addQty;
     final purchasePrice = product.purchasePrice;
     final sellingPrice = product.sellingPrice;
-    final totalPurchase = serialCount * purchasePrice;
-    final totalSelling = serialCount * sellingPrice;
+    final totalPurchase = addQty * purchasePrice;
+    final totalSelling = addQty * sellingPrice;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -305,14 +308,6 @@ class _EditProductScreenState extends State<EditProductScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          const Text('Serial Number',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.onSurface,
-              )),
-          const SizedBox(height: 8),
           Row(
             children: [
               const Icon(Icons.calendar_today, size: 14, color: AppColors.primary),
@@ -343,108 +338,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _serialInputController,
-                  decoration: InputDecoration(
-                    hintText: 'Type or scan serial number',
-                    hintStyle: const TextStyle(
-                      fontFamily: 'Geist',
-                      fontSize: 13,
-                      color: AppColors.onSurfaceVariant,
-                    ),
-                    filled: true,
-                    fillColor: AppColors.surfaceContainerLow,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        color: AppColors.primary,
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  style: const TextStyle(
-                    fontFamily: 'Geist',
-                    fontSize: 13,
-                    color: AppColors.onSurface,
-                  ),
-                  onSubmitted: (_) => _addPendingSerial(),
-                ),
-              ),
-              const SizedBox(width: 6),
-              IconButton(
-                onPressed: _scanAndAddSerial,
-                icon: const Icon(Icons.qr_code_scanner, color: AppColors.primary, size: 22),
-                tooltip: 'Scan & add',
-              ),
-              FilledButton.tonalIcon(
-                onPressed: _addPendingSerial,
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add',
-                    style: TextStyle(fontFamily: 'Inter', fontSize: 13)),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (_pendingSerials.isNotEmpty) ...[
+          isSerialized ? _buildSerialInput() : _buildQuantityInput(),
+          if (addQty > 0) ...[
             const SizedBox(height: 16),
-            const Text('Pending Serials',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.onSurfaceVariant,
-                )),
-            const SizedBox(height: 8),
-            ...List.generate(_pendingSerials.length, (i) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.check_circle_outline, size: 16, color: AppColors.green),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(_pendingSerials[i],
-                            style: const TextStyle(
-                              fontFamily: 'Geist',
-                              fontSize: 13,
-                              color: AppColors.onSurface,
-                            )),
-                      ),
-                      GestureDetector(
-                        onTap: () => _removePendingSerial(i),
-                        child: const Icon(Icons.close, size: 16, color: AppColors.error),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }),
-            const SizedBox(height: 16),
-            _buildStockSummary(symbol, serialCount, purchasePrice, sellingPrice,
+            _buildStockSummary(symbol, addQty, purchasePrice, sellingPrice,
                 totalPurchase, totalSelling),
             const SizedBox(height: 20),
             SizedBox(
@@ -467,7 +364,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                 label: Text(
                   _isStockSubmitting
                       ? 'Saving...'
-                      : 'Save $serialCount Serial${serialCount == 1 ? '' : 's'}',
+                      : 'Add $addQty ${isSerialized ? 'Serial${addQty == 1 ? "" : "s"}' : "unit${addQty == 1 ? "" : "s"}"}',
                   style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 15,
@@ -486,6 +383,156 @@ class _EditProductScreenState extends State<EditProductScreen> {
           const SizedBox(height: 32),
         ],
       ),
+    );
+  }
+
+  Widget _buildSerialInput() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Serial Number',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.onSurface,
+            )),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _serialInputController,
+                decoration: InputDecoration(
+                  hintText: 'Type or scan serial number',
+                  hintStyle: const TextStyle(
+                    fontFamily: 'Geist',
+                    fontSize: 13,
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                  filled: true,
+                  fillColor: AppColors.surfaceContainerLow,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: AppColors.primary, width: 1),
+                  ),
+                ),
+                style: const TextStyle(fontFamily: 'Geist', fontSize: 13, color: AppColors.onSurface),
+                onSubmitted: (_) => _addPendingSerial(),
+              ),
+            ),
+            const SizedBox(width: 6),
+            IconButton(
+              onPressed: _scanAndAddSerial,
+              icon: const Icon(Icons.qr_code_scanner, color: AppColors.primary, size: 22),
+              tooltip: 'Scan & add',
+            ),
+            FilledButton.tonalIcon(
+              onPressed: _addPendingSerial,
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Add', style: TextStyle(fontFamily: 'Inter', fontSize: 13)),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ],
+        ),
+        if (_pendingSerials.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          const Text('Pending Serials',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: AppColors.onSurfaceVariant,
+              )),
+          const SizedBox(height: 8),
+          ...List.generate(_pendingSerials.length, (i) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle_outline, size: 16, color: AppColors.green),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(_pendingSerials[i],
+                          style: const TextStyle(fontFamily: 'Geist', fontSize: 13, color: AppColors.onSurface)),
+                    ),
+                    GestureDetector(
+                      onTap: () => _removePendingSerial(i),
+                      child: const Icon(Icons.close, size: 16, color: AppColors.error),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildQuantityInput() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Quantity',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.onSurface,
+            )),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove, size: 20),
+                onPressed: _addQty > 1
+                    ? () => setState(() => _addQty--)
+                    : null,
+              ),
+              Expanded(
+                child: Center(
+                  child: Text(
+                    '$_addQty',
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.onSurface,
+                    ),
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add, size: 20),
+                onPressed: () => setState(() => _addQty++),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -567,23 +614,44 @@ class _EditProductScreenState extends State<EditProductScreen> {
   Future<void> _handleAddStock(
       BuildContext context, ProductProvider provider, String symbol) async {
     if (_isStockSubmitting) return;
-    if (_pendingSerials.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('At least one serial number is required')),
-      );
-      return;
+    final product = provider.selectedProduct!;
+
+    if (product.isSerialized) {
+      if (_pendingSerials.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('At least one serial number is required')),
+        );
+        return;
+      }
+    } else {
+      if (_addQty <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Quantity must be greater than 0')),
+        );
+        return;
+      }
     }
 
     setState(() => _isStockSubmitting = true);
     try {
-      await provider.addSerialNumbers(widget.productId, _pendingSerials, stockDate: _stockDate);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${_pendingSerials.length} serial(s) added successfully')),
-        );
-        _serialInputController.clear();
-        _pendingSerials.clear();
-        setState(() {});
+      if (product.isSerialized) {
+        await provider.addSerialNumbers(widget.productId, _pendingSerials, stockDate: _stockDate);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${_pendingSerials.length} serial(s) added successfully')),
+          );
+          _serialInputController.clear();
+          _pendingSerials.clear();
+          if (mounted) setState(() {});
+        }
+      } else {
+        await provider.addQuantity(widget.productId, _addQty, stockDate: _stockDate);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('$_addQty unit(s) added successfully')),
+          );
+          if (mounted) setState(() => _addQty = 1);
+        }
       }
     } on DuplicateSerialException catch (e) {
       if (context.mounted) {

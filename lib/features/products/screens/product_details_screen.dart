@@ -173,9 +173,14 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 const SizedBox(height: 16),
                 _buildDetails(product, dateFormat, isDark),
                 const SizedBox(height: 20),
-                _buildSerialNumbers(product.id, dateFormat, isDark),
-                const SizedBox(height: 20),
-                _buildIssuesSection(product.id, isDark),
+                if (product.isSerialized) ...[
+                  _buildSerialNumbers(product.id, dateFormat, isDark),
+                  const SizedBox(height: 20),
+                  _buildIssuesSection(product.id, isDark),
+                ] else ...[
+                  const SizedBox(height: 16),
+                  _buildQuantityProductInfo(product, isDark),
+                ],
                 const SizedBox(height: 32),
               ],
             ),
@@ -484,6 +489,30 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildQuantityProductInfo(Product product, bool isDark) {
+    return ModernCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.inventory_2_rounded, size: 16, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Text('Stock Information', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _DetailRow(label: 'Available', value: '${product.availableQuantity} units', isDark: isDark),
+          _DetailRow(label: 'Sold', value: '${product.soldQuantity} units', isDark: isDark),
+          const SizedBox(height: 8),
+          const Text('No serial number tracking (Quantity-based)',
+              style: TextStyle(fontFamily: 'Geist', fontSize: 11, color: AppColors.textMuted, fontStyle: FontStyle.italic)),
+        ],
+      ),
     );
   }
 

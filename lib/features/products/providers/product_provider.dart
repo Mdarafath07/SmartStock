@@ -90,22 +90,12 @@ class ProductProvider extends ChangeNotifier {
 
   Future<List<Product>> _enrichWithStockCounts(List<Product> products) async {
     if (products.isEmpty) return products;
-    final counts = <String, Map<String, int>>{};
-    final results = await Future.wait(products.map((p) async {
+    return Future.wait(products.map((p) async {
+      if (!p.isSerialized) return p;
       final available = await _countSerialNumbers(p.id, 'available');
       final sold = await _countSerialNumbers(p.id, 'sold');
-      return MapEntry(p.id, {'available': available, 'sold': sold});
+      return p.copyWith(availableQuantity: available, soldQuantity: sold);
     }));
-    for (final entry in results) {
-      counts[entry.key] = entry.value;
-    }
-    return products.map((p) {
-      final c = counts[p.id] ?? {'available': 0, 'sold': 0};
-      return p.copyWith(
-        availableQuantity: c['available'],
-        soldQuantity: c['sold'],
-      );
-    }).toList();
   }
 
   Future<void> loadProductById(String id) async {
@@ -117,12 +107,16 @@ class ProductProvider extends ChangeNotifier {
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         final product = Product.fromMap(data, doc.id);
-        final availableCount = await _countSerialNumbers(id, 'available');
-        final soldCount = await _countSerialNumbers(id, 'sold');
-        _selectedProduct = product.copyWith(
-          availableQuantity: availableCount,
-          soldQuantity: soldCount,
-        );
+        if (product.isSerialized) {
+          final availableCount = await _countSerialNumbers(id, 'available');
+          final soldCount = await _countSerialNumbers(id, 'sold');
+          _selectedProduct = product.copyWith(
+            availableQuantity: availableCount,
+            soldQuantity: soldCount,
+          );
+        } else {
+          _selectedProduct = product;
+        }
       }
     } catch (e) {
       _error = e.toString();
@@ -146,53 +140,101 @@ class ProductProvider extends ChangeNotifier {
     }
   }
 
+  Future<String?> checkSerialAvailability(String serialNumber) async {
+    try {
+      final snap = await _firestore
+          .collection('serial_numbers')
+          .where('serialNumber', isEqualTo: serialNumber)
+          .limit(1)
+          .get();
+      if (snap.docs.isEmpty) return null;
+      return snap.docs.first.data()['status'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<Product?> getFreshProduct(String productId) async {
+    try {
+      final doc = await _firestore.collection('products').doc(productId).get();
+      if (!doc.exists) return null;
+      return Product.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> addProduct(Product product, List<String> serialNumbers,
       {DateTime? stockDate}) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      final duplicates = await _findDuplicateSerials(serialNumbers);
-      if (duplicates.isNotEmpty) {
-        throw DuplicateSerialException(duplicates);
-      }
-
       final batch = _firestore.batch();
       final productRef = _firestore.collection('products').doc();
       final now = FieldValue.serverTimestamp();
       final dateAdded = stockDate ?? DateTime.now();
 
-      batch.set(productRef, {
-        ...product.toMap(),
-        'createdAt': now,
-        'availableQuantity': serialNumbers.length,
-      });
+      if (product.isSerialized) {
+        final duplicates = await _findDuplicateSerials(serialNumbers);
+        if (duplicates.isNotEmpty) {
+          throw DuplicateSerialException(duplicates);
+        }
 
-      for (final serial in serialNumbers) {
-        final serialRef = _firestore.collection('serial_numbers').doc();
-        batch.set(serialRef, {
-          'productId': productRef.id,
-          'serialNumber': serial,
-          'status': 'available',
+        batch.set(productRef, {
+          ...product.toMap(),
           'createdAt': now,
+          'availableQuantity': serialNumbers.length,
+        });
+
+        for (final serial in serialNumbers) {
+          final serialRef = _firestore.collection('serial_numbers').doc();
+          batch.set(serialRef, {
+            'productId': productRef.id,
+            'serialNumber': serial,
+            'status': 'available',
+            'createdAt': now,
+            'dateAdded': Timestamp.fromDate(dateAdded),
+          });
+        }
+
+        final qty = serialNumbers.length;
+        batch.set(_firestore.collection('daily_additions').doc(), {
+          'productName': product.productName,
+          'categoryName': product.categoryName,
+          'quantity': qty,
+          'unitPrice': product.purchasePrice,
+          'totalPrice': qty * product.purchasePrice,
+          'notes': '',
+          'serialNumbers': serialNumbers,
           'dateAdded': Timestamp.fromDate(dateAdded),
+          'createdAt': now,
+          'reminderEnabled': false,
+          'reminderTime': null,
+        });
+      } else {
+        final addQty = product.availableQuantity;
+        batch.set(productRef, {
+          ...product.toMap(),
+          'createdAt': now,
+          'availableQuantity': addQty,
+          'soldQuantity': 0,
+        });
+
+        batch.set(_firestore.collection('daily_additions').doc(), {
+          'productName': product.productName,
+          'categoryName': product.categoryName,
+          'quantity': addQty,
+          'unitPrice': product.purchasePrice,
+          'totalPrice': addQty * product.purchasePrice,
+          'notes': '',
+          'serialNumbers': [],
+          'dateAdded': Timestamp.fromDate(dateAdded),
+          'createdAt': now,
+          'reminderEnabled': false,
+          'reminderTime': null,
         });
       }
-
-      final qty = serialNumbers.length;
-      batch.set(_firestore.collection('daily_additions').doc(), {
-        'productName': product.productName,
-        'categoryName': product.categoryName,
-        'quantity': qty,
-        'unitPrice': product.purchasePrice,
-        'totalPrice': qty * product.purchasePrice,
-        'notes': '',
-        'serialNumbers': serialNumbers,
-        'dateAdded': Timestamp.fromDate(dateAdded),
-        'createdAt': now,
-        'reminderEnabled': false,
-        'reminderTime': null,
-      });
 
       await batch.commit();
     } on DuplicateSerialException {
@@ -265,6 +307,48 @@ class ProductProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> addQuantity(
+      String productId, int quantity,
+      {DateTime? stockDate}) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final productDoc =
+          await _firestore.collection('products').doc(productId).get();
+      final productData = productDoc.data() ?? {};
+      final productName = productData['productName'] as String? ?? 'Unknown';
+      final categoryName = productData['categoryName'] as String? ?? '';
+      final purchasePrice =
+          (productData['purchasePrice'] as num?)?.toDouble() ?? 0.0;
+      final dateAdded = stockDate ?? DateTime.now();
+
+      final batch = _firestore.batch();
+      batch.update(_firestore.collection('products').doc(productId), {
+        'availableQuantity': FieldValue.increment(quantity),
+      });
+      batch.set(_firestore.collection('daily_additions').doc(), {
+        'productName': productName,
+        'categoryName': categoryName,
+        'quantity': quantity,
+        'unitPrice': purchasePrice,
+        'totalPrice': quantity * purchasePrice,
+        'notes': '',
+        'serialNumbers': [],
+        'dateAdded': Timestamp.fromDate(dateAdded),
+        'createdAt': FieldValue.serverTimestamp(),
+        'reminderEnabled': false,
+        'reminderTime': null,
+      });
+      await batch.commit();
+    } catch (e) {
+      _error = e.toString();
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
   Future<void> updateProduct(Product product) async {
     _isLoading = true;
     notifyListeners();
@@ -287,16 +371,21 @@ class ProductProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final doc = await _firestore.collection('products').doc(id).get();
+      final isSerialized = (doc.data()?['isSerialized'] as bool?) ?? true;
+
       final batch = _firestore.batch();
       batch.delete(_firestore.collection('products').doc(id));
 
-      final serialSnapshot = await _firestore
-          .collection('serial_numbers')
-          .where('productId', isEqualTo: id)
-          .get();
+      if (isSerialized) {
+        final serialSnapshot = await _firestore
+            .collection('serial_numbers')
+            .where('productId', isEqualTo: id)
+            .get();
 
-      for (final doc in serialSnapshot.docs) {
-        batch.delete(doc.reference);
+        for (final doc in serialSnapshot.docs) {
+          batch.delete(doc.reference);
+        }
       }
 
       await batch.commit();
@@ -349,6 +438,7 @@ class ProductProvider extends ChangeNotifier {
       if (!productDoc.exists) return null;
       final product = Product.fromMap(
           productDoc.data() as Map<String, dynamic>, productDoc.id);
+      if (!product.isSerialized) return null;
       final availableCount = await _countSerialNumbers(productId, 'available');
       final soldCount = await _countSerialNumbers(productId, 'sold');
       return (

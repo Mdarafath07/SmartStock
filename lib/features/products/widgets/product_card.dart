@@ -153,21 +153,6 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    height: 16,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, isDark ? AppColors.surfaceContainer : AppColors.surface],
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
             Padding(

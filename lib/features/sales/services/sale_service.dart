@@ -100,7 +100,8 @@ class SaleService {
       final saleRef = _firestore.collection(_salesCollection).doc();
       final salePrice = item['salePrice'] as double;
       final purchasePrice = item['purchasePrice'] as double;
-      final profit = salePrice - purchasePrice;
+      final quantity = item['quantity'] as int? ?? 1;
+      final profit = (salePrice - purchasePrice) * quantity;
 
       batch.set(saleRef, {
         'productId': item['productId'],
@@ -109,8 +110,9 @@ class SaleService {
         'imageUrl': item['imageUrl'] as String? ?? '',
         'categoryId': item['categoryId'],
         'categoryName': item['categoryName'] as String? ?? '',
-        'serialNumber': item['serialNumber'],
-        'serialNumberId': item['serialNumberId'],
+        'serialNumber': item['serialNumber'] as String? ?? '',
+        'serialNumberId': item['serialNumberId'] as String? ?? '',
+        'quantity': quantity,
         'customerId': customerId,
         'customerName': customerName,
         'customerPhone': customerPhone,
@@ -118,28 +120,32 @@ class SaleService {
         'purchasePrice': purchasePrice,
         'profit': profit,
         'saleDate': saleTimestamp,
-        'warrantyExpiryDate': Timestamp.fromDate(item['warrantyExpiryDate'] as DateTime),
+        'warrantyExpiryDate': Timestamp.fromDate(item['warrantyExpiryDate'] as DateTime? ?? now),
         'warrantyMonths': item['warrantyMonths'] as int? ?? 0,
         'createdAt': saleTimestamp,
         'batchId': batchId,
       });
       saleIds.add(saleRef.id);
 
-      final serialRef = _firestore.collection(_serialNumbersCollection).doc(item['serialNumberId'] as String);
-      batch.update(serialRef, {
-        'status': 'sold',
-        'saleId': saleRef.id,
-      });
+      final serialNumberId = item['serialNumberId'] as String?;
+      if (serialNumberId != null && serialNumberId.isNotEmpty) {
+        final serialRef = _firestore.collection(_serialNumbersCollection).doc(serialNumberId);
+        batch.update(serialRef, {
+          'status': 'sold',
+          'saleId': saleRef.id,
+        });
+      }
 
       final pid = item['productId'] as String;
-      productStockUpdates[pid] = (productStockUpdates[pid] ?? 0) + 1;
-      totalLifetimeValue += salePrice;
+      productStockUpdates[pid] = (productStockUpdates[pid] ?? 0) + quantity;
+      totalLifetimeValue += salePrice * quantity;
     }
 
     for (final entry in productStockUpdates.entries) {
       final productRef = _firestore.collection('products').doc(entry.key);
       batch.update(productRef, {
         'availableQuantity': FieldValue.increment(-entry.value),
+        'soldQuantity': FieldValue.increment(entry.value),
       });
     }
 
@@ -176,21 +182,27 @@ class SaleService {
     final data = saleDoc.data()!;
     final serialNumberId = data['serialNumberId'] as String?;
     final productId = data['productId'] as String?;
+    final quantity = (data['quantity'] as num?)?.toInt() ?? 1;
 
-    if (serialNumberId == null || productId == null) {
+    if (productId == null) {
       throw Exception('Sale data incomplete');
     }
 
     final batch = _firestore.batch();
 
-    batch.update(
-      _firestore.collection(_serialNumbersCollection).doc(serialNumberId),
-      {'status': 'available', 'saleId': FieldValue.delete()},
-    );
+    if (serialNumberId != null && serialNumberId.isNotEmpty) {
+      batch.update(
+        _firestore.collection(_serialNumbersCollection).doc(serialNumberId),
+        {'status': 'available', 'saleId': FieldValue.delete()},
+      );
+    }
 
     batch.update(
       _firestore.collection('products').doc(productId),
-      {'availableQuantity': FieldValue.increment(1)},
+      {
+        'availableQuantity': FieldValue.increment(quantity),
+        'soldQuantity': FieldValue.increment(-quantity),
+      },
     );
 
     batch.delete(_firestore.collection(_salesCollection).doc(saleId));

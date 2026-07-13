@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:smartstock/features/customers/models/customer_model.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class CustomerTile extends StatelessWidget {
   final Customer customer;
@@ -10,6 +12,7 @@ class CustomerTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -49,7 +52,7 @@ class CustomerTile extends StatelessWidget {
               ),
             ),
             Text(
-              '\$${customer.lifetimeValue.toStringAsFixed(0)}',
+              '$symbol${customer.lifetimeValue.toStringAsFixed(0)}',
               style: theme.textTheme.labelSmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

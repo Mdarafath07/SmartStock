@@ -20,14 +20,20 @@ import 'package:smartstock/features/sales/providers/sale_provider.dart';
 import 'package:smartstock/features/settings/providers/settings_provider.dart';
 import 'package:smartstock/features/daily_additions/providers/daily_addition_provider.dart';
 import 'package:smartstock/features/warranty/providers/warranty_provider.dart';
-import 'package:smartstock/firebase_options.dart';
+import 'package:smartstock/firebase_options_dev.dart' as dev;
+import 'package:smartstock/firebase_options_prod.dart' as prod;
+
+const String appFlavor = String.fromEnvironment('FLUTTER_APP_FLAVOR', defaultValue: 'prod');
+const bool isDev = appFlavor == 'dev';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   try {
     await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
+      options: isDev
+          ? dev.DefaultFirebaseOptions.currentPlatform
+          : prod.DefaultFirebaseOptions.currentPlatform,
     );
   } catch (_) {
     // Already initialized via native google-services.json

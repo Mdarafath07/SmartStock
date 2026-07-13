@@ -80,7 +80,10 @@ class DashboardService {
     for (final doc in productsData.docs) {
       final d = doc.data() as Map<String, dynamic>?;
       if (d == null) continue;
-      final qty = serialCount[doc.id] ?? 0;
+      final isSerialized = d['isSerialized'] as bool? ?? true;
+      final qty = isSerialized
+          ? (serialCount[doc.id] ?? 0)
+          : ((d['availableQuantity'] as num?)?.toInt() ?? 0);
       final sellingPrice = (d['sellingPrice'] as num?)?.toDouble() ?? 0.0;
       final purchasePrice = (d['purchasePrice'] as num?)?.toDouble() ?? 0.0;
 
@@ -117,12 +120,29 @@ class DashboardService {
   }
 
   Future<int> _countAllAvailableSerials() async {
-    final snapshot = await _firestore
-        .collection('serial_numbers')
-        .where('status', isEqualTo: 'available')
-        .count()
-        .get();
-    return snapshot.count ?? 0;
+    final results = await Future.wait([
+      _firestore
+          .collection('serial_numbers')
+          .where('status', isEqualTo: 'available')
+          .count()
+          .get(),
+      _firestore.collection('products').get(),
+    ]);
+
+    final serialCount = results[0] as AggregateQuerySnapshot;
+    final productsSnap = results[1] as QuerySnapshot;
+    final serialOnly = serialCount.count ?? 0;
+
+    int quantityTotal = 0;
+    for (final doc in productsSnap.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final isSerialized = data['isSerialized'] as bool? ?? true;
+      if (!isSerialized) {
+        quantityTotal += (data['availableQuantity'] as num?)?.toInt() ?? 0;
+      }
+    }
+
+    return serialOnly + quantityTotal;
   }
 
   Future<int> _countOpenProductIssues() async {
@@ -149,9 +169,10 @@ class DashboardService {
     for (final doc in snapshot.docs) {
       final data = doc.data();
       if (data['saleType'] == 'warranty_claim') continue;
-      totalAmount += (data['salePrice'] as num?)?.toDouble() ?? 0.0;
+      final qty = (data['quantity'] as num?)?.toInt() ?? 1;
+      totalAmount += ((data['salePrice'] as num?)?.toDouble() ?? 0.0) * qty;
       totalProfit += (data['profit'] as num?)?.toDouble() ?? 0.0;
-      totalQuantity++;
+      totalQuantity += qty;
     }
     return {
       'totalAmount': totalAmount,
@@ -182,7 +203,8 @@ class DashboardService {
       for (final doc in snapshot.docs) {
         final data = doc.data();
         if (data['saleType'] == 'warranty_claim') continue;
-        daySales += (data['salePrice'] as num?)?.toDouble() ?? 0.0;
+        final qty = (data['quantity'] as num?)?.toInt() ?? 1;
+        daySales += ((data['salePrice'] as num?)?.toDouble() ?? 0.0) * qty;
         dayProfit += (data['profit'] as num?)?.toDouble() ?? 0.0;
       }
       sales.add(daySales);
@@ -207,13 +229,14 @@ class DashboardService {
       if (productId.isEmpty) continue;
       final existing = aggregated[productId];
       final imageUrl = data['imageUrl'] as String? ?? '';
+      final qty = (data['quantity'] as num?)?.toInt() ?? 1;
       if (existing != null) {
         aggregated[productId] = TopSellingProduct(
           productId: productId,
           productName: data['productName'] as String? ?? existing.productName,
           modelNumber: data['modelNumber'] as String? ?? existing.modelNumber,
           imageUrl: imageUrl.isNotEmpty ? imageUrl : existing.imageUrl,
-          totalSold: existing.totalSold + 1,
+          totalSold: existing.totalSold + qty,
         );
       } else {
         aggregated[productId] = TopSellingProduct(
@@ -221,7 +244,7 @@ class DashboardService {
           productName: data['productName'] as String? ?? '',
           modelNumber: data['modelNumber'] as String? ?? '',
           imageUrl: imageUrl,
-          totalSold: 1,
+          totalSold: qty,
         );
         if (imageUrl.isEmpty) missingImages.add(productId);
       }
@@ -342,16 +365,21 @@ class DashboardService {
       salesByProduct.putIfAbsent(productId, () => []).add(data);
     }
 
-    final sorted = salesByProduct.entries.toList()
-      ..sort((a, b) => b.value.length.compareTo(a.value.length));
-
     final summaries = <ProductSummary>[];
     final productIds = <String>{};
+    final sorted = salesByProduct.entries.toList()
+      ..sort((a, b) {
+        final aQty = a.value.fold<int>(0, (s, v) => s + ((v['quantity'] as num?)?.toInt() ?? 1));
+        final bQty = b.value.fold<int>(0, (s, v) => s + ((v['quantity'] as num?)?.toInt() ?? 1));
+        return bQty.compareTo(aQty);
+      });
+
     for (final entry in sorted) {
       if (summaries.length >= 5) break;
       final productId = entry.key;
       final sales = entry.value;
       final latestSale = sales.first;
+      final totalQty = sales.fold<int>(0, (s, v) => s + ((v['quantity'] as num?)?.toInt() ?? 1));
       productIds.add(productId);
       summaries.add(ProductSummary(
         productId: productId,
@@ -360,7 +388,7 @@ class DashboardService {
         imageUrl: latestSale['imageUrl'] as String? ?? '',
         categoryName: latestSale['categoryName'] as String? ?? '',
         availableQuantity: 0,
-        soldCount: sales.length,
+        soldCount: totalQty,
       ));
     }
 

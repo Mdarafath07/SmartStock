@@ -183,9 +183,9 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
             _buildSearchBar(isDark),
             _buildDateBar(isDark, dateFormat),
             if (filteredSales.isNotEmpty)
-              _buildSummaryCards(isDark, currencyFormat, filteredSales.length, filteredSales.fold(0.0, (s, e) => s + e.salePrice), filteredSales.fold(0.0, (s, e) => s + e.profit)),
+              _buildSummaryCards(isDark, currencyFormat, filteredSales.fold(0, (s, e) => s + e.quantity), filteredSales.fold(0.0, (s, e) => s + (e.salePrice * e.quantity)), filteredSales.fold(0.0, (s, e) => s + e.profit)),
             if (searchedSales.isNotEmpty) ...[
-              _buildCustomerGroup(isDark, currencyFormat, searchedSales.first.customerName.isNotEmpty ? searchedSales.first.customerName : 'Unknown Customer', searchedSales, searchedSales.fold(0.0, (s, e) => s + e.salePrice)),
+              _buildCustomerGroup(isDark, currencyFormat, searchedSales.first.customerName.isNotEmpty ? searchedSales.first.customerName : 'Unknown Customer', searchedSales, searchedSales.fold(0.0, (s, e) => s + (e.salePrice * e.quantity))),
               const SizedBox(height: 8),
             ],
             const SizedBox(height: 4),
@@ -202,7 +202,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                               grouped.entries.elementAt(index);
                           final customerSales = entry.value;
                           final customerTotal = customerSales
-                              .fold(0.0, (s, e) => s + e.salePrice);
+                              .fold(0.0, (s, e) => s + (e.salePrice * e.quantity));
                           return _buildCustomerGroup(
                               isDark, currencyFormat,
                               entry.key, customerSales, customerTotal);
@@ -526,7 +526,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    '${sales.length} item${sales.length > 1 ? 's' : ''}',
+                    '${sales.fold(0, (s, e) => s + e.quantity)} item${sales.fold(0, (s, e) => s + e.quantity) > 1 ? 's' : ''}',
                     style: TextStyle(
                       fontFamily: 'Geist',
                       fontSize: 10,
@@ -546,6 +546,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                       modelNumber: s.modelNumber,
                       serialNumber: s.serialNumber,
                       price: s.salePrice,
+                      quantity: s.quantity,
                       warrantyMonths: s.warrantyExpiryDate.isAfter(DateTime.now()) ? s.warrantyExpiryDate.difference(s.saleDate).inDays ~/ 30 : 0,
                       warrantyExpiry: s.warrantyExpiryDate,
                       saleDate: s.saleDate,
@@ -653,7 +654,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        currencyFormat.format(sale.salePrice),
+                        currencyFormat.format(sale.salePrice * sale.quantity),
                         style: TextStyle(
                           fontFamily: 'Hanken Grotesk',
                           fontSize: 12,

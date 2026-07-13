@@ -28,12 +28,16 @@ class ProductService {
     for (final doc in snapshot.docs) {
       final data = doc.data() as Map<String, dynamic>;
       final product = Product.fromMap(data, doc.id);
-      final availableCount = await _countSerialNumbers(doc.id, 'available');
-      final soldCount = await _countSerialNumbers(doc.id, 'sold');
-      products.add(product.copyWith(
-        availableQuantity: availableCount,
-        soldQuantity: soldCount,
-      ));
+      if (product.isSerialized) {
+        final availableCount = await _countSerialNumbers(doc.id, 'available');
+        final soldCount = await _countSerialNumbers(doc.id, 'sold');
+        products.add(product.copyWith(
+          availableQuantity: availableCount,
+          soldQuantity: soldCount,
+        ));
+      } else {
+        products.add(product);
+      }
     }
 
     if (filterByCategory) {
@@ -59,35 +63,46 @@ class ProductService {
 
     final data = doc.data()!;
     final product = Product.fromMap(data, doc.id);
-    final availableCount = await _countSerialNumbers(id, 'available');
-    final soldCount = await _countSerialNumbers(id, 'sold');
-    return product.copyWith(
-      availableQuantity: availableCount,
-      soldQuantity: soldCount,
-    );
+    if (product.isSerialized) {
+      final availableCount = await _countSerialNumbers(id, 'available');
+      final soldCount = await _countSerialNumbers(id, 'sold');
+      return product.copyWith(
+        availableQuantity: availableCount,
+        soldQuantity: soldCount,
+      );
+    }
+    return product;
   }
 
   Future<void> addProduct(Product product, List<String> serialNumbers) async {
-    final duplicates = await _findDuplicateSerials(serialNumbers);
-    if (duplicates.isNotEmpty) {
-      throw Exception(
-          'Duplicate serial numbers found: ${duplicates.join(', ')}');
-    }
-
     final batch = _firestore.batch();
     final productRef = _firestore.collection('products').doc();
-    batch.set(productRef, {
-      ...product.toMap(),
-      'availableQuantity': serialNumbers.length,
-    });
 
-    for (final serial in serialNumbers) {
-      final serialRef = _firestore.collection('serial_numbers').doc();
-      batch.set(serialRef, {
-        'productId': productRef.id,
-        'serialNumber': serial.trim(),
-        'status': 'available',
-        'createdAt': FieldValue.serverTimestamp(),
+    if (product.isSerialized) {
+      final duplicates = await _findDuplicateSerials(serialNumbers);
+      if (duplicates.isNotEmpty) {
+        throw Exception(
+            'Duplicate serial numbers found: ${duplicates.join(', ')}');
+      }
+      batch.set(productRef, {
+        ...product.toMap(),
+        'availableQuantity': serialNumbers.length,
+      });
+      for (final serial in serialNumbers) {
+        final serialRef = _firestore.collection('serial_numbers').doc();
+        batch.set(serialRef, {
+          'productId': productRef.id,
+          'serialNumber': serial.trim(),
+          'status': 'available',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+    } else {
+      final addQty = product.availableQuantity;
+      batch.set(productRef, {
+        ...product.toMap(),
+        'availableQuantity': addQty,
+        'soldQuantity': 0,
       });
     }
 
@@ -134,6 +149,21 @@ class ProductService {
   }
 
   Future<Map<String, dynamic>> getStockDetails(String productId) async {
+    final productDoc =
+        await _firestore.collection('products').doc(productId).get();
+    final productData = productDoc.data() ?? {};
+    final isSerialized = productData['isSerialized'] as bool? ?? true;
+
+    if (!isSerialized) {
+      return {
+        'available': (productData['availableQuantity'] as num?)?.toInt() ?? 0,
+        'sold': (productData['soldQuantity'] as num?)?.toInt() ?? 0,
+        'total': ((productData['availableQuantity'] as num?)?.toInt() ?? 0) +
+            ((productData['soldQuantity'] as num?)?.toInt() ?? 0),
+        'serialNumbers': <Map<String, dynamic>>[],
+      };
+    }
+
     final serialNumbers = await getSerialNumbers(productId);
     final available =
         serialNumbers.where((s) => s['status'] == 'available').length;

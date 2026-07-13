@@ -5,6 +5,7 @@ import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/widgets/glass_card.dart';
 import 'package:smartstock/features/customers/providers/customer_provider.dart';
 import 'package:smartstock/features/customers/screens/customer_details_screen.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class CustomerListScreen extends StatefulWidget {
   const CustomerListScreen({super.key});
@@ -34,6 +35,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
     final customerProvider = context.watch<CustomerProvider>();
     final customers = customerProvider.customers;
 
@@ -203,7 +205,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '\$${customer.lifetimeValue.toStringAsFixed(0)}',
+                                '$symbol${customer.lifetimeValue.toStringAsFixed(0)}',
                                 style: AppTextStyles.caption
                                     .copyWith(
                                   color: AppColors.textMuted,

@@ -53,11 +53,11 @@ class _SaleFormState extends State<SaleForm> {
   }
 
   double get _cartTotal {
-    return _cartItems.fold(0.0, (sum, item) => sum + item.product.sellingPrice * item.serials.length);
+    return _cartItems.fold(0.0, (sum, item) => sum + item.itemTotal);
   }
 
   int get _totalItems {
-    return _cartItems.fold(0, (sum, item) => sum + item.serials.length);
+    return _cartItems.fold(0, (sum, item) => sum + item.itemCount);
   }
 
   Future<void> _submitSale() async {
@@ -70,26 +70,71 @@ class _SaleFormState extends State<SaleForm> {
       return;
     }
 
+    final productProvider = context.read<ProductProvider>();
+    for (final item in _cartItems) {
+      if (item.isSerialized) {
+        for (final serial in item.serials) {
+          final current = await productProvider.checkSerialAvailability(serial.serialNumber);
+          if (current != null && current != 'available') {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('${serial.serialNumber} is no longer available')),
+              );
+            }
+            return;
+          }
+        }
+      } else {
+        final freshProduct = await productProvider.getFreshProduct(item.product.id);
+        if (freshProduct != null && freshProduct.availableQuantity < item.quantity) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Insufficient stock for ${item.product.productName}. Available: ${freshProduct.availableQuantity}')),
+            );
+          }
+          return;
+        }
+      }
+    }
+
     setState(() => _isSubmitting = true);
 
     final saleProvider = context.read<SaleProvider>();
-    final items = _cartItems.map((item) {
-      final serialNumbers = item.serials.map((s) => {
-        'serialNumberId': s.id,
-        'serialNumber': s.serialNumber,
-        'productId': item.product.id,
-        'productName': item.product.productName,
-        'modelNumber': item.product.modelNumber,
-        'imageUrl': item.product.imageUrl,
-        'categoryId': item.product.categoryId,
-        'categoryName': item.product.categoryName,
-        'salePrice': item.product.sellingPrice,
-        'purchasePrice': item.product.purchasePrice,
-        'warrantyExpiryDate': DateTime.now().add(Duration(days: item.product.warrantyMonths * 30)),
-        'warrantyMonths': item.product.warrantyMonths,
-      }).toList();
-      return serialNumbers;
-    }).expand((x) => x).toList();
+    final items = _cartItems.expand((item) {
+      if (item.isSerialized) {
+        return item.serials.map((s) => {
+          'serialNumberId': s.id,
+          'serialNumber': s.serialNumber,
+          'productId': item.product.id,
+          'productName': item.product.productName,
+          'modelNumber': item.product.modelNumber,
+          'imageUrl': item.product.imageUrl,
+          'categoryId': item.product.categoryId,
+          'categoryName': item.product.categoryName,
+          'salePrice': item.product.sellingPrice,
+          'purchasePrice': item.product.purchasePrice,
+          'warrantyExpiryDate': DateTime.now().add(Duration(days: item.product.warrantyMonths * 30)),
+          'warrantyMonths': item.product.warrantyMonths,
+          'quantity': 1,
+        }).toList();
+      } else {
+        return [{
+          'serialNumberId': '',
+          'serialNumber': '',
+          'productId': item.product.id,
+          'productName': item.product.productName,
+          'modelNumber': item.product.modelNumber,
+          'imageUrl': item.product.imageUrl,
+          'categoryId': item.product.categoryId,
+          'categoryName': item.product.categoryName,
+          'salePrice': item.product.sellingPrice,
+          'purchasePrice': item.product.purchasePrice,
+          'warrantyExpiryDate': DateTime.now(),
+          'warrantyMonths': 0,
+          'quantity': item.quantity,
+        }];
+      }
+    }).toList();
 
     try {
       final customerName = _customerNameController.text.trim();
@@ -124,11 +169,12 @@ class _SaleFormState extends State<SaleForm> {
       items: items.map((i) => ReceiptItem(
         productName: i['productName'] as String,
         modelNumber: i['modelNumber'] as String,
-        serialNumber: i['serialNumber'] as String,
+        serialNumber: i['serialNumber'] as String? ?? '',
         price: i['salePrice'] as double,
-        warrantyMonths: i['warrantyMonths'] as int,
-        warrantyExpiry: i['warrantyExpiryDate'] as DateTime,
+        warrantyMonths: i['warrantyMonths'] as int? ?? 0,
+        warrantyExpiry: i['warrantyExpiryDate'] as DateTime? ?? DateTime.now(),
         saleDate: DateTime.now(),
+        quantity: i['quantity'] as int? ?? 1,
       )).toList(),
       onDone: widget.onSaleComplete,
     );
@@ -150,6 +196,11 @@ class _SaleFormState extends State<SaleForm> {
     }
 
     final (product, serialData) = result;
+
+    if (!product.isSerialized) {
+      if (mounted) scaffoldMessenger.showSnackBar(const SnackBar(content: Text('Cannot scan serial for quantity-based products. Add manually.')));
+      return;
+    }
     final serialId = serialData['id'] as String;
     final serialNumber = serialData['serialNumber'] as String;
 
@@ -227,7 +278,7 @@ class _SaleFormState extends State<SaleForm> {
   }
 
   void _showAddItemSheet() {
-    final cartProductIds = _cartItems.map((i) => i.product.id).toSet();
+    final cartItemQtys = {for (final item in _cartItems) item.product.id: item.quantity};
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -247,8 +298,18 @@ class _SaleFormState extends State<SaleForm> {
                 }
               });
             },
+            onAddQuantityProduct: (product, quantity) {
+              setState(() {
+                final existingIndex = _cartItems.indexWhere((i) => i.product.id == product.id);
+                if (existingIndex >= 0) {
+                  _cartItems[existingIndex].quantity += quantity;
+                } else {
+                  _cartItems.add(_CartItem(product: product, serials: [], quantity: quantity));
+                }
+              });
+            },
             onBarcodeScan: _handleBarcodeScan,
-            cartProductIds: cartProductIds,
+            cartItemQtys: cartItemQtys,
           ),
         ),
       ),
@@ -560,35 +621,49 @@ class _CartItemTile extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          ...item.serials.map((s) => Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Row(
+          if (item.isSerialized) ...[
+            ...item.serials.map((s) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                children: [
+                  Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(s.serialNumber, style: TextStyle(fontFamily: 'Geist', fontSize: 12, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
+                  ),
+                  Text('$symbol${item.product.sellingPrice.toStringAsFixed(0)}',
+                      style: AppTextStyles.labelMd.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () => onRemoveSerial(s),
+                    child: Container(
+                      width: 24, height: 24,
+                      decoration: BoxDecoration(color: AppColors.redBg, borderRadius: BorderRadius.circular(6)),
+                      child: const Icon(Icons.close_rounded, size: 14, color: AppColors.red),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+            if (item.serials.length > 1)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text('${item.serials.length} items × $symbol${item.product.sellingPrice.toStringAsFixed(0)}',
+                    style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+              ),
+          ] else ...[
+            Row(
               children: [
                 Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle)),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(s.serialNumber, style: TextStyle(fontFamily: 'Geist', fontSize: 12, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
+                  child: Text('Quantity: ${item.quantity}', style: TextStyle(fontFamily: 'Geist', fontSize: 12, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
                 ),
-                Text('$symbol${item.product.sellingPrice.toStringAsFixed(0)}',
-                    style: AppTextStyles.labelMd.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => onRemoveSerial(s),
-                  child: Container(
-                    width: 24, height: 24,
-                    decoration: BoxDecoration(color: AppColors.redBg, borderRadius: BorderRadius.circular(6)),
-                    child: const Icon(Icons.close_rounded, size: 14, color: AppColors.red),
-                  ),
-                ),
+                Text('$symbol${item.product.sellingPrice.toStringAsFixed(0)} × ${item.quantity}',
+                    style: AppTextStyles.caption.copyWith(color: AppColors.primary)),
               ],
             ),
-          )),
-          if (item.serials.length > 1)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text('${item.serials.length} items × $symbol${item.product.sellingPrice.toStringAsFixed(0)}',
-                  style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
-            ),
+          ],
         ],
       ),
     );
@@ -780,17 +855,27 @@ class _PriceDialogState extends State<_PriceDialog> {
 class _CartItem {
   final Product product;
   final List<SerialNumber> serials;
-  _CartItem({required this.product, required this.serials});
+  int quantity;
+  _CartItem({required this.product, required this.serials, this.quantity = 1});
+
+  bool get isSerialized => product.isSerialized;
+  int get itemCount => isSerialized ? serials.length : quantity;
+
+  double get itemTotal => isSerialized
+      ? product.sellingPrice * serials.length
+      : product.sellingPrice * quantity;
 }
 
 class _AddItemSheet extends StatefulWidget {
   final void Function(Product product, List<SerialNumber> serials) onAddToCart;
+  final void Function(Product product, int quantity) onAddQuantityProduct;
   final VoidCallback? onBarcodeScan;
-  final Set<String> cartProductIds;
+  final Map<String, int> cartItemQtys;
   const _AddItemSheet({
     required this.onAddToCart,
+    required this.onAddQuantityProduct,
     this.onBarcodeScan,
-    this.cartProductIds = const {},
+    required this.cartItemQtys,
   });
 
   @override
@@ -1057,7 +1142,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       children: filtered.map((p) {
-        final inCart = widget.cartProductIds.contains(p.id);
+        final inCart = widget.cartItemQtys.containsKey(p.id);
         return Container(
           margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
@@ -1074,15 +1159,134 @@ class _AddItemSheetState extends State<_AddItemSheet> {
             borderRadius: BorderRadius.circular(12),
             onTap: inCart
                 ? null
-                : () {
-                    setState(() {
-                      _productId = p.id;
-                      _product = p;
-                      _selectedSerialIds.clear();
-                      _salePriceController.text = p.sellingPrice.toStringAsFixed(0);
-                      _setWarrantyFromProduct(p);
-                    });
-                    context.read<SaleProvider>().loadAvailableSerialNumbers(p.id);
+                : () async {
+                    if (p.isSerialized) {
+                      setState(() {
+                        _productId = p.id;
+                        _product = p;
+                        _selectedSerialIds.clear();
+                        _salePriceController.text = p.sellingPrice.toStringAsFixed(0);
+                        _setWarrantyFromProduct(p);
+                      });
+                      context.read<SaleProvider>().loadAvailableSerialNumbers(p.id);
+                    } else {
+                      final sym = context.read<SettingsProvider>().currencySymbol;
+                      final inCartQty = widget.cartItemQtys[p.id] ?? 0;
+                      final maxStock = p.availableQuantity - inCartQty;
+                      if (maxStock <= 0) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('No more stock available for ${p.productName}')),
+                          );
+                        }
+                        return;
+                      }
+                      int selectedQty = 1;
+                      final result = await showDialog<int>(
+                        context: context,
+                        builder: (ctx) {
+                          return StatefulBuilder(
+                            builder: (context, setDialogState) {
+                              return AlertDialog(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                                titlePadding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                                title: Row(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: SizedBox(
+                                        width: 40, height: 40,
+                                        child: p.imageUrl.isNotEmpty
+                                            ? Image.network(p.imageUrl, fit: BoxFit.cover,
+                                                errorBuilder: (_, _, _) => Container(color: const Color(0xFFE5E7EB), child: const Icon(Icons.inventory_2_rounded, size: 20, color: Color(0xFF9CA3AF))))
+                                            : Container(color: const Color(0xFFE5E7EB), child: const Icon(Icons.inventory_2_rounded, size: 20, color: Color(0xFF9CA3AF))),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(p.productName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                                          if (p.modelNumber.isNotEmpty)
+                                            Text(p.modelNumber, style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                content: Padding(
+                                  padding: const EdgeInsets.only(top: 16),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text('Stock', style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
+                                          Text('$maxStock available', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E))),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text('Unit Price', style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
+                                          Text('$sym${p.sellingPrice.toStringAsFixed(0)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF3F4F6),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text('Total: $sym${(p.sellingPrice * selectedQty).toStringAsFixed(0)}',
+                                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E))),
+                                            Row(
+                                              children: [
+                                                _QtyButton(
+                                                  icon: Icons.remove_rounded,
+                                                  onTap: selectedQty > 1 ? () => setDialogState(() => selectedQty--) : null,
+                                                ),
+                                                SizedBox(
+                                                  width: 40,
+                                                  child: Text('$selectedQty', textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E))),
+                                                ),
+                                                _QtyButton(
+                                                  icon: Icons.add_rounded,
+                                                  onTap: selectedQty < maxStock ? () => setDialogState(() => selectedQty++) : null,
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                                  FilledButton(
+                                    onPressed: () => Navigator.pop(ctx, selectedQty),
+                                    child: const Text('Add to Cart'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      );
+                      if (result != null && result > 0) {
+                        widget.onAddQuantityProduct(p.copyWith(warrantyMonths: 0, warrantyDays: 0), result);
+                        if (mounted) Navigator.pop(context);
+                      }
+                    }
                   },
             child: Padding(
               padding: const EdgeInsets.all(12),
@@ -1313,6 +1517,27 @@ class _AddItemSheetState extends State<_AddItemSheet> {
           )),
         const SizedBox(height: 80),
       ],
+    );
+  }
+}
+
+class _QtyButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+  const _QtyButton({required this.icon, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36, height: 36,
+        decoration: BoxDecoration(
+          color: onTap != null ? AppColors.primary : const Color(0xFFE5E7EB),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, size: 18, color: onTap != null ? Colors.white : const Color(0xFF9CA3AF)),
+      ),
     );
   }
 }

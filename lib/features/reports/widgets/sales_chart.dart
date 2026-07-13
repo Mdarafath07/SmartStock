@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/utils/date_utils.dart';
 import 'package:smartstock/features/reports/models/report_model.dart';
+import 'package:smartstock/features/settings/providers/settings_provider.dart';
 
 class SalesBarChart extends StatelessWidget {
   final List<SalesReport> data;
@@ -19,6 +21,7 @@ class SalesBarChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
     if (data.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -53,7 +56,7 @@ class SalesBarChart extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(
-                        '\$${report.totalSales.toStringAsFixed(0)}',
+                        '$symbol${report.totalSales.toStringAsFixed(0)}',
                         style: AppTextStyles.labelSm.copyWith(
                           fontSize: 9,
                           color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
@@ -138,7 +141,7 @@ class SimpleBar extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              formatValue?.call(value) ?? value.toStringAsFixed(2),
+              formatValue?.call(value) ?? value.toStringAsFixed(0),
               style: AppTextStyles.labelMd.copyWith(
                 fontWeight: FontWeight.w600,
               ),

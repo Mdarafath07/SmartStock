@@ -14,6 +14,7 @@ class Product {
   final int availableQuantity;
   final int soldQuantity;
   final DateTime createdAt;
+  final bool isSerialized;
 
   Product({
     this.id = '',
@@ -31,6 +32,7 @@ class Product {
     this.availableQuantity = 0,
     this.soldQuantity = 0,
     DateTime? createdAt,
+    this.isSerialized = true,
   }) : createdAt = createdAt ?? DateTime.now();
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -50,6 +52,7 @@ class Product {
       availableQuantity: (json['availableQuantity'] as num?)?.toInt() ?? 0,
       soldQuantity: (json['soldQuantity'] as num?)?.toInt() ?? 0,
       createdAt: (json['createdAt'] as dynamic)?.toDate() ?? DateTime.now(),
+      isSerialized: json['isSerialized'] as bool? ?? true,
     );
   }
 
@@ -70,6 +73,7 @@ class Product {
       availableQuantity: (map['availableQuantity'] as num?)?.toInt() ?? 0,
       soldQuantity: (map['soldQuantity'] as num?)?.toInt() ?? 0,
       createdAt: (map['createdAt'] as dynamic)?.toDate() ?? DateTime.now(),
+      isSerialized: map['isSerialized'] as bool? ?? true,
     );
   }
 
@@ -89,6 +93,7 @@ class Product {
       'availableQuantity': availableQuantity,
       'soldQuantity': soldQuantity,
       'createdAt': createdAt,
+      'isSerialized': isSerialized,
     };
   }
 
@@ -110,6 +115,7 @@ class Product {
     int? availableQuantity,
     int? soldQuantity,
     DateTime? createdAt,
+    bool? isSerialized,
   }) {
     return Product(
       id: id ?? this.id,
@@ -127,6 +133,7 @@ class Product {
       availableQuantity: availableQuantity ?? this.availableQuantity,
       soldQuantity: soldQuantity ?? this.soldQuantity,
       createdAt: createdAt ?? this.createdAt,
+      isSerialized: isSerialized ?? this.isSerialized,
     );
   }
 

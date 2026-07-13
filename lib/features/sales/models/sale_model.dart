@@ -25,6 +25,7 @@ class Sale {
   final String? newSerialNumber;
   final DateTime? claimDate;
   final String? batchId;
+  final int quantity;
 
   Sale({
     this.id = '',
@@ -51,6 +52,7 @@ class Sale {
     this.newSerialNumber,
     this.claimDate,
     this.batchId,
+    this.quantity = 1,
   })  : saleDate = saleDate ?? DateTime.now(),
         warrantyExpiryDate = warrantyExpiryDate ?? DateTime.now(),
         createdAt = createdAt ?? DateTime.now();
@@ -87,6 +89,7 @@ class Sale {
       newSerialNumber: json['newSerialNumber'] as String?,
       claimDate: (json['claimDate'] as Timestamp?)?.toDate(),
       batchId: json['batchId'] as String?,
+      quantity: (json['quantity'] as num?)?.toInt() ?? 1,
     );
   }
 
@@ -115,6 +118,7 @@ class Sale {
       'newSerialNumber': newSerialNumber,
       'claimDate': claimDate != null ? Timestamp.fromDate(claimDate!) : null,
       'batchId': batchId,
+      'quantity': quantity,
     };
   }
 
@@ -145,6 +149,7 @@ class Sale {
     String? newSerialNumber,
     DateTime? claimDate,
     String? batchId,
+    int? quantity,
   }) {
     return Sale(
       id: id ?? this.id,
@@ -171,6 +176,7 @@ class Sale {
       newSerialNumber: newSerialNumber ?? this.newSerialNumber,
       claimDate: claimDate ?? this.claimDate,
       batchId: batchId ?? this.batchId,
+      quantity: quantity ?? this.quantity,
     );
   }
 }

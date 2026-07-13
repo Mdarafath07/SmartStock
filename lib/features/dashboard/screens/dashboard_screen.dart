@@ -101,9 +101,11 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   String _timeGreeting() {
     final h = DateTime.now().hour;
+    if (h < 5) return 'Night';
     if (h < 12) return 'Morning';
     if (h < 17) return 'Afternoon';
-    return 'Evening';
+    if (h < 21) return 'Evening';
+    return 'Night';
   }
 
   // ─── HEADER ───────────────────────────────────────────────

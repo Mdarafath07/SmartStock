@@ -38,8 +38,10 @@ class _ProductFormState extends State<ProductForm> {
   final _descriptionController = TextEditingController();
   final _serialInputController = TextEditingController();
   final _pendingSerials = <String>[];
+  int _qty = 1;
   DateTime _stockDate = DateTime.now();
   bool _isSubmitting = false;
+  bool _isSerialized = true;
 
   String? _selectedCategoryId;
   String? _selectedCategoryName;
@@ -79,6 +81,7 @@ class _ProductFormState extends State<ProductForm> {
     super.initState();
     final p = widget.product;
     if (p != null) {
+      _isSerialized = p.isSerialized;
       _brandController.text = p.brandName;
       _productNameController.text = p.productName;
       _modelNumberController.text = p.modelNumber;
@@ -286,17 +289,31 @@ class _ProductFormState extends State<ProductForm> {
 
     final serialNumbers = List<String>.from(_pendingSerials);
 
-    if (!widget.isEdit && !widget.hideSerials && serialNumbers.isEmpty) {
-      if (mounted) {
-        setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('At least one serial number is required')),
-        );
+    if (!widget.isEdit && !widget.hideSerials) {
+      if (_isSerialized && serialNumbers.isEmpty) {
+        if (mounted) {
+          setState(() => _isSubmitting = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('At least one serial number is required')),
+          );
+        }
+        return;
       }
-      return;
+      if (!_isSerialized) {
+        if (_qty <= 0) {
+          if (mounted) {
+            setState(() => _isSubmitting = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Quantity must be greater than 0')),
+            );
+          }
+          return;
+        }
+      }
     }
 
     try {
+      final qty = _isSerialized ? 0 : _qty;
 
       final product = Product(
         id: widget.product?.id ?? '',
@@ -309,10 +326,11 @@ class _ProductFormState extends State<ProductForm> {
         description: _descriptionController.text.trim(),
         purchasePrice: double.tryParse(_purchasePriceController.text) ?? 0,
         sellingPrice: double.tryParse(_sellingPriceController.text) ?? 0,
-        warrantyMonths: _resolvedWarrantyMonths,
-        warrantyDays: _resolvedWarrantyDays,
-        availableQuantity: widget.product?.availableQuantity ?? 0,
+        warrantyMonths: _isSerialized ? _resolvedWarrantyMonths : 0,
+        warrantyDays: _isSerialized ? _resolvedWarrantyDays : 0,
+        availableQuantity: widget.isEdit ? (widget.product?.availableQuantity ?? 0) : qty,
         soldQuantity: widget.product?.soldQuantity ?? 0,
+        isSerialized: _isSerialized,
       );
 
       await widget.onSave(product, serialNumbers, stockDate: _stockDate);
@@ -330,6 +348,31 @@ class _ProductFormState extends State<ProductForm> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          if (!widget.isEdit) ...[
+            const Text('Product Type',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.onSurface,
+                )),
+            const SizedBox(height: 8),
+            SegmentedButton<bool>(
+              segments: const [
+                ButtonSegment(value: true, label: Text('Serialized', style: TextStyle(fontFamily: 'Inter', fontSize: 12))),
+                ButtonSegment(value: false, label: Text('Quantity Based', style: TextStyle(fontFamily: 'Inter', fontSize: 12))),
+              ],
+              selected: {_isSerialized},
+              onSelectionChanged: (v) => setState(() => _isSerialized = v.first),
+              style: SegmentedButton.styleFrom(
+                backgroundColor: AppColors.surfaceContainerLow,
+                selectedBackgroundColor: AppColors.primary,
+                selectedForegroundColor: Colors.white,
+                foregroundColor: AppColors.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
           ImagePickerWidget(
             initialImageUrl: _imageUrl,
             onImageUploaded: (url) => _imageUrl = url,
@@ -398,8 +441,10 @@ class _ProductFormState extends State<ProductForm> {
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          _buildWarrantySection(),
+          if (_isSerialized) ...[
+            const SizedBox(height: 14),
+            _buildWarrantySection(),
+          ],
           const SizedBox(height: 14),
           _buildTextField(
             controller: _descriptionController,
@@ -407,7 +452,81 @@ class _ProductFormState extends State<ProductForm> {
             hint: 'Product description...',
             maxLines: 3,
           ),
-          if (!widget.hideSerials) ...[
+          if (!widget.hideSerials && !_isSerialized && !widget.isEdit) ...[
+            const SizedBox(height: 20),
+            const Text('Initial Stock',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.onSurface,
+                )),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.calendar_today, size: 14, color: AppColors.primary),
+                const SizedBox(width: 6),
+                Text('Date: ', style: TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant)),
+                GestureDetector(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _stockDate,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2030),
+                    );
+                    if (picked != null) setState(() => _stockDate = picked);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      DateFormat('MMM dd, yyyy').format(_stockDate),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove, size: 20),
+                    onPressed: _qty > 1
+                        ? () => setState(() => _qty--)
+                        : null,
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        '$_qty',
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.onSurface,
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add, size: 20),
+                    onPressed: () => setState(() => _qty++),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (!widget.hideSerials && _isSerialized) ...[
             const SizedBox(height: 20),
             const Text('Serial Numbers',
                 style: TextStyle(
@@ -703,10 +822,11 @@ class _ProductFormState extends State<ProductForm> {
   Widget _buildSummary() {
     final symbol = context.watch<SettingsProvider>().currencySymbol;
     final serialCount = _pendingSerials.length;
+    final count = _isSerialized ? serialCount : _qty;
     final purchasePrice = double.tryParse(_purchasePriceController.text) ?? 0;
     final sellingPrice = double.tryParse(_sellingPriceController.text) ?? 0;
-    final totalPurchase = serialCount * purchasePrice;
-    final totalSelling = serialCount * sellingPrice;
+    final totalPurchase = count * purchasePrice;
+    final totalSelling = count * sellingPrice;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -726,7 +846,7 @@ class _ProductFormState extends State<ProductForm> {
                 color: AppColors.primary,
               )),
           const SizedBox(height: 10),
-          _summaryRow('Total Items', '$serialCount unit${serialCount == 1 ? '' : 's'}'),
+          _summaryRow('Total Items', '$count unit${count == 1 ? '' : 's'}'),
           _summaryRow('Purchase Total', '$symbol${totalPurchase.toStringAsFixed(0)}'),
           _summaryRow('Selling Total', '$symbol${totalSelling.toStringAsFixed(0)}'),
           const Divider(height: 18),

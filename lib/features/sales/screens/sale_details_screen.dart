@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -17,15 +18,33 @@ class SaleDetailsScreen extends StatefulWidget {
   State<SaleDetailsScreen> createState() => _SaleDetailsScreenState();
 }
 
-class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
+class _SaleDetailsScreenState extends State<SaleDetailsScreen> with WidgetsBindingObserver {
   bool _hideSensitive = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SaleProvider>().loadSaleById(widget.saleId);
+      _load();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _load();
+    }
+  }
+
+  void _load() {
+    context.read<SaleProvider>().loadSaleById(widget.saleId);
   }
 
   String _mask(String value) => _hideSensitive ? '*****' : value;
@@ -117,12 +136,21 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                         onTap: () => _showFullImage(context, sale.imageUrl),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            sale.imageUrl,
+                          child: CachedNetworkImage(
+                            imageUrl: sale.imageUrl,
                             height: 200,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Container(
+                            errorWidget: (_, _, _) => Container(
+                              height: 200,
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              child: Center(
+                                child: Icon(Icons.image,
+                                    size: 48,
+                                    color: theme.colorScheme.onSurfaceVariant),
+                              ),
+                            ),
+                            placeholder: (_, _) => Container(
                               height: 200,
                               color: theme.colorScheme.surfaceContainerHighest,
                               child: Center(
@@ -389,8 +417,9 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
           children: [
             InteractiveViewer(
               child: Center(
-                child: Image.network(imageUrl, fit: BoxFit.contain,
-                    errorBuilder: (_, _, _) => const Icon(Icons.broken_image, size: 64, color: Colors.white54)),
+                child: CachedNetworkImage(imageUrl: imageUrl, fit: BoxFit.contain,
+                    errorWidget: (_, _, _) => const Icon(Icons.broken_image, size: 64, color: Colors.white54),
+                    placeholder: (_, _) => const Icon(Icons.broken_image, size: 64, color: Colors.white54)),
               ),
             ),
             Positioned(

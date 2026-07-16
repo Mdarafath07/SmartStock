@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
@@ -116,10 +117,12 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
                   ? Stack(
                       fit: StackFit.expand,
                       children: [
-                        Image.network(
-                          _imageUrl!,
+                        CachedNetworkImage(
+                          imageUrl: _imageUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
+                          errorWidget: (context, error, stackTrace) =>
+                              _buildPlaceholder(),
+                          placeholder: (context, url) =>
                               _buildPlaceholder(),
                         ),
                         Positioned(

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
@@ -60,13 +61,14 @@ class InventoryTable extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: item.imageUrl.isNotEmpty
-                  ? Image.network(
-                      item.imageUrl,
+                  ? CachedNetworkImage(
+                      imageUrl: item.imageUrl,
                       width: 48,
                       height: 48,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
+                      errorWidget: (context, error, stackTrace) =>
                           _placeholderIcon(),
+                      placeholder: (context, url) => _placeholderIcon(),
                     )
                   : _placeholderIcon(),
             ),

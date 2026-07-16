@@ -49,7 +49,7 @@ class _ProductListScreenState extends State<ProductListScreen>
   void _startAutoRefresh() {
     _refreshTimer?.cancel();
     _refreshTimer = Timer.periodic(
-      const Duration(seconds: 15),
+      const Duration(seconds: 120),
       (_) => context.read<ProductProvider>().loadProducts(),
     );
   }

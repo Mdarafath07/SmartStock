@@ -17,13 +17,14 @@ class DailyAdditionsScreen extends StatefulWidget {
   State<DailyAdditionsScreen> createState() => _DailyAdditionsScreenState();
 }
 
-class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
+class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> with WidgetsBindingObserver {
   final _searchController = TextEditingController();
   String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context
           .read<DailyAdditionProvider>()
@@ -33,8 +34,16 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<DailyAdditionProvider>().loadAdditionsForDate(DateTime.now());
+    }
   }
 
   Future<void> _pickDate() async {
@@ -298,58 +307,60 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                   return RefreshIndicator(
                     onRefresh: () async =>
                         provider.loadAdditionsForDate(provider.selectedDate),
-                    child: ListView(
+                    child: ListView.builder(
                       padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                      children: [
-                        ModernCard(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.all(12),
-                          color: Colors.white,
-                          onTap: null,
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 34,
-                                height: 34,
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary,
-                                  borderRadius: BorderRadius.circular(10),
+                      itemCount: 1 + keys.length,
+                      itemBuilder: (context, index) {
+                        if (index == 0) {
+                          return ModernCard(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(12),
+                            color: Colors.white,
+                            onTap: null,
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 34,
+                                  height: 34,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(Icons.receipt_long_rounded, size: 18, color: Colors.white),
                                 ),
-                                child: const Icon(Icons.receipt_long_rounded, size: 18, color: Colors.white),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  '$grandQty item${grandQty == 1 ? '' : 's'} · ${grouped.length} product${grouped.length == 1 ? '' : 's'}',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontFamily: 'Hanken Grotesk',
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary,
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    '$grandQty item${grandQty == 1 ? '' : 's'} · ${grouped.length} product${grouped.length == 1 ? '' : 's'}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: 'Hanken Grotesk',
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '$currencySymbol${_formatAmount(grandTotal)}',
-                                maxLines: 1,
-                                style: TextStyle(
-                                  fontFamily: 'Hanken Grotesk',
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.textPrimary,
-                                  letterSpacing: -0.5,
+                                const SizedBox(width: 8),
+                                Text(
+                                  '$currencySymbol${_formatAmount(grandTotal)}',
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                    fontFamily: 'Hanken Grotesk',
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.textPrimary,
+                                    letterSpacing: -0.5,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        for (final name in keys) ...[
-                          _buildGroupCard(context, name, grouped[name]!, isDark, currencySymbol),
-                        ],
-                      ],
+                              ],
+                            ),
+                          );
+                        }
+                        final name = keys[index - 1];
+                        return _buildGroupCard(context, name, grouped[name]!, isDark, currencySymbol);
+                      },
                     ),
                   );
                 },

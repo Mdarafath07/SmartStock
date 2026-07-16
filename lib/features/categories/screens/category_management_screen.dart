@@ -18,13 +18,14 @@ class CategoryManagementScreen extends StatefulWidget {
       _CategoryManagementScreenState();
 }
 
-class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
+class _CategoryManagementScreenState extends State<CategoryManagementScreen> with WidgetsBindingObserver {
   final _searchController = TextEditingController();
   String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CategoryProvider>().loadCategories();
     });
@@ -32,8 +33,16 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<CategoryProvider>().loadCategories();
+    }
   }
 
   @override

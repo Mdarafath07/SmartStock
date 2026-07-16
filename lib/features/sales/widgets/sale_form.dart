@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -1399,8 +1400,8 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                       child: SizedBox(
                                         width: 40, height: 40,
                                         child: p.imageUrl.isNotEmpty
-                                            ? Image.network(p.imageUrl, fit: BoxFit.cover,
-                                                errorBuilder: (_, _, _) => Container(color: const Color(0xFFE5E7EB), child: const Icon(Icons.inventory_2_rounded, size: 20, color: Color(0xFF9CA3AF))))
+                                            ? CachedNetworkImage(imageUrl: p.imageUrl, fit: BoxFit.cover,
+                                                errorWidget: (_, _, _) => Container(color: const Color(0xFFE5E7EB), child: const Icon(Icons.inventory_2_rounded, size: 20, color: Color(0xFF9CA3AF))), placeholder: (_, _) => Container(color: const Color(0xFFE5E7EB), child: const Icon(Icons.inventory_2_rounded, size: 20, color: Color(0xFF9CA3AF))))
                                             : Container(color: const Color(0xFFE5E7EB), child: const Icon(Icons.inventory_2_rounded, size: 20, color: Color(0xFF9CA3AF))),
                                       ),
                                     ),
@@ -1501,8 +1502,8 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                     ),
                     child: p.imageUrl.isNotEmpty
                         ? ClipRRect(borderRadius: BorderRadius.circular(10),
-                            child: Image.network(p.imageUrl, fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => Icon(Icons.inventory_2_rounded, size: 22, color: AppColors.textMuted)))
+                            child: CachedNetworkImage(imageUrl: p.imageUrl, fit: BoxFit.cover,
+                              errorWidget: (_, _, _) => Icon(Icons.inventory_2_rounded, size: 22, color: AppColors.textMuted), placeholder: (_, _) => Icon(Icons.inventory_2_rounded, size: 22, color: AppColors.textMuted)))
                         : Icon(Icons.inventory_2_rounded, size: 22, color: AppColors.textMuted),
                   ),
                   const SizedBox(width: 12),
@@ -1593,8 +1594,8 @@ class _AddItemSheetState extends State<_AddItemSheet> {
               ),
               child: _product!.imageUrl.isNotEmpty
                   ? ClipRRect(borderRadius: BorderRadius.circular(10),
-                      child: Image.network(_product!.imageUrl, fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => Icon(Icons.inventory_2_rounded, size: 22, color: AppColors.textMuted)))
+                      child: CachedNetworkImage(imageUrl: _product!.imageUrl, fit: BoxFit.cover,
+                        errorWidget: (_, _, _) => Icon(Icons.inventory_2_rounded, size: 22, color: AppColors.textMuted), placeholder: (_, _) => Icon(Icons.inventory_2_rounded, size: 22, color: AppColors.textMuted)))
                   : Icon(Icons.inventory_2_rounded, size: 22, color: AppColors.textMuted),
             ),
             const SizedBox(width: 12),

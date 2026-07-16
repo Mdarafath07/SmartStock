@@ -14,13 +14,27 @@ class TodaysSalesScreen extends StatefulWidget {
   State<TodaysSalesScreen> createState() => _TodaysSalesScreenState();
 }
 
-class _TodaysSalesScreenState extends State<TodaysSalesScreen> {
+class _TodaysSalesScreenState extends State<TodaysSalesScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<SaleProvider>().loadTodaysSales();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<SaleProvider>().loadTodaysSales();
+    }
   }
 
   @override

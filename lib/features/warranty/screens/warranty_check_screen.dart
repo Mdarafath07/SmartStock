@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -20,13 +21,27 @@ class WarrantyCheckScreen extends StatefulWidget {
   State<WarrantyCheckScreen> createState() => _WarrantyCheckScreenState();
 }
 
-class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
+class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<WarrantyProvider>().loadAll();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<WarrantyProvider>().loadAll();
+    }
   }
 
   @override
@@ -325,10 +340,12 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
                 width: 40,
                 height: 40,
                 child: warranty.imageUrl.isNotEmpty
-                    ? Image.network(
-                        warranty.imageUrl,
+                    ? CachedNetworkImage(
+                        imageUrl: warranty.imageUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) =>
+                        errorWidget: (_, _, _) =>
+                            _productPlaceholder(isDark),
+                        placeholder: (_, _) =>
                             _productPlaceholder(isDark),
                       )
                     : _productPlaceholder(isDark),

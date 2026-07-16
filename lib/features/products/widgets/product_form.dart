@@ -474,7 +474,6 @@ class _ProductFormState extends State<ProductForm> {
               children: [
                 const Icon(Icons.calendar_today, size: 14, color: AppColors.primary),
                 const SizedBox(width: 6),
-                Text('Date: ', style: TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant)),
                 GestureDetector(
                   onTap: () async {
                     final picked = await showDatePicker(
@@ -483,7 +482,12 @@ class _ProductFormState extends State<ProductForm> {
                       firstDate: DateTime(2020),
                       lastDate: DateTime(2030),
                     );
-                    if (picked != null) setState(() => _stockDate = picked);
+                    if (picked != null) {
+                      setState(() => _stockDate = DateTime(
+                        picked.year, picked.month, picked.day,
+                        _stockDate.hour, _stockDate.minute,
+                      ));
+                    }
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -493,6 +497,34 @@ class _ProductFormState extends State<ProductForm> {
                     ),
                     child: Text(
                       DateFormat('MMM dd, yyyy').format(_stockDate),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.access_time_rounded, size: 14, color: AppColors.primary),
+                const SizedBox(width: 6),
+                GestureDetector(
+                  onTap: () async {
+                    final picked = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.fromDateTime(_stockDate),
+                    );
+                    if (picked != null) {
+                      setState(() => _stockDate = DateTime(
+                        _stockDate.year, _stockDate.month, _stockDate.day,
+                        picked.hour, picked.minute,
+                      ));
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      DateFormat('hh:mm a').format(_stockDate),
                       style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary),
                     ),
                   ),
@@ -543,7 +575,6 @@ class _ProductFormState extends State<ProductForm> {
               children: [
                 const Icon(Icons.calendar_today, size: 14, color: AppColors.primary),
                 const SizedBox(width: 6),
-                Text('Stock Date: ', style: TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant)),
                 GestureDetector(
                   onTap: () async {
                     final picked = await showDatePicker(
@@ -552,7 +583,12 @@ class _ProductFormState extends State<ProductForm> {
                       firstDate: DateTime(2020),
                       lastDate: DateTime(2030),
                     );
-                    if (picked != null) setState(() => _stockDate = picked);
+                    if (picked != null) {
+                      setState(() => _stockDate = DateTime(
+                        picked.year, picked.month, picked.day,
+                        _stockDate.hour, _stockDate.minute,
+                      ));
+                    }
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -562,6 +598,34 @@ class _ProductFormState extends State<ProductForm> {
                     ),
                     child: Text(
                       DateFormat('MMM dd, yyyy').format(_stockDate),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.access_time_rounded, size: 14, color: AppColors.primary),
+                const SizedBox(width: 6),
+                GestureDetector(
+                  onTap: () async {
+                    final picked = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.fromDateTime(_stockDate),
+                    );
+                    if (picked != null) {
+                      setState(() => _stockDate = DateTime(
+                        _stockDate.year, _stockDate.month, _stockDate.day,
+                        picked.hour, picked.minute,
+                      ));
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      DateFormat('hh:mm a').format(_stockDate),
                       style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary),
                     ),
                   ),

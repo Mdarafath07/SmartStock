@@ -16,13 +16,31 @@ class CustomerDetailsScreen extends StatefulWidget {
   State<CustomerDetailsScreen> createState() => _CustomerDetailsScreenState();
 }
 
-class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
+class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CustomerProvider>().loadCustomerDetails(widget.customerId);
+      _load();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _load();
+    }
+  }
+
+  void _load() {
+    context.read<CustomerProvider>().loadCustomerDetails(widget.customerId);
   }
 
   @override
@@ -73,48 +91,51 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: CustomerInfoCard(customer: customer),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withAlpha(25),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(Icons.receipt_long, size: 14, color: AppColors.primary),
-                  ),
-                  const SizedBox(width: 10),
-                  Text('Purchase History', style: AppTextStyles.titleSm),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.surfaceLighter : AppColors.whiteMuted,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      '${purchases.length}',
-                      style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
-                    ),
-                  ),
-                ],
+      body: RefreshIndicator(
+        onRefresh: () => context.read<CustomerProvider>().loadCustomerDetails(widget.customerId),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: CustomerInfoCard(customer: customer),
               ),
-            ),
-            const SizedBox(height: 12),
-            PurchaseHistoryTable(purchases: purchases),
-            const SizedBox(height: 80),
-          ],
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withAlpha(25),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.receipt_long, size: 14, color: AppColors.primary),
+                    ),
+                    const SizedBox(width: 10),
+                    Text('Purchase History', style: AppTextStyles.titleSm),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.surfaceLighter : AppColors.whiteMuted,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '${purchases.length}',
+                        style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              PurchaseHistoryTable(purchases: purchases),
+              const SizedBox(height: 80),
+            ],
+          ),
         ),
       ),
     );

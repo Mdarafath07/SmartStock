@@ -18,22 +18,35 @@ class ProductIssueDetailsScreen extends StatefulWidget {
       _ProductIssueDetailsScreenState();
 }
 
-class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> {
+class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> with WidgetsBindingObserver {
   final _resolutionController = TextEditingController();
   bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProductIssueProvider>().loadIssueById(widget.issueId);
+      _load();
     });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _resolutionController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _load();
+    }
+  }
+
+  void _load() {
+    context.read<ProductIssueProvider>().loadIssueById(widget.issueId);
   }
 
   @override
@@ -73,10 +86,12 @@ class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> {
             );
           }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          return RefreshIndicator(
+            onRefresh: () => context.read<ProductIssueProvider>().loadIssueById(widget.issueId),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildStatusHeader(issue.status),
                 const SizedBox(height: 16),
@@ -207,7 +222,8 @@ class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> {
                   ),
               ],
             ),
-          );
+          ),
+        );
         },
       ),
     );

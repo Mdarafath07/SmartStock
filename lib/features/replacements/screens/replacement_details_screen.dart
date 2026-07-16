@@ -18,23 +18,36 @@ class ReplacementDetailsScreen extends StatefulWidget {
       _ReplacementDetailsScreenState();
 }
 
-class _ReplacementDetailsScreenState extends State<ReplacementDetailsScreen> {
+class _ReplacementDetailsScreenState extends State<ReplacementDetailsScreen> with WidgetsBindingObserver {
   final _serialController = TextEditingController();
   final _notesController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ReplacementProvider>().loadReplacementById(widget.replacementId);
+      _load();
     });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _serialController.dispose();
     _notesController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _load();
+    }
+  }
+
+  void _load() {
+    context.read<ReplacementProvider>().loadReplacementById(widget.replacementId);
   }
 
   @override
@@ -54,10 +67,12 @@ class _ReplacementDetailsScreenState extends State<ReplacementDetailsScreen> {
             return const Center(child: Text('Request not found'));
           }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          return RefreshIndicator(
+            onRefresh: () => context.read<ReplacementProvider>().loadReplacementById(widget.replacementId),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildStatusHeader(item),
                 const SizedBox(height: 16),
@@ -127,7 +142,8 @@ class _ReplacementDetailsScreenState extends State<ReplacementDetailsScreen> {
                 const SizedBox(height: 16),
               ],
             ),
-          );
+          ),
+        );
         },
       ),
     );

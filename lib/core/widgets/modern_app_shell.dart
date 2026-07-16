@@ -18,7 +18,7 @@ const _tabs = [
   _TabItem('assets/icons/product.png', 'Products'),
   _TabItem('assets/icons/sell.png', 'Sale'),
   _TabItem('assets/icons/analyics.png', 'Analytics'),
-  _TabItem('assets/icons/store.png', 'Profile'),
+  _TabItem('assets/icons/store.png', 'Settings'),
 ];
 
 class ModernAppShell extends StatefulWidget {

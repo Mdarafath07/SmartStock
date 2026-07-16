@@ -1,4 +1,4 @@
-import 'dart:ui' as ui;
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
@@ -72,7 +72,7 @@ class AnalyticsScreen extends StatefulWidget {
   State<AnalyticsScreen> createState() => _AnalyticsScreenState();
 }
 
-class _AnalyticsScreenState extends State<AnalyticsScreen> {
+class _AnalyticsScreenState extends State<AnalyticsScreen> with WidgetsBindingObserver {
   int _tab = 0;
   int _month = DateTime.now().month;
   int _year = DateTime.now().year;
@@ -86,9 +86,23 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ReportProvider>().loadAllReports();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<ReportProvider>().loadAllReports();
+    }
   }
 
   @override
@@ -560,8 +574,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   width: 40, height: 40,
                   color: const Color(0xFFE2E8F0),
                   child: p.imageUrl.isNotEmpty
-                      ? Image.network(p.imageUrl, fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => const Icon(Icons.inventory_2_rounded, size: 18, color: Color(0xFF94A3AF)))
+                      ? CachedNetworkImage(imageUrl: p.imageUrl, fit: BoxFit.cover,
+                          errorWidget: (_, _, _) => const Icon(Icons.inventory_2_rounded, size: 18, color: Color(0xFF94A3AF)), placeholder: (_, _) => const Icon(Icons.inventory_2_rounded, size: 18, color: Color(0xFF94A3AF)))
                       : const Icon(Icons.inventory_2_rounded, size: 18, color: Color(0xFF94A3AF)),
                 ),
               ),

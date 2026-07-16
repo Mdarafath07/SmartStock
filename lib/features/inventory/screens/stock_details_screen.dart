@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -15,13 +16,31 @@ class StockDetailsScreen extends StatefulWidget {
   State<StockDetailsScreen> createState() => _StockDetailsScreenState();
 }
 
-class _StockDetailsScreenState extends State<StockDetailsScreen> {
+class _StockDetailsScreenState extends State<StockDetailsScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<InventoryProvider>().loadStockDetails(widget.productId);
+      _load();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _load();
+    }
+  }
+
+  void _load() {
+    context.read<InventoryProvider>().loadStockDetails(widget.productId);
   }
 
   @override
@@ -48,7 +67,10 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
           ? const Center(child: CircularProgressIndicator())
           : details == null
               ? const Center(child: Text('No details found'))
-              : _buildContent(details),
+              : RefreshIndicator(
+                  onRefresh: () => context.read<InventoryProvider>().loadStockDetails(widget.productId),
+                  child: _buildContent(details),
+                ),
     );
   }
 
@@ -93,13 +115,14 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: imageUrl.isNotEmpty
-                ? Image.network(
-                    imageUrl,
+                ? CachedNetworkImage(
+                    imageUrl: imageUrl,
                     width: 72,
                     height: 72,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
+                    errorWidget: (context, error, stackTrace) =>
                         _placeholderImage(),
+                    placeholder: (context, url) => _placeholderImage(),
                   )
                 : _placeholderImage(),
           ),

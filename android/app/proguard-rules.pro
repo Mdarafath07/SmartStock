@@ -1,0 +1,9 @@
+-keep class com.smartstock.** { *; }
+-keep class com.google.firestore.** { *; }
+-keep class com.google.firebase.** { *; }
+-keepattributes Signature
+-keepattributes *Annotation*
+-dontwarn com.google.firebase.**
+-dontwarn com.google.android.gms.**
+-dontwarn io.flutter.**
+-keep class io.flutter.** { *; }

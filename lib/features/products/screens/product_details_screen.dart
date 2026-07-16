@@ -23,7 +23,7 @@ class ProductDetailsScreen extends StatefulWidget {
   State<ProductDetailsScreen> createState() => _ProductDetailsScreenState();
 }
 
-class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
+class _ProductDetailsScreenState extends State<ProductDetailsScreen> with WidgetsBindingObserver {
   List<Map<String, dynamic>>? _serialNumbers;
   List<ProductIssue>? _issues;
   bool _loadingSerials = true;
@@ -34,7 +34,21 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _load();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _load();
+    }
   }
 
   Future<void> _load() async {
@@ -95,7 +109,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               ? _buildError()
               : _product == null
                   ? _buildNotFound(isDark)
-                  : _buildContent(_product!, isDark),
+                  : RefreshIndicator(
+                      onRefresh: _load,
+                      child: _buildContent(_product!, isDark),
+                    ),
     );
   }
 

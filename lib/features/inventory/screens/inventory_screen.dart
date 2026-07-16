@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
@@ -38,7 +39,7 @@ class _InventoryScreenState extends State<InventoryScreen>
   void _startAutoRefresh() {
     _refreshTimer?.cancel();
     _refreshTimer = Timer.periodic(
-      const Duration(seconds: 15),
+      const Duration(seconds: 120),
       (_) => context.read<InventoryProvider>().loadInventory(),
     );
   }
@@ -496,8 +497,8 @@ class _InventoryRow extends StatelessWidget {
               width: 44, height: 44,
               decoration: BoxDecoration(color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200), borderRadius: BorderRadius.circular(10)),
               child: item.imageUrl.isNotEmpty
-                  ? ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(item.imageUrl, fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Icon(Icons.inventory_2_rounded, size: 22, color: AppColors.textMuted)))
+                  ? ClipRRect(borderRadius: BorderRadius.circular(10), child: CachedNetworkImage(imageUrl: item.imageUrl, fit: BoxFit.cover,
+                      errorWidget: (_, _, _) => Icon(Icons.inventory_2_rounded, size: 22, color: AppColors.textMuted), placeholder: (_, _) => Icon(Icons.inventory_2_rounded, size: 22, color: AppColors.textMuted)))
                   : Icon(Icons.inventory_2_rounded, size: 22, color: AppColors.textMuted),
             ),
             const SizedBox(width: 12),

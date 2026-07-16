@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -24,18 +25,36 @@ class WarrantyDetailsScreen extends StatefulWidget {
   State<WarrantyDetailsScreen> createState() => _WarrantyDetailsScreenState();
 }
 
-class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
+class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> with WidgetsBindingObserver {
   bool _isClaiming = false;
   Map<String, dynamic>? _claimResult;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<WarrantyProvider>().loadBySaleId(widget.warrantyId);
+        _load();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _load();
+    }
+  }
+
+  void _load() {
+    context.read<WarrantyProvider>().loadBySaleId(widget.warrantyId);
   }
 
   @override
@@ -81,7 +100,10 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
             );
           }
 
-          return _buildDetails(context, warranty, isDark);
+          return RefreshIndicator(
+            onRefresh: () => context.read<WarrantyProvider>().loadBySaleId(widget.warrantyId),
+            child: _buildDetails(context, warranty, isDark),
+          );
         },
       ),
     );
@@ -424,10 +446,11 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
               width: 72,
               height: 72,
               child: warranty.imageUrl.isNotEmpty
-                  ? Image.network(
-                      warranty.imageUrl,
+                  ? CachedNetworkImage(
+                      imageUrl: warranty.imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => _placeholder(isDark),
+                      errorWidget: (_, _, _) => _placeholder(isDark),
+                      placeholder: (_, _) => _placeholder(isDark),
                     )
                   : _placeholder(isDark),
             ),

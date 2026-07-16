@@ -14,14 +14,28 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await context.read<SettingsProvider>().loadSettings();
       if (!mounted) return;
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<SettingsProvider>().loadSettings();
+    }
   }
 
   @override
@@ -33,7 +47,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: SafeArea(
         child: settings.isLoading
             ? _buildLoading(isDark)
-            : ListView(
+            : RefreshIndicator(
+                onRefresh: () => context.read<SettingsProvider>().loadSettings(),
+                child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
                 children: [
                   Row(
@@ -75,6 +91,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 32),
               ],
             ),
+          ),
         ),
     );
   }

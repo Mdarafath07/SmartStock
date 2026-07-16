@@ -17,12 +17,13 @@ class ProductIssueListScreen extends StatefulWidget {
 }
 
 class _ProductIssueListScreenState extends State<ProductIssueListScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(length: 3, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProductIssueProvider>().loadIssues();
@@ -31,8 +32,16 @@ class _ProductIssueListScreenState extends State<ProductIssueListScreen>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _tabController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<ProductIssueProvider>().loadIssues();
+    }
   }
 
   @override

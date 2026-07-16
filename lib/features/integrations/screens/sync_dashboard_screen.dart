@@ -14,7 +14,7 @@ class SyncDashboardScreen extends StatefulWidget {
   State<SyncDashboardScreen> createState() => _SyncDashboardScreenState();
 }
 
-class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
+class _SyncDashboardScreenState extends State<SyncDashboardScreen> with WidgetsBindingObserver {
   final _sheetIdController = TextEditingController();
   final _jsonController = TextEditingController();
   bool _locked = true;
@@ -22,22 +22,35 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final s = context.read<SettingsProvider>();
-      _sheetIdController.text = s.sheetsSpreadsheetId;
-      _jsonController.text = s.sheetsServiceAccountJson;
-      context.read<SyncProvider>().configure(
-        s.sheetsServiceAccountJson,
-        s.sheetsSpreadsheetId,
-      );
+      _configureSync();
     });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _sheetIdController.dispose();
     _jsonController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _configureSync();
+    }
+  }
+
+  void _configureSync() {
+    final s = context.read<SettingsProvider>();
+    _sheetIdController.text = s.sheetsSpreadsheetId;
+    _jsonController.text = s.sheetsServiceAccountJson;
+    context.read<SyncProvider>().configure(
+      s.sheetsServiceAccountJson,
+      s.sheetsSpreadsheetId,
+    );
   }
 
   @override
@@ -50,7 +63,12 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
       appBar: AppBar(
         title: const Text('Google Sheets Backup'),
       ),
-      body: ListView(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          _configureSync();
+          await context.read<SyncProvider>().syncAll();
+        },
+        child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _buildConfigSection(settings, syncProvider, isDark),
@@ -64,6 +82,7 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
           if (syncProvider.lastResult != null)
             _buildResultCard(context, syncProvider, isDark),
         ],
+      ),
       ),
     );
   }

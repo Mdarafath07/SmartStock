@@ -20,7 +20,7 @@ class SalesHistoryScreen extends StatefulWidget {
   State<SalesHistoryScreen> createState() => _SalesHistoryScreenState();
 }
 
-class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
+class _SalesHistoryScreenState extends State<SalesHistoryScreen> with WidgetsBindingObserver {
   DateTime? _startDate;
   DateTime? _endDate;
   DateTime? _selectedDay;
@@ -30,6 +30,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _setToday();
       final saved = context.read<SaleProvider>().currentSerialSearch;
@@ -42,8 +43,16 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<SaleProvider>().loadSalesHistory();
+    }
   }
 
   void _setToday() {

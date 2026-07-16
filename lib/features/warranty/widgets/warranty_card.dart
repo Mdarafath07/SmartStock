@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
@@ -41,10 +42,11 @@ class WarrantyCard extends StatelessWidget {
                         child: SizedBox(
                           width: 56,
                           height: 56,
-                          child: Image.network(
-                            warranty.imageUrl,
+                          child: CachedNetworkImage(
+                            imageUrl: warranty.imageUrl,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => _productPlaceholder(context),
+                            errorWidget: (_, _, _) => _productPlaceholder(context),
+                            placeholder: (_, _) => _productPlaceholder(context),
                           ),
                         ),
                       )

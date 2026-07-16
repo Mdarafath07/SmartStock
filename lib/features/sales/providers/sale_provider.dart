@@ -85,6 +85,7 @@ class SaleProvider extends ChangeNotifier {
     required String customerId,
     required String customerName,
     required String customerPhone,
+    DateTime? saleDate,
   }) async {
     _setLoading(true);
     _setError(null);
@@ -94,6 +95,7 @@ class SaleProvider extends ChangeNotifier {
         customerId: customerId,
         customerName: customerName,
         customerPhone: customerPhone,
+        saleDate: saleDate,
       );
       await loadDailySalesSummary();
       return saleIds;

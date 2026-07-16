@@ -85,6 +85,7 @@ class SaleService {
     required String customerId,
     required String customerName,
     required String customerPhone,
+    DateTime? saleDate,
   }) async {
     final batch = _firestore.batch();
     final saleIds = <String>[];
@@ -93,7 +94,7 @@ class SaleService {
     final productStockUpdates = <String, int>{};
 
     final batchId = _firestore.collection(_salesCollection).doc().id;
-    final now = DateTime.now();
+    final now = saleDate ?? DateTime.now();
     final saleTimestamp = Timestamp.fromDate(now);
 
     for (final item in items) {

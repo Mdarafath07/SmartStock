@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/routes/app_routes.dart';
 import 'package:smartstock/core/services/connectivity_service.dart';
@@ -40,6 +41,7 @@ class _SaleFormState extends State<SaleForm> {
 
   final List<_CartItem> _cartItems = [];
   final Set<String> _scannedSerialNumbers = {};
+  DateTime _saleDate = DateTime.now();
 
   @override
   void initState() {
@@ -128,7 +130,7 @@ class _SaleFormState extends State<SaleForm> {
           'categoryName': item.product.categoryName,
           'salePrice': item.product.sellingPrice,
           'purchasePrice': item.product.purchasePrice,
-          'warrantyExpiryDate': DateTime.now().add(Duration(days: item.product.warrantyMonths * 30)),
+          'warrantyExpiryDate': _saleDate.add(Duration(days: item.product.warrantyMonths * 30)),
           'warrantyMonths': item.product.warrantyMonths,
           'quantity': 1,
         }).toList();
@@ -144,7 +146,7 @@ class _SaleFormState extends State<SaleForm> {
           'categoryName': item.product.categoryName,
           'salePrice': item.product.sellingPrice,
           'purchasePrice': item.product.purchasePrice,
-          'warrantyExpiryDate': DateTime.now(),
+          'warrantyExpiryDate': _saleDate,
           'warrantyMonths': 0,
           'quantity': item.quantity,
         }];
@@ -162,6 +164,7 @@ class _SaleFormState extends State<SaleForm> {
         customerId: finalCustomerId,
         customerName: finalCustomerName,
         customerPhone: finalCustomerPhone,
+        saleDate: _saleDate,
       );
       if (mounted) {
         _showReceipt(finalCustomerName, finalCustomerPhone, items);
@@ -189,7 +192,7 @@ class _SaleFormState extends State<SaleForm> {
         price: i['salePrice'] as double,
         warrantyMonths: i['warrantyMonths'] as int? ?? 0,
         warrantyExpiry: i['warrantyExpiryDate'] as DateTime? ?? DateTime.now(),
-        saleDate: DateTime.now(),
+        saleDate: _saleDate,
         quantity: i['quantity'] as int? ?? 1,
       )).toList(),
       onDone: widget.onSaleComplete,
@@ -510,7 +513,7 @@ class _SaleFormState extends State<SaleForm> {
               ],
             ),
           ),
-          if (_selectedCustomer != null)
+            if (_selectedCustomer != null)
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: Container(
@@ -531,6 +534,84 @@ class _SaleFormState extends State<SaleForm> {
                 ),
               ),
             ),
+          const SizedBox(height: 20),
+          Text('Sale Date & Time', style: AppTextStyles.titleMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          const SizedBox(height: 4),
+          Text('Set the date and time for this sale',
+              style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: (isDark ? AppColors.surfaceLight : const Color(0xFFF9FAFB)).withAlpha(200),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.calendar_today, size: 18, color: AppColors.primary),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: _saleDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2030),
+                      );
+                      if (picked != null) {
+                        setState(() => _saleDate = DateTime(
+                          picked.year, picked.month, picked.day,
+                          _saleDate.hour, _saleDate.minute,
+                        ));
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withAlpha(20),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        DateFormat('MMM dd, yyyy').format(_saleDate),
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Icon(Icons.access_time_rounded, size: 18, color: AppColors.primary),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () async {
+                      final picked = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.fromDateTime(_saleDate),
+                      );
+                      if (picked != null) {
+                        setState(() => _saleDate = DateTime(
+                          _saleDate.year, _saleDate.month, _saleDate.day,
+                          picked.hour, picked.minute,
+                        ));
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withAlpha(20),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        DateFormat('hh:mm a').format(_saleDate),
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

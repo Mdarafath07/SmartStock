@@ -42,12 +42,14 @@ class SaleRepository {
     required String customerId,
     required String customerName,
     required String customerPhone,
+    DateTime? saleDate,
   }) {
     return _saleService.bulkCreateSales(
       items: items,
       customerId: customerId,
       customerName: customerName,
       customerPhone: customerPhone,
+      saleDate: saleDate,
     );
   }
 

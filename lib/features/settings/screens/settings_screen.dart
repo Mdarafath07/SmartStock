@@ -92,7 +92,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             child: Center(
               child: Text(
-                (settings.ownerName.isNotEmpty ? settings.ownerName[0] : 'S').toUpperCase(),
+                (settings.storeName.isNotEmpty ? settings.storeName[0] : 'S').toUpperCase(),
                 style: const TextStyle(
                     fontFamily: 'Hanken Grotesk', fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white),
               ),
@@ -103,20 +103,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(settings.ownerName.isNotEmpty ? settings.ownerName : 'Shop Owner',
-                    style: AppTextStyles.titleMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
-                if (settings.ownerEmail.isNotEmpty)
-                  Text(settings.ownerEmail, style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF64748B))),
+                Text(settings.storeName, style: AppTextStyles.titleMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+                if (settings.storeAddress.isNotEmpty)
+                  Text(settings.storeAddress, style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF64748B))),
               ],
             ),
-          ),
-          GestureDetector(
-            onTap: () => _showEditProfileDialog(settings),
-            child: Container(width: 36, height: 36,
-              decoration: BoxDecoration(
-                color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
-                borderRadius: BorderRadius.circular(10)),
-              child: Icon(Icons.edit_rounded, size: 18, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
           ),
         ],
       ),
@@ -136,6 +127,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _settingRow(icon: Icons.attach_money_rounded, label: 'Currency', value: '${settings.currency} (${settings.currencySymbol})', isDark: isDark, onTap: () => _showCurrencySelector(settings)),
           Divider(height: 1, color: isDark ? AppColors.greyDarker.withAlpha(60) : const Color(0xFFE2E8F0)),
           _settingRow(icon: Icons.access_time_rounded, label: 'Timezone', value: settings.timezone, isDark: isDark, onTap: () => _showTimezoneSelector(settings)),
+          Divider(height: 1, color: isDark ? AppColors.greyDarker.withAlpha(60) : const Color(0xFFE2E8F0)),
+          _settingRow(icon: Icons.email_rounded, label: 'Store Email', value: settings.storeEmail.isEmpty ? 'Not set' : settings.storeEmail, isDark: isDark, onTap: () => _showEditFieldDialog(settings, 'Store Email', settings.storeEmail, (v) => settings.updateStoreEmail(v))),
+          Divider(height: 1, color: isDark ? AppColors.greyDarker.withAlpha(60) : const Color(0xFFE2E8F0)),
+          _settingRow(icon: Icons.phone_rounded, label: 'Store Phone', value: settings.storePhone.isEmpty ? 'Not set' : settings.storePhone, isDark: isDark, onTap: () => _showEditFieldDialog(settings, 'Store Phone', settings.storePhone, (v) => settings.updateStorePhone(v))),
+          Divider(height: 1, color: isDark ? AppColors.greyDarker.withAlpha(60) : const Color(0xFFE2E8F0)),
+          _settingRow(icon: Icons.location_on_rounded, label: 'Store Address', value: settings.storeAddress.isEmpty ? 'Not set' : settings.storeAddress, isDark: isDark, onTap: () => _showEditFieldDialog(settings, 'Store Address', settings.storeAddress, (v) => settings.updateStoreAddress(v))),
         ],
       ),
     );
@@ -295,31 +292,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _showEditProfileDialog(SettingsProvider settings) {
-    final nameController = TextEditingController(text: settings.ownerName);
-    final emailController = TextEditingController(text: settings.ownerEmail);
-    showDialog(context: context, builder: (ctx) => Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? AppColors.cardDark : Colors.white, borderRadius: BorderRadius.circular(20)),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Edit Profile', style: AppTextStyles.titleMd.copyWith(color: _getTextColor(context))),
-          const SizedBox(height: 16),
-          TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Name'), style: TextStyle(color: _getTextColor(context))),
-          const SizedBox(height: 12),
-          TextField(controller: emailController, decoration: const InputDecoration(labelText: 'Email'), style: TextStyle(color: _getTextColor(context))),
-          const SizedBox(height: 20),
-          Row(children: [
-            Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel'))),
-            const SizedBox(width: 12),
-            Expanded(child: FilledButton(onPressed: () { settings.updateProfile(nameController.text.trim(), emailController.text.trim()); _showSnackBar('Profile updated'); Navigator.pop(ctx); }, child: const Text('Save'))),
-          ]),
-        ]),
-      ),
-    ));
-  }
-
   void _showEditStoreNameDialog(SettingsProvider settings) {
     final controller = TextEditingController(text: settings.storeName);
     showDialog(context: context, builder: (ctx) => Dialog(
@@ -336,6 +308,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel'))),
             const SizedBox(width: 12),
             Expanded(child: FilledButton(onPressed: () { settings.updateStoreName(controller.text.trim()); _showSnackBar('Store name updated'); Navigator.pop(ctx); }, child: const Text('Save'))),
+          ]),
+        ]),
+      ),
+    ));
+  }
+
+  void _showEditFieldDialog(SettingsProvider settings, String label, String currentValue, Future<void> Function(String) onSave) {
+    final controller = TextEditingController(text: currentValue);
+    showDialog(context: context, builder: (ctx) => Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? AppColors.cardDark : Colors.white, borderRadius: BorderRadius.circular(20)),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(label, style: AppTextStyles.titleMd.copyWith(color: _getTextColor(context))),
+          const SizedBox(height: 16),
+          TextField(controller: controller, decoration: InputDecoration(labelText: label), maxLines: label == 'Store Address' ? 3 : 1, style: TextStyle(color: _getTextColor(context))),
+          const SizedBox(height: 20),
+          Row(children: [
+            Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel'))),
+            const SizedBox(width: 12),
+            Expanded(child: FilledButton(onPressed: () { onSave(controller.text.trim()); _showSnackBar('$label updated'); Navigator.pop(ctx); }, child: const Text('Save'))),
           ]),
         ]),
       ),

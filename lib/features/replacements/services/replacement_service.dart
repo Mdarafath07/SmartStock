@@ -175,14 +175,15 @@ class ReplacementService {
     await _firestore.collection(_collection).doc(id).delete();
   }
 
-  Stream<List<Replacement>> streamReplacements() {
-    return _firestore
+  Future<List<Replacement>> getReplacements() async {
+    final snapshot = await _firestore
         .collection(_collection)
         .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Replacement.fromJson(doc.data(), doc.id))
-            .toList());
+        .limit(100)
+        .get();
+    return snapshot.docs
+        .map((doc) => Replacement.fromJson(doc.data(), doc.id))
+        .toList();
   }
 
   Future<List<Replacement>> getReplacementsByCustomer(String customerId) async {

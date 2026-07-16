@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:smartstock/core/widgets/debounced.dart';
+import 'package:provider/provider.dart';
+import 'package:smartstock/core/services/connectivity_service.dart';
 import 'package:smartstock/features/categories/widgets/icon_picker.dart';
 
 class CategoryFormDialog extends StatefulWidget {
@@ -22,6 +23,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
   late final TextEditingController _controller;
   final _formKey = GlobalKey<FormState>();
   late String _selectedIcon;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -34,6 +36,21 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  void _save() {
+    if (_isSaving) return;
+    if (!_formKey.currentState!.validate()) return;
+    final connectivity = context.read<ConnectivityService>();
+    if (!connectivity.canWrite()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No internet connection. Please connect to save.')),
+      );
+      return;
+    }
+    setState(() => _isSaving = true);
+    widget.onSave(_controller.text.trim(), _selectedIcon);
+    Navigator.pop(context);
   }
 
   @override
@@ -76,29 +93,15 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
         ),
       ),
       actions: [
-        Debounced(
-          onPressed: () => Navigator.pop(context),
-          builder: (_, isDisabled) => TextButton(
-            onPressed: isDisabled ? null : () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
+        TextButton(
+          onPressed: _isSaving ? null : () => Navigator.pop(context),
+          child: const Text('Cancel'),
         ),
-        Debounced(
-          onPressed: () {
-            if (_formKey.currentState!.validate()) {
-              widget.onSave(_controller.text.trim(), _selectedIcon);
-              Navigator.pop(context);
-            }
-          },
-          builder: (context, isDisabled) => FilledButton(
-            onPressed: isDisabled ? null : () {
-              if (_formKey.currentState!.validate()) {
-                widget.onSave(_controller.text.trim(), _selectedIcon);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Save'),
-          ),
+        FilledButton(
+          onPressed: _isSaving ? null : _save,
+          child: _isSaving
+              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : const Text('Save'),
         ),
       ],
     );

@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import 'package:smartstock/core/services/connectivity_service.dart';
 import 'package:smartstock/features/replacements/models/replacement_model.dart';
 import 'package:smartstock/features/replacements/providers/replacement_provider.dart';
 
@@ -25,6 +25,7 @@ class _AddReplacementScreenState extends State<AddReplacementScreen> {
   String? _customerName;
   String? _customerPhone;
   bool _isSearching = false;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -170,9 +171,11 @@ class _AddReplacementScreenState extends State<AddReplacementScreen> {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: _submit,
-                  icon: const Icon(Icons.send),
-                  label: const Text('Submit Replacement Request'),
+                  onPressed: _isSubmitting ? null : _submit,
+                  icon: _isSubmitting
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Icon(Icons.send),
+                  label: Text(_isSubmitting ? 'Submitting...' : 'Submit Replacement Request'),
                 ),
               ),
             ],
@@ -183,7 +186,18 @@ class _AddReplacementScreenState extends State<AddReplacementScreen> {
   }
 
   Future<void> _submit() async {
+    if (_isSubmitting) return;
     if (!_formKey.currentState!.validate()) return;
+
+    final connectivity = context.read<ConnectivityService>();
+    if (!connectivity.canWrite()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No internet connection. Please connect to submit.')),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
 
     final replacement = Replacement(
       id: '',
@@ -219,6 +233,8 @@ class _AddReplacementScreenState extends State<AddReplacementScreen> {
           SnackBar(content: Text('Failed to submit: $e')),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 }

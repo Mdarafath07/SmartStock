@@ -32,7 +32,6 @@ class DashboardService {
     final results = await Future.wait([
       _firestore.collection('categories').count().get(),
       _firestore.collection('products').count().get(),
-      _countAllAvailableSerials(),
       _getTodaySales(todayStart, todayEnd),
       _getTopSellingProducts(),
       _getRecentlyAddedProducts(),
@@ -40,27 +39,27 @@ class DashboardService {
       _getDailySales(30),
       _countActiveWarranties(),
       _countOpenProductIssues(),
+      _getTodayAdditions(todayStart, todayEnd),
       productsSnap,
       serialsSnap,
     ]);
 
     final totalCategories = (results[0] as AggregateQuerySnapshot).count ?? 0;
     final totalProducts = (results[1] as AggregateQuerySnapshot).count ?? 0;
-    final totalAvailableStock = results[2] as int;
-
-    final todaySalesData = results[3] as Map<String, dynamic>;
+    final todaySalesData = results[2] as Map<String, dynamic>;
     final todaySalesAmount =
         (todaySalesData['totalAmount'] as num?)?.toDouble() ?? 0.0;
     final todayProfit =
         (todaySalesData['totalProfit'] as num?)?.toDouble() ?? 0.0;
     final todaySoldProducts =
         (todaySalesData['totalQuantity'] as num?)?.toInt() ?? 0;
-    final topSelling = results[4] as List<TopSellingProduct>;
-    final recentlyAdded = results[5] as List<ProductSummary>;
-    final recentlySold = results[6] as List<ProductSummary>;
-    final dailyData = results[7] as Map<String, List<double>>;
-    final activeWarranties = results[8] as int;
-    final openIssueCount = results[9] as int;
+    final topSelling = results[3] as List<TopSellingProduct>;
+    final recentlyAdded = results[4] as List<ProductSummary>;
+    final recentlySold = results[5] as List<ProductSummary>;
+    final dailyData = results[6] as Map<String, List<double>>;
+    final activeWarranties = results[7] as int;
+    final openIssueCount = results[8] as int;
+    final todayAddedQty = results[9] as int;
     final productsData = results[10] as QuerySnapshot;
     final serialsData = results[11] as QuerySnapshot;
 
@@ -74,13 +73,14 @@ class DashboardService {
 
     double totalStockValue = 0;
     double totalStockCost = 0;
+    int totalAvailableStock = serialsData.docs.length;
     int lowStockProducts = 0;
     int outOfStockProducts = 0;
 
     for (final doc in productsData.docs) {
       final d = doc.data() as Map<String, dynamic>?;
       if (d == null) continue;
-      final isSerialized = d['isSerialized'] as bool? ?? true;
+      final isSerialized = d['isSerialized'] as bool? ?? serialCount.containsKey(doc.id);
       final qty = isSerialized
           ? (serialCount[doc.id] ?? 0)
           : ((d['availableQuantity'] as num?)?.toInt() ?? 0);
@@ -89,6 +89,10 @@ class DashboardService {
 
       totalStockValue += sellingPrice * qty;
       totalStockCost += purchasePrice * qty;
+
+      if (!isSerialized) {
+        totalAvailableStock += qty;
+      }
 
       if (qty == 0) {
         outOfStockProducts++;
@@ -114,35 +118,10 @@ class DashboardService {
       recentlySoldProducts: recentlySold,
       activeWarranties: activeWarranties,
       openIssueCount: openIssueCount,
+      todayAddedQuantity: todayAddedQty,
       dailySales: dailyData['sales'] ?? [],
       dailyProfit: dailyData['profit'] ?? [],
     );
-  }
-
-  Future<int> _countAllAvailableSerials() async {
-    final results = await Future.wait([
-      _firestore
-          .collection('serial_numbers')
-          .where('status', isEqualTo: 'available')
-          .count()
-          .get(),
-      _firestore.collection('products').get(),
-    ]);
-
-    final serialCount = results[0] as AggregateQuerySnapshot;
-    final productsSnap = results[1] as QuerySnapshot;
-    final serialOnly = serialCount.count ?? 0;
-
-    int quantityTotal = 0;
-    for (final doc in productsSnap.docs) {
-      final data = doc.data() as Map<String, dynamic>;
-      final isSerialized = data['isSerialized'] as bool? ?? true;
-      if (!isSerialized) {
-        quantityTotal += (data['availableQuantity'] as num?)?.toInt() ?? 0;
-      }
-    }
-
-    return serialOnly + quantityTotal;
   }
 
   Future<int> _countOpenProductIssues() async {
@@ -183,33 +162,32 @@ class DashboardService {
 
   Future<Map<String, List<double>>> _getDailySales(int days) async {
     final now = DateTime.now();
-    final sales = <double>[];
-    final profits = <double>[];
+    final startDate = DateTime(now.year, now.month, now.day - days + 1);
 
-    for (int i = days - 1; i >= 0; i--) {
-      final day = DateTime(now.year, now.month, now.day - i);
-      final dayStart = day;
-      final dayEnd = dayStart.add(const Duration(days: 1));
+    final snapshot = await _firestore
+        .collection('sales')
+        .where('saleDate',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+        .orderBy('saleDate', descending: false)
+        .get();
 
-      final snapshot = await _firestore
-          .collection('sales')
-          .where('saleDate',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(dayStart))
-          .where('saleDate', isLessThan: Timestamp.fromDate(dayEnd))
-          .get();
-
-      double daySales = 0;
-      double dayProfit = 0;
-      for (final doc in snapshot.docs) {
-        final data = doc.data();
-        if (data['saleType'] == 'warranty_claim') continue;
-        final qty = (data['quantity'] as num?)?.toInt() ?? 1;
-        daySales += ((data['salePrice'] as num?)?.toDouble() ?? 0.0) * qty;
-        dayProfit += (data['profit'] as num?)?.toDouble() ?? 0.0;
-      }
-      sales.add(daySales);
-      profits.add(dayProfit);
+    final Map<int, List<double>> dayMap = {};
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      if (data['saleType'] == 'warranty_claim') continue;
+      final ts = data['saleDate'] as Timestamp?;
+      if (ts == null) continue;
+      final dayIndex = ts.toDate().difference(startDate).inDays;
+      final qty = (data['quantity'] as num?)?.toInt() ?? 1;
+      final sale = ((data['salePrice'] as num?)?.toDouble() ?? 0.0) * qty;
+      final profit = (data['profit'] as num?)?.toDouble() ?? 0.0;
+      dayMap.putIfAbsent(dayIndex, () => [0.0, 0.0]);
+      dayMap[dayIndex]![0] += sale;
+      dayMap[dayIndex]![1] += profit;
     }
+
+    final sales = List.generate(days, (i) => dayMap[i]?[0] ?? 0.0);
+    final profits = List.generate(days, (i) => dayMap[i]?[1] ?? 0.0);
     return {'sales': sales, 'profit': profits};
   }
 
@@ -301,6 +279,19 @@ class DashboardService {
         createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       );
     }).toList();
+  }
+
+  Future<int> _getTodayAdditions(DateTime todayStart, DateTime todayEnd) async {
+    final snapshot = await _firestore
+        .collection('daily_additions')
+        .where('dateAdded',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(todayStart))
+        .where('dateAdded', isLessThan: Timestamp.fromDate(todayEnd))
+        .get();
+    return snapshot.docs.fold<int>(0, (total, doc) {
+      final data = doc.data();
+      return total + ((data['quantity'] as num?)?.toInt() ?? 0);
+    });
   }
 
   Future<int> _countActiveWarranties() async {

@@ -163,7 +163,7 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
                         fontWeight: FontWeight.w500,
                         color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
                       )),
-                      Text('Auto-sync all data to sheets on changes',
+                      Text('Auto-sync all data to sheets every 5 minutes',
                           style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8))),
                     ],
                   ),
@@ -353,8 +353,7 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'All changes are tracked. Data will be synced to Google Sheets '
-            'automatically within 30 seconds of any change.',
+            'Data will be synced to Google Sheets every 5 minutes.',
             style: AppTextStyles.caption.copyWith(
               color: isDark ? AppColors.textMuted : const Color(0xFF64748B),
             ),
@@ -365,7 +364,7 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
               Icon(Icons.check_circle_rounded, size: 16, color: AppColors.green),
               const SizedBox(width: 6),
               Text(
-                'Listening for changes',
+                'Auto-backup every 5 min',
                 style: AppTextStyles.caption.copyWith(
                   color: AppColors.green,
                   fontWeight: FontWeight.w500,

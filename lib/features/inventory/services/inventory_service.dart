@@ -45,7 +45,7 @@ class InventoryService {
     final items = <InventoryItem>[];
     for (final doc in productsSnap.docs) {
       final data = doc.data();
-      final serialized = data['isSerialized'] as bool? ?? true;
+      final serialized = data['isSerialized'] as bool? ?? serialCounts.containsKey(doc.id);
       isSerialized[doc.id] = serialized;
       final availableCount = serialized
           ? (serialCounts[doc.id]?['available'] ?? 0)
@@ -84,7 +84,23 @@ class InventoryService {
     final productDoc =
         await _firestore.collection('products').doc(productId).get();
     final productData = productDoc.data() ?? {};
-    final serialized = productData['isSerialized'] as bool? ?? true;
+
+    final serialSnapshot = await _firestore
+        .collection('serial_numbers')
+        .where('productId', isEqualTo: productId)
+        .get();
+
+    final serialNumbers = serialSnapshot.docs.map((doc) {
+      final data = doc.data();
+      return <String, dynamic>{
+        'id': doc.id,
+        'serialNumber': data['serialNumber'] as String? ?? '',
+        'status': data['status'] as String? ?? 'available',
+      };
+    }).toList();
+
+    final hasSerials = serialNumbers.isNotEmpty;
+    final serialized = productData['isSerialized'] as bool? ?? hasSerials;
 
     final issuesSnapshot = await _firestore
         .collection('product_issues')
@@ -97,23 +113,8 @@ class InventoryService {
     final int sold;
     final int defective;
     final int total;
-    final List<Map<String, dynamic>> serialNumbers;
 
     if (serialized) {
-      final serialSnapshot = await _firestore
-          .collection('serial_numbers')
-          .where('productId', isEqualTo: productId)
-          .get();
-
-      serialNumbers = serialSnapshot.docs.map((doc) {
-        final data = doc.data();
-        return <String, dynamic>{
-          'id': doc.id,
-          'serialNumber': data['serialNumber'] as String? ?? '',
-          'status': data['status'] as String? ?? 'available',
-        };
-      }).toList();
-
       available = serialNumbers.where((s) => s['status'] == 'available').length;
       sold = serialNumbers.where((s) => s['status'] == 'sold').length;
       defective = serialNumbers.where((s) => s['status'] == 'defective').length;
@@ -123,7 +124,6 @@ class InventoryService {
       sold = (productData['soldQuantity'] as num?)?.toInt() ?? 0;
       defective = 0;
       total = available + sold;
-      serialNumbers = [];
     }
 
     return <String, dynamic>{
@@ -140,7 +140,7 @@ class InventoryService {
       'defective': defective,
       'openIssuesCount': openIssuesCount,
       'total': total,
-      'serialNumbers': serialNumbers,
+      'serialNumbers': serialized ? serialNumbers : [],
     };
   }
 

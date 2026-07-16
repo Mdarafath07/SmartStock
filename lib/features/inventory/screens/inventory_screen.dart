@@ -17,25 +17,49 @@ class InventoryScreen extends StatefulWidget {
   State<InventoryScreen> createState() => _InventoryScreenState();
 }
 
-class _InventoryScreenState extends State<InventoryScreen> {
+class _InventoryScreenState extends State<InventoryScreen>
+    with WidgetsBindingObserver {
   final _searchController = TextEditingController();
   String _searchQuery = '';
   Timer? _debounce;
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startAutoRefresh();
       context.read<InventoryProvider>().loadInventory();
       context.read<CategoryProvider>().loadCategories();
     });
   }
 
+  void _startAutoRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(
+      const Duration(seconds: 15),
+      (_) => context.read<InventoryProvider>().loadInventory(),
+    );
+  }
+
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _searchController.dispose();
     _debounce?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<InventoryProvider>().loadInventory();
+      _startAutoRefresh();
+    } else if (state == AppLifecycleState.paused) {
+      _refreshTimer?.cancel();
+    }
   }
 
   void _onSearch(String v) {
@@ -167,6 +191,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
           const SizedBox(width: 6),
           _SumChip(label: 'Low', value: '${provider.lowStockCount}', color: AppColors.orange, isDark: isDark),
           const SizedBox(width: 6),
+          _SumChip(label: 'Over', value: '${provider.overstockCount}', color: AppColors.blue, isDark: isDark),
+          const SizedBox(width: 6),
           _SumChip(label: 'Out', value: '${provider.outOfStockCount}', color: AppColors.red, isDark: isDark),
         ],
       ),
@@ -199,6 +225,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
             selected: provider.filter.isStatusSelected('low_stock'),
             isDark: isDark,
             onTap: () => provider.toggleStockStatus('low_stock'),
+          ),
+          const SizedBox(width: 6),
+          _FilterBtn(
+            label: 'Overstock',
+            selected: provider.filter.isStatusSelected('overstock'),
+            isDark: isDark,
+            onTap: () => provider.toggleStockStatus('overstock'),
           ),
           const SizedBox(width: 6),
           _FilterBtn(
@@ -257,7 +290,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     for (final item in items) {
       grouped.putIfAbsent(item.stockStatus, () => []).add(item);
     }
-    final order = ['in_stock', 'low_stock', 'out_of_stock'];
+    final order = ['in_stock', 'overstock', 'low_stock', 'out_of_stock'];
     final sorted = <String, List<InventoryItem>>{};
     for (final key in order) {
       if (grouped.containsKey(key)) sorted[key] = grouped[key]!;

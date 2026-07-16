@@ -1,11 +1,9 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:smartstock/features/daily_additions/models/daily_addition_model.dart';
 
 class DailyAdditionProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  StreamSubscription? _subscription;
 
   List<DailyAddition> _additions = [];
   List<DailyAddition> get additions => _additions;
@@ -25,37 +23,32 @@ class DailyAdditionProvider extends ChangeNotifier {
   DateTime _selectedDate = DateTime.now();
   DateTime get selectedDate => _selectedDate;
 
-  void loadAdditionsForDate(DateTime date) {
+  Future<void> loadAdditionsForDate(DateTime date) async {
     _selectedDate = date;
     _isLoading = true;
+    _error = null;
     notifyListeners();
 
-    _subscription?.cancel();
-    final start = DateTime(date.year, date.month, date.day);
-    final end = start.add(const Duration(days: 1));
+    try {
+      final start = DateTime(date.year, date.month, date.day);
+      final end = start.add(const Duration(days: 1));
 
-    _subscription = _firestore
-        .collection('daily_additions')
-        .where('dateAdded',
-            isGreaterThanOrEqualTo: Timestamp.fromDate(start))
-        .where('dateAdded', isLessThan: Timestamp.fromDate(end))
-        .orderBy('dateAdded', descending: true)
-        .snapshots()
-        .listen(
-      (snapshot) {
-        _additions = snapshot.docs
-            .map((doc) =>
-                DailyAddition.fromMap(doc.data(), doc.id))
-            .toList();
-        _isLoading = false;
-        notifyListeners();
-      },
-      onError: (e) {
-        _error = e.toString();
-        _isLoading = false;
-        notifyListeners();
-      },
-    );
+      final snapshot = await _firestore
+          .collection('daily_additions')
+          .where('dateAdded',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+          .where('dateAdded', isLessThan: Timestamp.fromDate(end))
+          .orderBy('dateAdded', descending: true)
+          .limit(100)
+          .get();
+      _additions = snapshot.docs
+          .map((doc) => DailyAddition.fromMap(doc.data(), doc.id))
+          .toList();
+    } catch (e) {
+      _error = e.toString();
+    }
+    _isLoading = false;
+    notifyListeners();
   }
 
   void loadTodaysAdditions() {
@@ -91,9 +84,4 @@ class DailyAdditionProvider extends ChangeNotifier {
     loadAdditionsForDate(date);
   }
 
-  @override
-  void dispose() {
-    _subscription?.cancel();
-    super.dispose();
-  }
 }

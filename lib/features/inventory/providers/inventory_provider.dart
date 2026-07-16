@@ -63,6 +63,16 @@ class InventoryProvider extends ChangeNotifier {
       _items.where((item) => item.stockStatus == 'low_stock').length;
   int get outOfStockCount =>
       _items.where((item) => item.stockStatus == 'out_of_stock').length;
+  int get overstockCount =>
+      _items.where((item) => item.stockStatus == 'overstock').length;
+
+  Set<String> _getExpandedStatuses() {
+    final statuses = Set<String>.from(_filter.stockStatuses);
+    if (statuses.contains('in_stock')) {
+      statuses.addAll(['in_stock', 'low_stock', 'overstock']);
+    }
+    return statuses;
+  }
 
   Future<void> loadInventory() async {
     _isLoading = true;
@@ -70,10 +80,11 @@ class InventoryProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final expandedStatuses = _getExpandedStatuses();
       _items = await _repository.getInventory(
         categoryId: _filter.categoryId,
         brandFilter: _filter.brandFilter,
-        stockStatuses: _filter.stockStatuses.isNotEmpty ? _filter.stockStatuses : null,
+        stockStatuses: expandedStatuses.isNotEmpty ? expandedStatuses : null,
       );
     } catch (e) {
       _error = e.toString();

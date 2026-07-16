@@ -1,21 +1,18 @@
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smartstock/features/integrations/services/google_sheets_backup_service.dart';
 
 class SyncProvider extends ChangeNotifier {
   final GoogleSheetsBackupService _service = GoogleSheetsBackupService();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   bool _isSyncing = false;
   bool _autoSyncEnabled = false;
   DateTime? _lastSyncTime;
   SyncResult? _lastResult;
-  final List<StreamSubscription> _listeners = [];
+  Timer? _syncTimer;
   String _sheetsServiceAccountJson = '';
   String _sheetsSpreadsheetId = '';
   int _pendingChanges = 0;
-  Timer? _debounceTimer;
 
   bool get isSyncing => _isSyncing;
   bool get autoSyncEnabled => _autoSyncEnabled;
@@ -32,51 +29,25 @@ class SyncProvider extends ChangeNotifier {
     _autoSyncEnabled = enabled;
     notifyListeners();
     if (enabled) {
-      _startListening();
+      _startPeriodicSync();
       await syncAll();
     } else {
-      _stopListening();
-
+      _stopPeriodicSync();
     }
   }
 
-  void _startListening() {
-    _stopListening();
-    final collections = [
-      'products', 'categories', 'sales', 'serial_numbers',
-      'customers', 'daily_additions', 'product_issues',
-      'replacements', 'warranty',
-    ];
-
-    for (final collection in collections) {
-      final sub = _firestore.collection(collection).snapshots().listen(
-        _onDataChange,
-        onError: (e) => debugPrint('Sync listener error ($collection): $e'),
-      );
-      _listeners.add(sub);
-    }
-  }
-
-  void _stopListening() {
-    for (final sub in _listeners) {
-      sub.cancel();
-    }
-    _listeners.clear();
-    _debounceTimer?.cancel();
-    _pendingChanges = 0;
-  }
-
-  void _onDataChange(QuerySnapshot snapshot) {
-    if (snapshot.docChanges.isEmpty) return;
-    _pendingChanges += snapshot.docChanges.length;
-    notifyListeners();
-
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(seconds: 30), () async {
-      if (_autoSyncEnabled && _pendingChanges > 0) {
+  void _startPeriodicSync() {
+    _stopPeriodicSync();
+    _syncTimer = Timer.periodic(const Duration(minutes: 5), (_) async {
+      if (_autoSyncEnabled && !_isSyncing) {
         await syncAll();
       }
     });
+  }
+
+  void _stopPeriodicSync() {
+    _syncTimer?.cancel();
+    _syncTimer = null;
   }
 
   Future<String?> syncAll() async {
@@ -113,7 +84,7 @@ class SyncProvider extends ChangeNotifier {
   }
 
   void reset() {
-    _stopListening();
+    _stopPeriodicSync();
     _autoSyncEnabled = false;
     _lastSyncTime = null;
     _lastResult = null;
@@ -123,8 +94,7 @@ class SyncProvider extends ChangeNotifier {
 
   @override
   void dispose() {
-    _stopListening();
-    _debounceTimer?.cancel();
+    _stopPeriodicSync();
     super.dispose();
   }
 }

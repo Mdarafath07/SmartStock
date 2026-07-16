@@ -23,14 +23,30 @@ class ProductService {
     }
 
     final snapshot = await query.get();
+
+    final allSerials = await _firestore.collection('serial_numbers').get();
+    final serialStatusCount = <String, Map<String, int>>{};
+    for (final doc in allSerials.docs) {
+      final d = doc.data();
+      final pid = d['productId'] as String? ?? '';
+      final status = d['status'] as String? ?? 'available';
+      if (pid.isEmpty) continue;
+      serialStatusCount.putIfAbsent(pid, () => {'available': 0, 'sold': 0});
+      serialStatusCount[pid]![status] =
+          (serialStatusCount[pid]![status] ?? 0) + 1;
+    }
+
     final products = <Product>[];
 
     for (final doc in snapshot.docs) {
       final data = doc.data() as Map<String, dynamic>;
-      final product = Product.fromMap(data, doc.id);
-      if (product.isSerialized) {
-        final availableCount = await _countSerialNumbers(doc.id, 'available');
-        final soldCount = await _countSerialNumbers(doc.id, 'sold');
+      final hasSerials = serialStatusCount.containsKey(doc.id);
+      final isSerialized = (data['isSerialized'] as bool?) ?? hasSerials;
+      final product = Product.fromMap({...data, 'isSerialized': isSerialized}, doc.id);
+      if (isSerialized) {
+        final availableCount =
+            serialStatusCount[doc.id]?['available'] ?? 0;
+        final soldCount = serialStatusCount[doc.id]?['sold'] ?? 0;
         products.add(product.copyWith(
           availableQuantity: availableCount,
           soldQuantity: soldCount,
@@ -62,8 +78,14 @@ class ProductService {
     if (!doc.exists) return null;
 
     final data = doc.data()!;
-    final product = Product.fromMap(data, doc.id);
-    if (product.isSerialized) {
+    final hasSerials = (await _firestore
+        .collection('serial_numbers')
+        .where('productId', isEqualTo: id)
+        .limit(1)
+        .get()).docs.isNotEmpty;
+    final isSerialized = (data['isSerialized'] as bool?) ?? hasSerials;
+    final product = Product.fromMap({...data, 'isSerialized': isSerialized}, doc.id);
+    if (isSerialized) {
       final availableCount = await _countSerialNumbers(id, 'available');
       final soldCount = await _countSerialNumbers(id, 'sold');
       return product.copyWith(
@@ -152,7 +174,9 @@ class ProductService {
     final productDoc =
         await _firestore.collection('products').doc(productId).get();
     final productData = productDoc.data() ?? {};
-    final isSerialized = productData['isSerialized'] as bool? ?? true;
+    final serialNumbers = await getSerialNumbers(productId);
+    final hasSerials = serialNumbers.isNotEmpty;
+    final isSerialized = (productData['isSerialized'] as bool?) ?? hasSerials;
 
     if (!isSerialized) {
       return {
@@ -164,7 +188,6 @@ class ProductService {
       };
     }
 
-    final serialNumbers = await getSerialNumbers(productId);
     final available =
         serialNumbers.where((s) => s['status'] == 'available').length;
     final sold = serialNumbers.where((s) => s['status'] == 'sold').length;

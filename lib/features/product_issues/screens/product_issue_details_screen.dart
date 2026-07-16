@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:smartstock/core/services/connectivity_service.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
@@ -19,6 +20,7 @@ class ProductIssueDetailsScreen extends StatefulWidget {
 
 class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> {
   final _resolutionController = TextEditingController();
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -168,7 +170,7 @@ class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: FilledButton.icon(
-                            onPressed: _resolveIssue,
+                            onPressed: _isSubmitting ? null : _resolveIssue,
                             style: FilledButton.styleFrom(
                               backgroundColor: AppColors.green,
                               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -327,6 +329,7 @@ class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> {
   }
 
   Future<void> _resolveIssue() async {
+    if (_isSubmitting) return;
     final notes = _resolutionController.text.trim();
     if (notes.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -335,6 +338,15 @@ class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> {
       return;
     }
 
+    final connectivity = context.read<ConnectivityService>();
+    if (!connectivity.canWrite()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No internet connection. Please connect to resolve.')),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
     try {
       await context
           .read<ProductIssueProvider>()
@@ -353,10 +365,13 @@ class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> {
           SnackBar(content: Text('Failed to resolve: $e')),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
   Future<void> _deleteIssue(String id) async {
+    if (_isSubmitting) return;
     final provider = context.read<ProductIssueProvider>();
     final confirmed = await showDialog<bool>(
       context: context,
@@ -387,6 +402,7 @@ class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> {
     );
 
     if (confirmed == true) {
+      setState(() => _isSubmitting = true);
       try {
         await provider.deleteIssue(id);
         if (mounted) Navigator.pop(context);
@@ -396,6 +412,8 @@ class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> {
             SnackBar(content: Text('Failed to delete: $e')),
           );
         }
+      } finally {
+        if (mounted) setState(() => _isSubmitting = false);
       }
     }
   }

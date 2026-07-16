@@ -1,10 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/routes/app_routes.dart';
 import 'package:smartstock/core/routes/route_generator.dart';
+import 'package:smartstock/core/services/connectivity_service.dart';
 import 'package:smartstock/core/theme/app_theme.dart';
+import 'package:smartstock/core/widgets/offline_banner.dart';
 import 'package:smartstock/features/categories/providers/category_provider.dart';
 import 'package:smartstock/features/customers/providers/customer_provider.dart';
 import 'package:smartstock/features/dashboard/providers/dashboard_provider.dart';
@@ -38,16 +41,27 @@ void main() async {
   } catch (_) {
     // Already initialized via native google-services.json
   }
-  runApp(const SmartStockApp());
+
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true,
+    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+  );
+
+  final connectivity = ConnectivityService();
+  await connectivity.init();
+
+  runApp(SmartStockApp(connectivity: connectivity));
 }
 
 class SmartStockApp extends StatelessWidget {
-  const SmartStockApp({super.key});
+  final ConnectivityService connectivity;
+  const SmartStockApp({super.key, required this.connectivity});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider.value(value: connectivity),
         ChangeNotifierProvider(
           create: (_) => DashboardProvider()..loadDashboardStats(),
         ),
@@ -76,11 +90,10 @@ class SmartStockApp extends StatelessWidget {
         theme: AppTheme.light,
         initialRoute: AppRoutes.splash,
         onGenerateRoute: RouteGenerator.onGenerateRoute,
+        builder: (context, child) => OfflineBanner(child: child ?? const SizedBox.shrink()),
       ),
     );
   }
-
-
-
-
 }
+
+

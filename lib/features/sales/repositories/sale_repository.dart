@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:smartstock/features/sales/models/sale_model.dart';
 import 'package:smartstock/features/sales/models/serial_number_model.dart';
 import 'package:smartstock/features/sales/services/sale_service.dart';
@@ -52,9 +51,9 @@ class SaleRepository {
     );
   }
 
-  Stream<List<Sale>> getTodaysSales() => _saleService.getTodaysSales();
+  Future<List<Sale>> getTodaysSales() => _saleService.getTodaysSales();
 
-  Stream<List<Sale>> getSalesHistory({
+  Future<List<Sale>> getSalesHistory({
     DateTime? startDate,
     DateTime? endDate,
     String? productId,
@@ -78,7 +77,7 @@ class SaleRepository {
   Future<Map<String, dynamic>> getDailySalesSummary() =>
       _saleService.getDailySalesSummary();
 
-  Stream<List<SerialNumber>> getAvailableSerialNumbers(String productId) =>
+  Future<List<SerialNumber>> getAvailableSerialNumbers(String productId) =>
       _saleService.getAvailableSerialNumbers(productId);
 
   Future<void> voidSale(String saleId) => _saleService.voidSale(saleId);

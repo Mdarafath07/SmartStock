@@ -24,12 +24,36 @@ class ProductDetailsScreen extends StatefulWidget {
 }
 
 class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
+  List<Map<String, dynamic>>? _serialNumbers;
+  List<ProductIssue>? _issues;
+  bool _loadingSerials = true;
+  Product? _product;
+  String? _error;
+  bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProductProvider>().loadProductById(widget.productId);
-    });
+    _load();
+  }
+
+  Future<void> _load() async {
+    _isLoading = true;
+    _error = null;
+    if (mounted) setState(() {});
+    try {
+      final provider = context.read<ProductProvider>();
+      await provider.loadProductById(widget.productId);
+      _product = provider.selectedProduct;
+      if (!mounted) return;
+      _serialNumbers = await provider.getSerialNumbers(widget.productId);
+      _issues = await ProductIssueService().getIssuesByProduct(widget.productId);
+    } catch (e) {
+      _error = e.toString();
+    }
+    _isLoading = false;
+    _loadingSerials = false;
+    if (mounted) setState(() {});
   }
 
   void _showFullImage(BuildContext context, String imageUrl) {
@@ -63,18 +87,15 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final provider = context.watch<ProductProvider>();
-    final product = provider.selectedProduct;
-    final showLoading = provider.isLoading || (product != null && product.id != widget.productId);
 
     return Scaffold(
-      body: showLoading
+      body: _isLoading
           ? _buildLoading(isDark)
-          : provider.error != null && product == null
-              ? _buildError(provider)
-              : product == null
+          : _error != null && _product == null
+              ? _buildError()
+              : _product == null
                   ? _buildNotFound(isDark)
-                  : _buildContent(product, isDark),
+                  : _buildContent(_product!, isDark),
     );
   }
 
@@ -94,7 +115,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 
-  Widget _buildError(ProductProvider provider) {
+  Widget _buildError() {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -102,9 +123,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           Container(width: 72, height: 72, decoration: BoxDecoration(color: AppColors.redBg, borderRadius: BorderRadius.circular(18)),
             child: const Icon(Icons.error_outline_rounded, size: 32, color: AppColors.error)),
           const SizedBox(height: 16),
-          Text(provider.error!, style: AppTextStyles.bodyMd.copyWith(color: AppColors.textSecondary), textAlign: TextAlign.center),
+          Text(_error ?? 'Unknown error', style: AppTextStyles.bodyMd.copyWith(color: AppColors.textSecondary), textAlign: TextAlign.center),
           const SizedBox(height: 20),
-          FilledButton.icon(onPressed: () => provider.loadProductById(widget.productId), icon: const Icon(Icons.refresh_rounded, size: 18), label: const Text('Retry')),
+          FilledButton.icon(onPressed: _load, icon: const Icon(Icons.refresh_rounded, size: 18), label: const Text('Retry')),
         ],
       ),
     );
@@ -124,7 +145,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   }
 
   Widget _buildContent(Product product, bool isDark) {
-    final symbol = context.watch<SettingsProvider>().currencySymbol;
+    final symbol = context.read<SettingsProvider>().currencySymbol;
     final currencyFormat = NumberFormat.currency(symbol: symbol, decimalDigits: 0);
     final dateFormat = DateFormat('MMM dd, yyyy');
     final stockStatus = _getStockStatus(product.availableQuantity);
@@ -325,6 +346,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   }
 
   Widget _buildStockSection(Product product, bool isDark) {
+    final issueCount = _issues?.where((i) => i.status != 'resolved').length ?? 0;
     return ModernCard(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -338,13 +360,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               const SizedBox(width: 8),
               Expanded(child: _StockIndicator(label: 'Sold', value: '${product.soldQuantity}', color: AppColors.blue, total: product.availableQuantity + product.soldQuantity, isDark: isDark)),
               const SizedBox(width: 8),
-              Expanded(child: FutureBuilder<List<ProductIssue>>(
-                future: ProductIssueService().getIssuesByProduct(product.id),
-                builder: (context, snapshot) {
-                  final count = snapshot.data?.where((i) => i.status != 'resolved').length ?? 0;
-                  return _StockIndicator(label: 'Issues', value: '$count', color: AppColors.red, total: count > 0 ? count : 1, isDark: isDark);
-                },
-              )),
+              Expanded(child: _StockIndicator(label: 'Issues', value: '$issueCount', color: AppColors.red, total: issueCount > 0 ? issueCount : 1, isDark: isDark)),
             ],
           ),
         ],
@@ -383,67 +399,58 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   }
 
   Widget _buildSerialNumbers(String productId, DateFormat df, bool isDark) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: context.read<ProductProvider>().getSerialNumbers(widget.productId),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return _buildSectionSkeleton(isDark);
-        }
-        final allSerials = snapshot.data ?? [];
-        final available = allSerials.where((s) => s['status'] == 'available').toList();
-        final sold = allSerials.where((s) => s['status'] == 'sold').toList();
+    if (_loadingSerials) return _buildSectionSkeleton(isDark);
 
-        if (allSerials.isEmpty) return const SizedBox.shrink();
+    final allSerials = _serialNumbers ?? [];
+    final available = allSerials.where((s) => s['status'] == 'available').toList();
+    final sold = allSerials.where((s) => s['status'] == 'sold').toList();
 
-        return ModernCard(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    if (allSerials.isEmpty) return const SizedBox.shrink();
+
+    return ModernCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Serial Numbers', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
-                  Text('${available.length} available · ${sold.length} sold',
-                      style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (available.isNotEmpty) ...[
-                Text('Available Stock (${available.length})', style: AppTextStyles.labelSm.copyWith(color: AppColors.green)),
-                const SizedBox(height: 6),
-                ...available.map((serial) => _SerialTile(serial: serial, dateFormat: df, isDark: isDark)),
-                const SizedBox(height: 12),
-              ],
-              if (sold.isNotEmpty) ...[
-                Text('Sold History (${sold.length})', style: AppTextStyles.labelSm.copyWith(color: AppColors.blue)),
-                const SizedBox(height: 6),
-                ...sold.map((serial) => _SerialTile(
-                  serial: serial,
-                  dateFormat: df,
-                  isDark: isDark,
-                  onTap: () {
-                    final saleId = serial['saleId'] as String?;
-                    if (saleId != null && saleId.isNotEmpty) {
-                      Navigator.pushNamed(context, AppRoutes.salesDetails, arguments: saleId);
-                    }
-                  },
-                )),
-              ],
+              Text('Serial Numbers', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+              Text('${available.length} available · ${sold.length} sold',
+                  style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
             ],
           ),
-        );
-      },
+          const SizedBox(height: 12),
+          if (available.isNotEmpty) ...[
+            Text('Available Stock (${available.length})', style: AppTextStyles.labelSm.copyWith(color: AppColors.green)),
+            const SizedBox(height: 6),
+            ...available.map((serial) => _SerialTile(serial: serial, dateFormat: df, isDark: isDark)),
+            const SizedBox(height: 12),
+          ],
+          if (sold.isNotEmpty) ...[
+            Text('Sold History (${sold.length})', style: AppTextStyles.labelSm.copyWith(color: AppColors.blue)),
+            const SizedBox(height: 6),
+            ...sold.map((serial) => _SerialTile(
+              serial: serial,
+              dateFormat: df,
+              isDark: isDark,
+              onTap: () {
+                final saleId = serial['saleId'] as String?;
+                if (saleId != null && saleId.isNotEmpty) {
+                  Navigator.pushNamed(context, AppRoutes.salesDetails, arguments: saleId);
+                }
+              },
+            )),
+          ],
+        ],
+      ),
     );
   }
 
   Widget _buildIssuesSection(String productId, bool isDark) {
-    return FutureBuilder<List<ProductIssue>>(
-      future: ProductIssueService().getIssuesByProduct(productId),
-      builder: (context, snapshot) {
-        final all = snapshot.data ?? [];
-        final issues = all.where((i) => i.status != 'resolved').toList();
-        if (issues.isEmpty) return const SizedBox.shrink();
+    final all = _issues ?? [];
+    final issues = all.where((i) => i.status != 'resolved').toList();
+    if (issues.isEmpty) return const SizedBox.shrink();
 
         return ModernCard(
           padding: const EdgeInsets.all(16),
@@ -488,8 +495,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             ],
           ),
         );
-      },
-    );
   }
 
   Widget _buildQuantityProductInfo(Product product, bool isDark) {

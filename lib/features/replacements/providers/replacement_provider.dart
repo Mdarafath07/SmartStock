@@ -1,11 +1,9 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:smartstock/features/replacements/models/replacement_model.dart';
 import 'package:smartstock/features/replacements/services/replacement_service.dart';
 
 class ReplacementProvider extends ChangeNotifier {
   final ReplacementService _service = ReplacementService();
-  StreamSubscription<List<Replacement>>? _subscription;
 
   List<Replacement> _replacements = [];
   List<Replacement> get replacements => _replacements;
@@ -29,19 +27,14 @@ class ReplacementProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void loadReplacements() {
+  Future<void> loadReplacements() async {
     _setLoading(true);
-    _subscription?.cancel();
-    _subscription = _service.streamReplacements().listen(
-      (replacements) {
-        _replacements = replacements;
-        _setLoading(false);
-      },
-      onError: (e) {
-        _setError(e.toString());
-        _setLoading(false);
-      },
-    );
+    try {
+      _replacements = await _service.getReplacements();
+    } catch (e) {
+      _setError(e.toString());
+    }
+    _setLoading(false);
   }
 
   Future<void> createReplacement(Replacement replacement) async {
@@ -110,9 +103,4 @@ class ReplacementProvider extends ChangeNotifier {
   List<Replacement> get completedReplacements =>
       _replacements.where((r) => r.status == 'completed').toList();
 
-  @override
-  void dispose() {
-    _subscription?.cancel();
-    super.dispose();
-  }
 }

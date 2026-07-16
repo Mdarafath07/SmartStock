@@ -18,11 +18,14 @@ class SettingsService {
   Map<String, dynamic> _defaults() {
     return {
       'storeName': 'My Store',
+      'storePhone': '',
       'currency': 'USD',
       'currencySymbol': r'$',
       'timezone': 'UTC',
       'ownerName': 'Store Owner',
       'ownerEmail': 'owner@smartstock.com',
+      'storeEmail': 'info@mystore.com',
+      'storeAddress': '123 Main Street, City',
       'lowStockThreshold': 5,
       'overstockThreshold': 100,
     };

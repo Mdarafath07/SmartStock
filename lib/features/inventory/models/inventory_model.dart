@@ -1,3 +1,5 @@
+import 'package:smartstock/core/constants/app_constants.dart';
+
 class InventoryItem {
   final String productId;
   final String productName;
@@ -41,10 +43,10 @@ class InventoryItem {
     );
   }
 
-  static String computeStockStatus(int available, {int lowStockThreshold = 5, int overstockThreshold = 100}) {
+  static String computeStockStatus(int available) {
     if (available == 0) return 'out_of_stock';
-    if (available <= lowStockThreshold) return 'low_stock';
-    if (available >= overstockThreshold) return 'overstock';
+    if (available <= AppConstants.lowStockThreshold) return 'low_stock';
+    if (available >= AppConstants.overstockThreshold) return 'overstock';
     return 'in_stock';
   }
 

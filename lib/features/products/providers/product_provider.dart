@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:smartstock/features/products/models/product_model.dart';
@@ -38,7 +37,6 @@ class DuplicateSerialException implements Exception {
 
 class ProductProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  StreamSubscription? _subscription;
 
   List<Product> _products = [];
   List<Product> get products => _products;
@@ -52,40 +50,35 @@ class ProductProvider extends ChangeNotifier {
   String? _error;
   String? get error => _error;
 
-  void loadProducts({String? categoryId}) {
+  Future<void> loadProducts({String? categoryId}) async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
 
-    _subscription?.cancel();
-    final bool filterByCategory =
-        categoryId != null && categoryId.isNotEmpty;
-    Query query = _firestore.collection('products');
-    if (filterByCategory) {
-      query = query.where('categoryId', isEqualTo: categoryId);
-    } else {
-      query = query.orderBy('createdAt', descending: true);
-    }
+    try {
+      final bool filterByCategory = categoryId != null && categoryId.isNotEmpty;
+      Query query = _firestore.collection('products');
+      if (filterByCategory) {
+        query = query.where('categoryId', isEqualTo: categoryId);
+      } else {
+        query = query.orderBy('createdAt', descending: true);
+      }
 
-    _subscription = query.snapshots().listen(
-      (snapshot) async {
-        final products = snapshot.docs
-            .map((doc) =>
-                Product.fromMap(doc.data() as Map<String, dynamic>, doc.id))
-            .toList();
-        final enriched = await _enrichWithStockCounts(products);
-        _products = enriched;
-        if (filterByCategory) {
-          _products.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        }
-        _isLoading = false;
-        notifyListeners();
-      },
-      onError: (e) {
-        _error = e.toString();
-        _isLoading = false;
-        notifyListeners();
-      },
-    );
+      final snapshot = await query.limit(100).get();
+      final products = snapshot.docs
+          .map((doc) =>
+              Product.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+      final enriched = await _enrichWithStockCounts(products);
+      _products = enriched;
+      if (filterByCategory) {
+        _products.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      }
+    } catch (e) {
+      _error = e.toString();
+    }
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<List<Product>> _enrichWithStockCounts(List<Product> products) async {
@@ -371,21 +364,16 @@ class ProductProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final doc = await _firestore.collection('products').doc(id).get();
-      final isSerialized = (doc.data()?['isSerialized'] as bool?) ?? true;
-
       final batch = _firestore.batch();
       batch.delete(_firestore.collection('products').doc(id));
 
-      if (isSerialized) {
-        final serialSnapshot = await _firestore
-            .collection('serial_numbers')
-            .where('productId', isEqualTo: id)
-            .get();
+      final serialSnapshot = await _firestore
+          .collection('serial_numbers')
+          .where('productId', isEqualTo: id)
+          .get();
 
-        for (final doc in serialSnapshot.docs) {
-          batch.delete(doc.reference);
-        }
+      for (final doc in serialSnapshot.docs) {
+        batch.delete(doc.reference);
       }
 
       await batch.commit();
@@ -580,9 +568,4 @@ class ProductProvider extends ChangeNotifier {
     return result;
   }
 
-  @override
-  void dispose() {
-    _subscription?.cancel();
-    super.dispose();
-  }
 }

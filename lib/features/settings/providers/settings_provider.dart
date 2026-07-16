@@ -1,10 +1,15 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:smartstock/features/settings/services/settings_service.dart';
 
 class SettingsProvider extends ChangeNotifier {
   final SettingsService _service = SettingsService();
+  Timer? _debounceTimer;
 
   String _storeName = 'My Store';
+  String _storePhone = '';
+  String _storeEmail = 'info@mystore.com';
+  String _storeAddress = '123 Main Street, City';
   String _currency = 'USD';
   String _currencySymbol = r'$';
   String _timezone = 'UTC';
@@ -19,6 +24,9 @@ class SettingsProvider extends ChangeNotifier {
   bool _autoBackupEnabled = false;
 
   String get storeName => _storeName;
+  String get storePhone => _storePhone;
+  String get storeEmail => _storeEmail;
+  String get storeAddress => _storeAddress;
   String get currency => _currency;
   String get currencySymbol => _currencySymbol;
   String get timezone => _timezone;
@@ -43,22 +51,47 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> _debouncedSave(Map<String, dynamic> data) async {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () async {
+      await _service.saveSettings(data);
+    });
+  }
+
   Future<void> updateStoreName(String value) async {
     _storeName = value;
-    await _service.saveSettings({'storeName': value});
+    await _debouncedSave({'storeName': value});
+    notifyListeners();
+  }
+
+  Future<void> updateStorePhone(String value) async {
+    _storePhone = value;
+    await _debouncedSave({'storePhone': value});
+    notifyListeners();
+  }
+
+  Future<void> updateStoreEmail(String value) async {
+    _storeEmail = value;
+    await _debouncedSave({'storeEmail': value});
+    notifyListeners();
+  }
+
+  Future<void> updateStoreAddress(String value) async {
+    _storeAddress = value;
+    await _debouncedSave({'storeAddress': value});
     notifyListeners();
   }
 
   Future<void> updateCurrency(String value) async {
     _currency = value;
     _currencySymbol = SettingsService.currencySymbol(value);
-    await _service.saveSettings({'currency': value, 'currencySymbol': _currencySymbol});
+    await _debouncedSave({'currency': value, 'currencySymbol': _currencySymbol});
     notifyListeners();
   }
 
   Future<void> updateTimezone(String value) async {
     _timezone = value;
-    await _service.saveSettings({'timezone': value});
+    await _debouncedSave({'timezone': value});
     notifyListeners();
   }
 
@@ -71,13 +104,13 @@ class SettingsProvider extends ChangeNotifier {
 
   Future<void> updateLowStockThreshold(int value) async {
     _lowStockThreshold = value;
-    await _service.saveSettings({'lowStockThreshold': value});
+    await _debouncedSave({'lowStockThreshold': value});
     notifyListeners();
   }
 
   Future<void> updateOverstockThreshold(int value) async {
     _overstockThreshold = value;
-    await _service.saveSettings({'overstockThreshold': value});
+    await _debouncedSave({'overstockThreshold': value});
     notifyListeners();
   }
 
@@ -106,6 +139,9 @@ class SettingsProvider extends ChangeNotifier {
 
   void _apply(Map<String, dynamic> data) {
     _storeName = data['storeName'] as String? ?? _storeName;
+    _storePhone = data['storePhone'] as String? ?? _storePhone;
+    _storeEmail = data['storeEmail'] as String? ?? _storeEmail;
+    _storeAddress = data['storeAddress'] as String? ?? _storeAddress;
     _currency = data['currency'] as String? ?? _currency;
     _currencySymbol = data['currencySymbol'] as String? ?? _currencySymbol;
     _timezone = data['timezone'] as String? ?? _timezone;

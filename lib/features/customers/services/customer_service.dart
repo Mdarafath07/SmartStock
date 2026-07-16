@@ -8,7 +8,7 @@ class CustomerService {
   String get _customersCollection => 'customers';
   String get _salesCollection => 'sales';
 
-  Stream<List<Customer>> getCustomers({String? searchQuery}) {
+  Future<List<Customer>> getCustomers({String? searchQuery}) {
     Query query = _firestore.collection(_customersCollection);
 
     if (searchQuery != null && searchQuery.isNotEmpty) {
@@ -18,8 +18,9 @@ class CustomerService {
 
     return query
         .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
+        .limit(100)
+        .get()
+        .then((snapshot) => snapshot.docs
             .map((doc) => Customer.fromJson(doc.data() as Map<String, dynamic>, doc.id))
             .toList());
   }
@@ -64,13 +65,14 @@ class CustomerService {
     return results;
   }
 
-  Stream<List<Sale>> getCustomerPurchaseHistory(String customerId) {
+  Future<List<Sale>> getCustomerPurchaseHistory(String customerId) {
     return FirebaseFirestore.instance
         .collection(_salesCollection)
         .where('customerId', isEqualTo: customerId)
         .orderBy('saleDate', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
+        .limit(50)
+        .get()
+        .then((snapshot) => snapshot.docs
             .map((doc) => Sale.fromJson(doc.data(), doc.id))
             .where((sale) => sale.saleType != 'warranty_claim')
             .toList());

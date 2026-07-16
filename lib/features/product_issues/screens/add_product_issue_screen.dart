@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:smartstock/core/services/connectivity_service.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/features/product_issues/models/product_issue_model.dart';
 import 'package:smartstock/features/products/widgets/barcode_scanner_screen.dart';
@@ -27,6 +28,7 @@ class _AddProductIssueScreenState extends State<AddProductIssueScreen> {
   String? _productName;
   String? _modelNumber;
   bool _isSearching = false;
+  bool _isSubmitting = false;
   List<Map<String, dynamic>> _suggestions = [];
   Timer? _debounce;
   bool _showSuggestions = false;
@@ -317,9 +319,11 @@ class _AddProductIssueScreenState extends State<AddProductIssueScreen> {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: _submitIssue,
-                  icon: const Icon(Icons.send),
-                  label: const Text('Submit Issue Report'),
+                  onPressed: _isSubmitting ? null : _submitIssue,
+                  icon: _isSubmitting
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Icon(Icons.send),
+                  label: Text(_isSubmitting ? 'Submitting...' : 'Submit Issue Report'),
                 ),
               ),
             ],
@@ -330,6 +334,7 @@ class _AddProductIssueScreenState extends State<AddProductIssueScreen> {
   }
 
   Future<void> _submitIssue() async {
+    if (_isSubmitting) return;
     if (!_formKey.currentState!.validate()) return;
 
     if (_productId == null) {
@@ -339,6 +344,16 @@ class _AddProductIssueScreenState extends State<AddProductIssueScreen> {
       );
       return;
     }
+
+    final connectivity = context.read<ConnectivityService>();
+    if (!connectivity.canWrite()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No internet connection. Please connect to report issue.')),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
 
     final issue = ProductIssue(
       id: '',
@@ -372,6 +387,8 @@ class _AddProductIssueScreenState extends State<AddProductIssueScreen> {
           SnackBar(content: Text('Failed to report issue: $e')),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 

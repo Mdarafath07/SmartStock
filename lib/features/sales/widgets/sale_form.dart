@@ -4,11 +4,14 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/routes/app_routes.dart';
+import 'package:smartstock/core/services/connectivity_service.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/features/categories/providers/category_provider.dart';
 import 'package:smartstock/features/products/models/product_model.dart';
 import 'package:smartstock/features/products/providers/product_provider.dart';
+import 'package:smartstock/features/customers/models/customer_model.dart';
+import 'package:smartstock/features/customers/providers/customer_provider.dart';
 import 'package:smartstock/features/products/widgets/barcode_scanner_screen.dart';
 import 'package:smartstock/features/sales/providers/sale_provider.dart';
 import 'package:smartstock/features/sales/models/serial_number_model.dart';
@@ -29,6 +32,9 @@ class _SaleFormState extends State<SaleForm> {
   final _customerPhoneController = TextEditingController();
   final _customerNameFocus = FocusNode();
   final _customerPhoneFocus = FocusNode();
+  Customer? _selectedCustomer;
+  List<Customer> _customerSearchResults = [];
+  Timer? _customerSearchDebounce;
   bool _isSubmitting = false;
   int _currentPage = 0;
 
@@ -45,6 +51,7 @@ class _SaleFormState extends State<SaleForm> {
 
   @override
   void dispose() {
+    _customerSearchDebounce?.cancel();
     _customerNameController.dispose();
     _customerPhoneController.dispose();
     _customerNameFocus.dispose();
@@ -71,6 +78,15 @@ class _SaleFormState extends State<SaleForm> {
     }
 
     final productProvider = context.read<ProductProvider>();
+    final saleProvider = context.read<SaleProvider>();
+    final connectivity = context.read<ConnectivityService>();
+    if (!connectivity.canWrite()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No internet connection. Please connect to complete sale.')),
+      );
+      return;
+    }
+
     for (final item in _cartItems) {
       if (item.isSerialized) {
         for (final serial in item.serials) {
@@ -99,7 +115,6 @@ class _SaleFormState extends State<SaleForm> {
 
     setState(() => _isSubmitting = true);
 
-    final saleProvider = context.read<SaleProvider>();
     final items = _cartItems.expand((item) {
       if (item.isSerialized) {
         return item.serials.map((s) => {
@@ -141,9 +156,10 @@ class _SaleFormState extends State<SaleForm> {
       final customerPhone = _customerPhoneController.text.trim();
       final finalCustomerName = customerName.isEmpty ? 'Customer${Random().nextInt(900000) + 100000}' : customerName;
       final finalCustomerPhone = customerPhone.isEmpty ? 'N/A' : customerPhone;
+      final finalCustomerId = _selectedCustomer?.id ?? '';
       await saleProvider.bulkCreateSales(
         items: items,
-        customerId: '',
+        customerId: finalCustomerId,
         customerName: finalCustomerName,
         customerPhone: finalCustomerPhone,
       );
@@ -402,16 +418,81 @@ class _SaleFormState extends State<SaleForm> {
                   controller: _customerNameController,
                   focusNode: _customerNameFocus,
                   decoration: InputDecoration(
-                    hintText: 'Customer Name',
+                    hintText: 'Search or enter customer name',
                     prefixIcon: Icon(Icons.person_rounded, size: 20, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                    suffixIcon: _selectedCustomer != null
+                        ? IconButton(
+                            icon: const Icon(Icons.close_rounded, size: 18),
+                            onPressed: () {
+                              setState(() {
+                                _selectedCustomer = null;
+                                _customerNameController.clear();
+                                _customerPhoneController.clear();
+                                _customerSearchResults = [];
+                              });
+                            },
+                          )
+                        : null,
                     filled: false,
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
                   style: TextStyle(fontFamily: 'Inter', fontSize: 15, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
                   textInputAction: TextInputAction.next,
+                  onChanged: _onCustomerNameChanged,
                   onFieldSubmitted: (_) => _customerPhoneFocus.requestFocus(),
                 ),
+                if (_customerSearchResults.isNotEmpty && _selectedCustomer == null)
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 160),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      padding: EdgeInsets.zero,
+                      itemCount: _customerSearchResults.length,
+                      separatorBuilder: (_, _) => Divider(height: 1, color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(40)),
+                      itemBuilder: (context, index) {
+                        final c = _customerSearchResults[index];
+                        return InkWell(
+                          onTap: () {
+                            setState(() {
+                              _selectedCustomer = c;
+                              _customerNameController.text = c.name;
+                              _customerPhoneController.text = c.phone;
+                              _customerSearchResults = [];
+                            });
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 32, height: 32,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withAlpha(25),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Center(child: Text(c.name.isNotEmpty ? c.name[0].toUpperCase() : '?',
+                                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.primary))),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(c.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+                                      if (c.phone.isNotEmpty)
+                                        Text(c.phone, style: TextStyle(fontSize: 11, color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+                                    ],
+                                  ),
+                                ),
+                                Text('${c.totalOrders} orders', style: TextStyle(fontSize: 11, color: AppColors.primary)),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 Divider(height: 1, color: (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(80)),
                 TextFormField(
                   controller: _customerPhoneController,
@@ -429,9 +510,48 @@ class _SaleFormState extends State<SaleForm> {
               ],
             ),
           ),
+          if (_selectedCustomer != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.check_circle_rounded, size: 14, color: AppColors.primary),
+                    const SizedBox(width: 6),
+                    Text('Existing customer selected', style: TextStyle(fontSize: 12, color: AppColors.primary)),
+                    const SizedBox(width: 6),
+                    Text('(${_selectedCustomer!.totalOrders} orders)', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
+  }
+
+  void _onCustomerNameChanged(String value) {
+    _customerSearchDebounce?.cancel();
+    if (value.isEmpty || _selectedCustomer != null) {
+      setState(() => _customerSearchResults = []);
+      return;
+    }
+    _customerSearchDebounce = Timer(const Duration(milliseconds: 300), () async {
+      final results = await context.read<CustomerProvider>().searchCustomer(value);
+      if (mounted) {
+        setState(() {
+          _customerSearchResults = results.where((c) =>
+            c.name != _selectedCustomer?.name
+          ).toList();
+        });
+      }
+    });
   }
 
   Widget _buildCartStep(bool isDark, String symbol) {

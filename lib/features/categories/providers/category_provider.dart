@@ -1,11 +1,9 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart' hide Category;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:smartstock/features/categories/models/category_model.dart';
 
 class CategoryProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  StreamSubscription? _subscription;
 
   List<Category> _categories = [];
   List<Category> get categories => _categories;
@@ -16,29 +14,25 @@ class CategoryProvider extends ChangeNotifier {
   String? _error;
   String? get error => _error;
 
-  void loadCategories() {
+  Future<void> loadCategories() async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
 
-    _subscription?.cancel();
-    _subscription = _firestore
-        .collection('categories')
-        .orderBy('name')
-        .snapshots()
-        .listen(
-      (snapshot) {
-        _categories = snapshot.docs
-            .map((doc) => Category.fromJson({...doc.data(), 'id': doc.id}))
-            .toList();
-        _isLoading = false;
-        notifyListeners();
-      },
-      onError: (e) {
-        _error = e.toString();
-        _isLoading = false;
-        notifyListeners();
-      },
-    );
+    try {
+      final snapshot = await _firestore
+          .collection('categories')
+          .orderBy('name')
+          .limit(100)
+          .get();
+      _categories = snapshot.docs
+          .map((doc) => Category.fromJson({...doc.data(), 'id': doc.id}))
+          .toList();
+    } catch (e) {
+      _error = e.toString();
+    }
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<void> addCategory(String name, {String icon = 'inventory_2_rounded'}) async {
@@ -74,9 +68,4 @@ class CategoryProvider extends ChangeNotifier {
     }
   }
 
-  @override
-  void dispose() {
-    _subscription?.cancel();
-    super.dispose();
-  }
 }

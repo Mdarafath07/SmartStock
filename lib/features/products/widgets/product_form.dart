@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:smartstock/core/services/connectivity_service.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/features/categories/providers/category_provider.dart';
 import 'package:smartstock/features/products/models/product_model.dart';
@@ -280,6 +281,13 @@ class _ProductFormState extends State<ProductForm> {
 
   Future<void> _submit() async {
     if (_isSubmitting) return;
+    final connectivity = context.read<ConnectivityService>();
+    if (!connectivity.canWrite()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No internet connection. Please connect to save.')),
+      );
+      return;
+    }
     setState(() => _isSubmitting = true);
 
     if (!_formKey.currentState!.validate()) {
@@ -492,38 +500,33 @@ class _ProductFormState extends State<ProductForm> {
               ],
             ),
             const SizedBox(height: 10),
-            Container(
-              decoration: BoxDecoration(
-                color: AppColors.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(8),
+            TextField(
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              decoration: InputDecoration(
+                labelText: 'Quantity',
+                filled: true,
+                fillColor: AppColors.surfaceContainerLow,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
               ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.remove, size: 20),
-                    onPressed: _qty > 1
-                        ? () => setState(() => _qty--)
-                        : null,
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        '$_qty',
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.onSurface,
-                        ),
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.add, size: 20),
-                    onPressed: () => setState(() => _qty++),
-                  ),
-                ],
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.onSurface,
               ),
+              onChanged: (value) {
+                setState(() {
+                  _qty = int.tryParse(value) ?? 1;
+                });
+              },
             ),
           ],
           if (!widget.hideSerials && _isSerialized) ...[

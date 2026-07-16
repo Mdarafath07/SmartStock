@@ -1,11 +1,9 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:smartstock/features/product_issues/models/product_issue_model.dart';
 import 'package:smartstock/features/product_issues/services/product_issue_service.dart';
 
 class ProductIssueProvider extends ChangeNotifier {
   final ProductIssueService _service = ProductIssueService();
-  StreamSubscription<List<ProductIssue>>? _subscription;
 
   List<ProductIssue> _issues = [];
   List<ProductIssue> get issues => _issues;
@@ -29,19 +27,14 @@ class ProductIssueProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void loadIssues() {
+  Future<void> loadIssues() async {
     _setLoading(true);
-    _subscription?.cancel();
-    _subscription = _service.streamIssues().listen(
-      (issues) {
-        _issues = issues;
-        _setLoading(false);
-      },
-      onError: (e) {
-        _setError(e.toString());
-        _setLoading(false);
-      },
-    );
+    try {
+      _issues = await _service.getIssues();
+    } catch (e) {
+      _setError(e.toString());
+    }
+    _setLoading(false);
   }
 
   Future<void> createIssue(ProductIssue issue) async {
@@ -105,9 +98,4 @@ class ProductIssueProvider extends ChangeNotifier {
   List<ProductIssue> get resolvedIssues =>
       _issues.where((i) => i.status == 'resolved').toList();
 
-  @override
-  void dispose() {
-    _subscription?.cancel();
-    super.dispose();
-  }
 }

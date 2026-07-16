@@ -11,6 +11,7 @@ class DashboardStats {
   final int outOfStockProducts;
   final int activeWarranties;
   final int openIssueCount;
+  final int todayAddedQuantity;
   final List<TopSellingProduct> topSellingProducts;
   final List<ProductSummary> mostStockedProducts;
   final List<ProductSummary> recentlyAddedProducts;
@@ -31,6 +32,7 @@ class DashboardStats {
     this.outOfStockProducts = 0,
     this.activeWarranties = 0,
     this.openIssueCount = 0,
+    this.todayAddedQuantity = 0,
     this.topSellingProducts = const [],
     this.mostStockedProducts = const [],
     this.recentlyAddedProducts = const [],
@@ -54,6 +56,7 @@ class DashboardStats {
       outOfStockProducts: (json['outOfStockProducts'] as num?)?.toInt() ?? 0,
       activeWarranties: (json['activeWarranties'] as num?)?.toInt() ?? 0,
       openIssueCount: (json['openIssueCount'] as num?)?.toInt() ?? 0,
+      todayAddedQuantity: (json['todayAddedQuantity'] as num?)?.toInt() ?? 0,
       topSellingProducts:
           (json['topSellingProducts'] as List<dynamic>?)
                   ?.map((e) =>
@@ -103,6 +106,7 @@ class DashboardStats {
       'outOfStockProducts': outOfStockProducts,
       'activeWarranties': activeWarranties,
       'openIssueCount': openIssueCount,
+      'todayAddedQuantity': todayAddedQuantity,
       'topSellingProducts': topSellingProducts.map((e) => e.toJson()).toList(),
       'mostStockedProducts': mostStockedProducts.map((e) => e.toJson()).toList(),
       'recentlyAddedProducts':
@@ -127,6 +131,7 @@ class DashboardStats {
     int? outOfStockProducts,
     int? activeWarranties,
     int? openIssueCount,
+    int? todayAddedQuantity,
     List<TopSellingProduct>? topSellingProducts,
     List<ProductSummary>? mostStockedProducts,
     List<ProductSummary>? recentlyAddedProducts,
@@ -147,6 +152,7 @@ class DashboardStats {
       outOfStockProducts: outOfStockProducts ?? this.outOfStockProducts,
       activeWarranties: activeWarranties ?? this.activeWarranties,
       openIssueCount: openIssueCount ?? this.openIssueCount,
+      todayAddedQuantity: todayAddedQuantity ?? this.todayAddedQuantity,
       topSellingProducts: topSellingProducts ?? this.topSellingProducts,
       mostStockedProducts: mostStockedProducts ?? this.mostStockedProducts,
       recentlyAddedProducts:

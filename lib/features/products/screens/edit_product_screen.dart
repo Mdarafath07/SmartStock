@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:smartstock/core/services/connectivity_service.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/products/models/product_model.dart';
@@ -27,6 +28,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
   final _pendingSerials = <String>[];
   DateTime _stockDate = DateTime.now();
   bool _isStockSubmitting = false;
+  bool _isEditing = false;
   int _addQty = 1;
 
   @override
@@ -593,6 +595,15 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
   Future<void> _handleEditSave(
       BuildContext context, Product product, String symbol) async {
+    if (_isEditing) return;
+    final connectivity = context.read<ConnectivityService>();
+    if (!connectivity.canWrite()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No internet connection. Please connect to save.')),
+      );
+      return;
+    }
+    setState(() => _isEditing = true);
     try {
       final provider = context.read<ProductProvider>();
       await provider.updateProduct(product);
@@ -608,12 +619,21 @@ class _EditProductScreenState extends State<EditProductScreen> {
           SnackBar(content: Text('Failed to update product: $e')),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isEditing = false);
     }
   }
 
   Future<void> _handleAddStock(
       BuildContext context, ProductProvider provider, String symbol) async {
     if (_isStockSubmitting) return;
+    final connectivity = context.read<ConnectivityService>();
+    if (!connectivity.canWrite()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No internet connection. Please connect to add stock.')),
+      );
+      return;
+    }
     final product = provider.selectedProduct!;
 
     if (product.isSerialized) {

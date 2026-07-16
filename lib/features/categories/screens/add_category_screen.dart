@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:smartstock/core/services/connectivity_service.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/features/categories/providers/category_provider.dart';
 import 'package:smartstock/features/categories/widgets/icon_picker.dart';
@@ -25,7 +26,15 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
   }
 
   Future<void> _save() async {
+    if (_isSaving) return;
     if (!_formKey.currentState!.validate()) return;
+    final connectivity = context.read<ConnectivityService>();
+    if (!connectivity.canWrite()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No internet connection. Please connect to save.')),
+      );
+      return;
+    }
 
     setState(() => _isSaving = true);
     try {
@@ -34,7 +43,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
           .addCategory(_nameController.text.trim(), icon: _selectedIcon);
       if (mounted) Navigator.pop(context);
     } catch (_) {
-      setState(() => _isSaving = false);
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:smartstock/features/sales/models/sale_model.dart';
 import 'package:smartstock/features/sales/models/serial_number_model.dart';
@@ -6,9 +5,6 @@ import 'package:smartstock/features/sales/repositories/sale_repository.dart';
 
 class SaleProvider extends ChangeNotifier {
   final SaleRepository _repository = SaleRepository();
-  StreamSubscription<List<Sale>>? _todaysSalesSubscription;
-  StreamSubscription<List<Sale>>? _salesHistorySubscription;
-  StreamSubscription<List<SerialNumber>>? _serialNumbersSubscription;
 
   List<Sale> _todaysSales = [];
   List<Sale> get todaysSales => _todaysSales;
@@ -109,53 +105,44 @@ class SaleProvider extends ChangeNotifier {
     }
   }
 
-  void loadTodaysSales() {
-    _todaysSalesSubscription?.cancel();
-    _todaysSalesSubscription = _repository.getTodaysSales().listen(
-      (sales) {
-        _todaysSales = sales;
-        notifyListeners();
-      },
-      onError: (e) => _setError(e.toString()),
-    );
+  Future<void> loadTodaysSales() async {
+    try {
+      _todaysSales = await _repository.getTodaysSales();
+      notifyListeners();
+    } catch (e) {
+      _setError(e.toString());
+    }
     loadDailySalesSummary();
   }
 
-  void loadSalesHistory({
+  Future<void> loadSalesHistory({
     DateTime? startDate,
     DateTime? endDate,
     String? productId,
     String? categoryId,
     String? customerId,
-  }) {
-    _salesHistorySubscription?.cancel();
-    _salesHistorySubscription = _repository
-        .getSalesHistory(
-          startDate: startDate,
-          endDate: endDate,
-          productId: productId,
-          categoryId: categoryId,
-          customerId: customerId,
-        )
-        .listen(
-          (sales) {
-            _salesHistory = sales;
-            notifyListeners();
-          },
-          onError: (e) => _setError(e.toString()),
-        );
+  }) async {
+    try {
+      _salesHistory = await _repository.getSalesHistory(
+        startDate: startDate,
+        endDate: endDate,
+        productId: productId,
+        categoryId: categoryId,
+        customerId: customerId,
+      );
+      notifyListeners();
+    } catch (e) {
+      _setError(e.toString());
+    }
   }
 
-  void loadAvailableSerialNumbers(String productId) {
-    _serialNumbersSubscription?.cancel();
-    _serialNumbersSubscription =
-        _repository.getAvailableSerialNumbers(productId).listen(
-      (serialNumbers) {
-        _availableSerialNumbers = serialNumbers;
-        notifyListeners();
-      },
-      onError: (e) => _setError(e.toString()),
-    );
+  Future<void> loadAvailableSerialNumbers(String productId) async {
+    try {
+      _availableSerialNumbers = await _repository.getAvailableSerialNumbers(productId);
+      notifyListeners();
+    } catch (e) {
+      _setError(e.toString());
+    }
   }
 
   Future<void> loadDailySalesSummary() async {
@@ -221,11 +208,4 @@ class SaleProvider extends ChangeNotifier {
     }
   }
 
-  @override
-  void dispose() {
-    _todaysSalesSubscription?.cancel();
-    _salesHistorySubscription?.cancel();
-    _serialNumbersSubscription?.cancel();
-    super.dispose();
-  }
 }

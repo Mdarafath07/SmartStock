@@ -6,7 +6,7 @@ import 'package:smartstock/features/sales/models/sale_model.dart';
 class CustomerRepository {
   final CustomerService _customerService = CustomerService();
 
-  Stream<List<Customer>> getCustomers({String? searchQuery}) =>
+  Future<List<Customer>> getCustomers({String? searchQuery}) =>
       _customerService.getCustomers(searchQuery: searchQuery);
 
   Future<Customer?> getCustomerById(String id) =>
@@ -21,6 +21,6 @@ class CustomerRepository {
   Future<List<Customer>> searchCustomers(String query) =>
       _customerService.searchCustomers(query);
 
-  Stream<List<Sale>> getCustomerPurchaseHistory(String customerId) =>
+  Future<List<Sale>> getCustomerPurchaseHistory(String customerId) =>
       _customerService.getCustomerPurchaseHistory(customerId);
 }

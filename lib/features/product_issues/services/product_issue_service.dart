@@ -104,14 +104,15 @@ class ProductIssueService {
         .toList();
   }
 
-  Stream<List<ProductIssue>> streamIssues() {
-    return _firestore
+  Future<List<ProductIssue>> getIssues() async {
+    final snapshot = await _firestore
         .collection(_collection)
         .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => ProductIssue.fromJson(doc.data(), doc.id))
-            .toList());
+        .limit(100)
+        .get();
+    return snapshot.docs
+        .map((doc) => ProductIssue.fromJson(doc.data(), doc.id))
+        .toList();
   }
 
   Future<List<ProductIssue>> getIssuesByProduct(String productId) async {

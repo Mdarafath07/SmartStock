@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:smartstock/features/customers/models/customer_model.dart';
 import 'package:smartstock/features/customers/repositories/customer_repository.dart';
@@ -6,8 +5,6 @@ import 'package:smartstock/features/sales/models/sale_model.dart';
 
 class CustomerProvider extends ChangeNotifier {
   final CustomerRepository _repository = CustomerRepository();
-  StreamSubscription<List<Customer>>? _customersSubscription;
-  StreamSubscription<List<Sale>>? _purchaseHistorySubscription;
 
   List<Customer> _customers = [];
   List<Customer> get customers => _customers;
@@ -34,16 +31,13 @@ class CustomerProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void loadCustomers({String? searchQuery}) {
-    _customersSubscription?.cancel();
-    _customersSubscription =
-        _repository.getCustomers(searchQuery: searchQuery).listen(
-      (customers) {
-        _customers = customers;
-        notifyListeners();
-      },
-      onError: (e) => _setError(e.toString()),
-    );
+  Future<void> loadCustomers({String? searchQuery}) async {
+    try {
+      _customers = await _repository.getCustomers(searchQuery: searchQuery);
+      notifyListeners();
+    } catch (e) {
+      _setError(e.toString());
+    }
   }
 
   Future<void> loadCustomerDetails(String id) async {
@@ -62,16 +56,13 @@ class CustomerProvider extends ChangeNotifier {
     }
   }
 
-  void loadPurchaseHistory(String customerId) {
-    _purchaseHistorySubscription?.cancel();
-    _purchaseHistorySubscription =
-        _repository.getCustomerPurchaseHistory(customerId).listen(
-      (sales) {
-        _purchaseHistory = sales;
-        notifyListeners();
-      },
-      onError: (e) => _setError(e.toString()),
-    );
+  Future<void> loadPurchaseHistory(String customerId) async {
+    try {
+      _purchaseHistory = await _repository.getCustomerPurchaseHistory(customerId);
+      notifyListeners();
+    } catch (e) {
+      _setError(e.toString());
+    }
   }
 
   Future<List<Customer>> searchCustomer(String query) async {
@@ -105,10 +96,4 @@ class CustomerProvider extends ChangeNotifier {
     }
   }
 
-  @override
-  void dispose() {
-    _customersSubscription?.cancel();
-    _purchaseHistorySubscription?.cancel();
-    super.dispose();
-  }
 }

@@ -20,7 +20,8 @@ class ProductListScreen extends StatefulWidget {
   State<ProductListScreen> createState() => _ProductListScreenState();
 }
 
-class _ProductListScreenState extends State<ProductListScreen> {
+class _ProductListScreenState extends State<ProductListScreen>
+    with WidgetsBindingObserver {
   final _searchController = TextEditingController();
   String? _selectedCategoryId;
   String _searchQuery = '';
@@ -32,21 +33,44 @@ class _ProductListScreenState extends State<ProductListScreen> {
   bool get _priceFilterActive => _minPrice != null || _maxPrice != null;
   Product? _serialSearchedProduct;
   Timer? _searchDebounce;
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startAutoRefresh();
       context.read<ProductProvider>().loadProducts();
       context.read<CategoryProvider>().loadCategories();
     });
   }
 
+  void _startAutoRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(
+      const Duration(seconds: 15),
+      (_) => context.read<ProductProvider>().loadProducts(),
+    );
+  }
+
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _searchController.dispose();
     _searchDebounce?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<ProductProvider>().loadProducts();
+      _startAutoRefresh();
+    } else if (state == AppLifecycleState.paused) {
+      _refreshTimer?.cancel();
+    }
   }
 
   void _onSearch(String query) {
@@ -365,21 +389,22 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 
   Widget _buildStatsRow(List<Product> products, bool isDark) {
-    final inStock = products.where((p) => p.availableQuantity > 5).length;
-    final lowStock = products.where((p) => p.availableQuantity > 0 && p.availableQuantity <= 5).length;
-    final outOfStock = products.where((p) => p.availableQuantity <= 0).length;
+    final totalItems = products.fold<int>(0, (sum, p) => sum + p.availableQuantity);
+    final inStockProducts = products.where((p) => p.availableQuantity > 0).length;
+    final lowStockProducts = products.where((p) => p.availableQuantity > 0 && p.availableQuantity <= 5).length;
+    final outOfStockProducts = products.where((p) => p.availableQuantity <= 0).length;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          _MiniStat(label: 'Total', value: '${products.length}', color: AppColors.blue, isDark: isDark),
+          _MiniStat(label: 'Items', value: '$totalItems', color: AppColors.blue, isDark: isDark),
           const SizedBox(width: 8),
-          _MiniStat(label: 'In Stock', value: '$inStock', color: AppColors.green, isDark: isDark),
+          _MiniStat(label: 'In Stock', value: '$inStockProducts', color: AppColors.green, isDark: isDark),
           const SizedBox(width: 8),
-          _MiniStat(label: 'Low', value: '$lowStock', color: AppColors.orange, isDark: isDark),
+          _MiniStat(label: 'Low', value: '$lowStockProducts', color: AppColors.orange, isDark: isDark),
           const SizedBox(width: 8),
-          _MiniStat(label: 'Out', value: '$outOfStock', color: AppColors.red, isDark: isDark),
+          _MiniStat(label: 'Out', value: '$outOfStockProducts', color: AppColors.red, isDark: isDark),
         ],
       ),
     );

@@ -149,8 +149,25 @@ class SaleService {
       });
     }
 
-    if (customerId.isNotEmpty) {
-      final customerRef = _firestore.collection(_customersCollection).doc(customerId);
+    if (customerName.isNotEmpty && !customerName.startsWith('Customer')) {
+      final String targetId;
+      if (customerId.isNotEmpty) {
+        targetId = customerId;
+      } else if (customerPhone.isNotEmpty && customerPhone != 'N/A') {
+        final existing = await _firestore
+            .collection(_customersCollection)
+            .where('phone', isEqualTo: customerPhone)
+            .limit(1)
+            .get();
+        if (existing.docs.isNotEmpty) {
+          targetId = existing.docs.first.id;
+        } else {
+          targetId = _firestore.collection(_customersCollection).doc().id;
+        }
+      } else {
+        targetId = _firestore.collection(_customersCollection).doc().id;
+      }
+      final customerRef = _firestore.collection(_customersCollection).doc(targetId);
       final customerDoc = await customerRef.get();
       if (customerDoc.exists) {
         batch.update(customerRef, {
@@ -217,31 +234,32 @@ class SaleService {
     );
   }
 
-  Stream<List<Sale>> getTodaysSales() {
+  Future<List<Sale>> getTodaysSales() async {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
 
-    return _firestore
+    final snapshot = await _firestore
         .collection(_salesCollection)
         .where('saleDate',
             isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
         .where('saleDate', isLessThan: Timestamp.fromDate(endOfDay))
         .orderBy('saleDate', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Sale.fromJson(doc.data(), doc.id))
-            .where((sale) => sale.saleType != 'warranty_claim')
-            .toList());
+        .limit(100)
+        .get();
+    return snapshot.docs
+        .map((doc) => Sale.fromJson(doc.data(), doc.id))
+        .where((sale) => sale.saleType != 'warranty_claim')
+        .toList();
   }
 
-  Stream<List<Sale>> getSalesHistory({
+  Future<List<Sale>> getSalesHistory({
     DateTime? startDate,
     DateTime? endDate,
     String? productId,
     String? categoryId,
     String? customerId,
-  }) {
+  }) async {
     Query query = _firestore.collection(_salesCollection);
 
     bool hasDateFilter = startDate != null && endDate != null;
@@ -265,13 +283,14 @@ class SaleService {
       query = query.where('customerId', isEqualTo: customerId);
     }
 
-    return query
+    final snapshot = await query
         .orderBy('saleDate', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Sale.fromJson(doc.data() as Map<String, dynamic>, doc.id))
-            .where((sale) => sale.saleType != 'warranty_claim')
-            .toList());
+        .limit(100)
+        .get();
+    return snapshot.docs
+        .map((doc) => Sale.fromJson(doc.data() as Map<String, dynamic>, doc.id))
+        .where((sale) => sale.saleType != 'warranty_claim')
+        .toList();
   }
 
   Future<List<Sale>> searchSaleBySerialNumber(String serial) async {
@@ -330,14 +349,15 @@ class SaleService {
     };
   }
 
-  Stream<List<SerialNumber>> getAvailableSerialNumbers(String productId) {
-    return _firestore
+  Future<List<SerialNumber>> getAvailableSerialNumbers(String productId) async {
+    final snapshot = await _firestore
         .collection(_serialNumbersCollection)
         .where('productId', isEqualTo: productId)
         .where('status', isEqualTo: 'available')
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => SerialNumber.fromJson(doc.data(), doc.id))
-            .toList());
+        .limit(500)
+        .get();
+    return snapshot.docs
+        .map((doc) => SerialNumber.fromJson(doc.data(), doc.id))
+        .toList();
   }
 }

@@ -40,7 +40,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   void _startAutoRefresh() {
     _refreshTimer?.cancel();
     _refreshTimer = Timer.periodic(
-      const Duration(seconds: 30),
+      const Duration(seconds: 15),
       (_) => context.read<DashboardProvider>().refresh(),
     );
   }
@@ -487,10 +487,10 @@ class _DashboardScreenState extends State<DashboardScreen>
       _GroupData('Products', AppColors.blue, [
         _ItemData(Icons.inventory_2_rounded, '${stats.totalProducts}', 'Product Types', AppColors.blue, route: AppRoutes.products),
         _ItemData(Icons.inventory_rounded, '${stats.totalAvailableStock}', 'Total Items', AppColors.teal, route: AppRoutes.products),
-        _ItemData(Icons.add_circle_rounded, '${stats.recentlyAddedProducts.length}', 'Added Today', AppColors.primary, route: AppRoutes.dailyAdditions),
+        _ItemData(Icons.add_circle_rounded, '${stats.todayAddedQuantity}', 'Added Today', AppColors.primary, route: AppRoutes.dailyAdditions),
       ]),
       _GroupData('Stock Health', AppColors.green, [
-        _ItemData(Icons.check_circle_rounded, '${stats.totalAvailableStock}', 'In Stock', AppColors.green, barValue: (stats.totalAvailableStock / total * 100).clamp(0, 100), route: AppRoutes.products),
+        _ItemData(Icons.check_circle_rounded, '${stats.totalProducts - stats.outOfStockProducts}', 'In Stock', AppColors.green, barValue: ((stats.totalProducts - stats.outOfStockProducts) / total * 100).clamp(0, 100), route: AppRoutes.products),
         _ItemData(Icons.warning_rounded, '${stats.lowStockProducts}', 'Low Stock', AppColors.orange, barValue: (stats.lowStockProducts / total * 100).clamp(0, 100), route: AppRoutes.products),
         _ItemData(Icons.error_outline_rounded, '${stats.outOfStockProducts}', 'Out of Stock', AppColors.red, barValue: (stats.outOfStockProducts / total * 100).clamp(0, 100), route: AppRoutes.products),
       ]),
@@ -1432,7 +1432,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   double _calcStockHealth(DashboardStats s) {
     if (s.totalProducts == 0) return 0;
-    final h = s.totalProducts - s.lowStockProducts - s.outOfStockProducts;
+    final h = s.totalProducts - s.outOfStockProducts;
     return (h / s.totalProducts * 100).clamp(0, 100);
   }
 

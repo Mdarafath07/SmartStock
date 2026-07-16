@@ -29,23 +29,12 @@ class StatCard extends StatelessWidget {
         onPressed: onTap,
         builder: (context, isDisabled) => InkWell(
           onTap: isDisabled ? null : onTap,
-          child: Container(
-            decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                color.withValues(alpha: 0.08),
-                Colors.transparent,
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 height: 3,
-                color: color,
+                color: AppColors.primary,
               ),
               Padding(
                 padding: const EdgeInsets.all(16),
@@ -56,13 +45,13 @@ class StatCard extends StatelessWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.12),
+                        color: AppColors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         icon,
                         size: 22,
-                        color: color,
+                        color: AppColors.primary,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -71,14 +60,14 @@ class StatCard extends StatelessWidget {
                       style: AppTextStyles.displayLg.copyWith(
                         fontSize: 28,
                         height: 32 / 28,
-                        color: isDark ? AppColors.textPrimary : const Color(0xFF1B1B21),
+                        color: isDark ? AppColors.textPrimary : AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       title,
                       style: AppTextStyles.bodyMd.copyWith(
-                        color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
+                        color: isDark ? AppColors.textSecondary : AppColors.textSecondary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -90,7 +79,6 @@ class StatCard extends StatelessWidget {
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 }

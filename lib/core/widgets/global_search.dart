@@ -21,19 +21,19 @@ class _GlobalSearchState extends State<GlobalSearch> {
 
   final List<_SearchCategory> _categories = [
     _SearchCategory('Products', Icons.inventory_2_rounded, AppColors.primary),
-    _SearchCategory('Categories', Icons.category_rounded, AppColors.blue),
-    _SearchCategory('Warranty', Icons.verified_rounded, AppColors.orange),
-    _SearchCategory('Sales', Icons.receipt_rounded, AppColors.purple),
+    _SearchCategory('Categories', Icons.category_rounded, AppColors.primary),
+    _SearchCategory('Warranty', Icons.verified_rounded, AppColors.warning),
+    _SearchCategory('Sales', Icons.receipt_rounded, AppColors.primary),
     _SearchCategory('Customers', Icons.people_rounded, AppColors.primary),
-    _SearchCategory('Issues', Icons.bug_report_rounded, AppColors.red),
+    _SearchCategory('Issues', Icons.bug_report_rounded, AppColors.error),
   ];
 
   final List<_SearchResult> _mockResults = [
     _SearchResult('iPhone 15 Pro Max', 'Products', 'Smartphone, 256GB', Icons.phone_iphone_rounded, AppColors.primary, AppRoutes.productsDetails),
     _SearchResult('Samsung 65" TV', 'Products', 'OLED, 4K Smart TV', Icons.tv_rounded, AppColors.primary, AppRoutes.productsDetails),
-    _SearchResult('Warranty - iPhone 15', 'Warranty', 'Expires in 300 days', Icons.verified_rounded, AppColors.orange, AppRoutes.warrantyDetails),
-    _SearchResult('Sale #2024-001', 'Sales', '\$1,299 - John Doe', Icons.receipt_rounded, AppColors.purple, AppRoutes.salesDetails),
-    _SearchResult('John Doe', 'Customers', 'john@email.com', Icons.person_rounded, AppColors.blue, AppRoutes.customersDetails),
+    _SearchResult('Warranty - iPhone 15', 'Warranty', 'Expires in 300 days', Icons.verified_rounded, AppColors.warning, AppRoutes.warrantyDetails),
+    _SearchResult('Sale #2024-001', 'Sales', '\$1,299 - John Doe', Icons.receipt_rounded, AppColors.primary, AppRoutes.salesDetails),
+    _SearchResult('John Doe', 'Customers', 'john@email.com', Icons.person_rounded, AppColors.primary, AppRoutes.customersDetails),
   ];
 
   @override
@@ -107,7 +107,7 @@ class _GlobalSearchState extends State<GlobalSearch> {
             Icon(
               Icons.search_rounded,
               size: 20,
-              color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+              color: AppColors.textMuted,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -121,20 +121,20 @@ class _GlobalSearchState extends State<GlobalSearch> {
                   hintStyle: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
-                    color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+                    color: AppColors.textMuted,
                   ),
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 14,
-                  color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
             if (_searchQuery.isNotEmpty)
               IconButton(
-                icon: Icon(Icons.clear_rounded, size: 18, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                icon: Icon(Icons.clear_rounded, size: 18, color: AppColors.textMuted),
                 onPressed: () {
                   _searchController.clear();
                   setState(() => _searchQuery = '');
@@ -207,7 +207,7 @@ class _GlobalSearchState extends State<GlobalSearch> {
                     Text(
                       cat.name,
                       style: AppTextStyles.caption.copyWith(
-                        color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280),
+                        color: AppColors.textSecondary,
                       ),
                       textAlign: TextAlign.center,
                       maxLines: 1,
@@ -226,7 +226,7 @@ class _GlobalSearchState extends State<GlobalSearch> {
           icon: Icons.trending_up_rounded,
           title: 'Best Selling Products',
           subtitle: 'View top performing items',
-          color: AppColors.green,
+          color: AppColors.success,
           isDark: isDark,
           onTap: () => Navigator.pushNamed(context, AppRoutes.products),
         ),
@@ -234,7 +234,7 @@ class _GlobalSearchState extends State<GlobalSearch> {
           icon: Icons.inventory_rounded,
           title: 'Low Stock Items',
           subtitle: 'Products needing restock',
-          color: AppColors.orange,
+          color: AppColors.warning,
           isDark: isDark,
           onTap: () => Navigator.pushNamed(context, AppRoutes.inventory),
         ),
@@ -242,7 +242,7 @@ class _GlobalSearchState extends State<GlobalSearch> {
           icon: Icons.warning_rounded,
           title: 'Warranty Expiring Soon',
           subtitle: '7 items expiring this month',
-          color: AppColors.red,
+          color: AppColors.error,
           isDark: isDark,
           onTap: () => Navigator.pushNamed(context, AppRoutes.warranty),
         ),
@@ -260,7 +260,7 @@ class _GlobalSearchState extends State<GlobalSearch> {
         Text(
           '${_mockResults.length} results found',
           style: AppTextStyles.caption.copyWith(
-            color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+            color: AppColors.textMuted,
           ),
         ),
         const SizedBox(height: 12),
@@ -290,7 +290,7 @@ class _GlobalSearchState extends State<GlobalSearch> {
     return Text(
       title,
       style: AppTextStyles.titleSm.copyWith(
-        color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+        color: AppColors.textPrimary,
       ),
     );
   }
@@ -337,12 +337,12 @@ class _RecentSearchChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.history_rounded, size: 14, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+            Icon(Icons.history_rounded, size: 14, color: AppColors.textMuted),
             const SizedBox(width: 6),
             Text(
               text,
               style: AppTextStyles.labelSm.copyWith(
-                color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280),
+                color: AppColors.textSecondary,
               ),
             ),
           ],
@@ -396,12 +396,12 @@ class _SuggestionTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
-                  Text(subtitle, style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
+                  Text(title, style: AppTextStyles.titleSm.copyWith(color: AppColors.textPrimary)),
+                  Text(subtitle, style: AppTextStyles.bodySm.copyWith(color: AppColors.textSecondary)),
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios_rounded, size: 12, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+            Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.textMuted),
           ],
         ),
       ),
@@ -477,7 +477,7 @@ class _ResultTile extends StatelessWidget {
                       child: Text(
                         result.subtitle,
                         style: AppTextStyles.caption.copyWith(
-                          color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+                          color: AppColors.textMuted,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -496,7 +496,7 @@ class _ResultTile extends StatelessWidget {
 
   List<TextSpan> _highlightText(String text, String query, bool isDark) {
     if (query.isEmpty) {
-      return [TextSpan(text: text, style: TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)))];
+      return [TextSpan(text: text, style: TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary))];
     }
     final lowercase = text.toLowerCase();
     final queryLower = query.toLowerCase();
@@ -517,7 +517,7 @@ class _ResultTile extends StatelessWidget {
       spans.add(TextSpan(text: text.substring(start)));
     }
     final styled = spans.map((span) {
-      final style = TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E));
+      final style = TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary);
       return TextSpan(text: span.text, style: span.style ?? style);
     }).toList();
     return styled;

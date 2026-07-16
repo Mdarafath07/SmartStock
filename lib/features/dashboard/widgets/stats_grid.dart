@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/dashboard/models/dashboard_stats_model.dart';
 import 'package:smartstock/core/routes/app_routes.dart';
@@ -29,16 +30,12 @@ class StatsGrid extends StatelessWidget {
               icon: Icons.inventory_2,
               label: 'Total Products',
               value: NumberFormat('#,###').format(stats.totalProducts),
-              gradientColors: [const Color(0xFF7C4DFF), const Color(0xFFB388FF)],
-              iconBgColor: Colors.white.withValues(alpha: 0.2),
               route: AppRoutes.products,
             ),
             _StatCard(
               icon: Icons.check_circle,
               label: 'Available Stock',
               value: NumberFormat('#,###').format(stats.totalAvailableStock),
-              gradientColors: [const Color(0xFF00C853), const Color(0xFF69F0AE)],
-              iconBgColor: Colors.white.withValues(alpha: 0.2),
               route: AppRoutes.inventory,
             ),
             _StatCard(
@@ -46,8 +43,6 @@ class StatsGrid extends StatelessWidget {
               label: "Today's Sales",
               value: '$symbol${NumberFormat('#,###').format(stats.todaySalesAmount)}',
               subtitle: '${stats.todaySoldProducts} items',
-              gradientColors: [const Color(0xFF2979FF), const Color(0xFF82B1FF)],
-              iconBgColor: Colors.white.withValues(alpha: 0.2),
               route: AppRoutes.salesToday,
             ),
             _StatCard(
@@ -55,8 +50,6 @@ class StatsGrid extends StatelessWidget {
               label: 'Low Stock Items',
               value: '${stats.lowStockProducts}',
               subtitle: '${stats.outOfStockProducts} out of stock',
-              gradientColors: [const Color(0xFFFF6D00), const Color(0xFFFFAB40)],
-              iconBgColor: Colors.white.withValues(alpha: 0.2),
               route: AppRoutes.inventory,
             ),
           ],
@@ -66,13 +59,67 @@ class StatsGrid extends StatelessWidget {
   }
 }
 
+Widget _iconFromAsset(IconData icon, {double size = 24, required Color color}) {
+  String? asset;
+  if (icon == Icons.store_rounded) {
+    asset = 'store';
+  } else if (icon == Icons.check_circle_rounded || icon == Icons.check_circle) {
+    asset = 'instock';
+  } else if (icon == Icons.warning_rounded || icon == Icons.warning) {
+    asset = 'warning';
+  } else if (icon == Icons.error_outline_rounded) {
+    asset = 'sold_out';
+  } else if (icon == Icons.shopping_cart_rounded || icon == Icons.add_shopping_cart_rounded || icon == Icons.payments) {
+    asset = 'sell';
+  } else if (icon == Icons.trending_up_rounded) {
+    asset = 'top_sell';
+  } else if (icon == Icons.verified_rounded) {
+    asset = 'warranty';
+  } else if (icon == Icons.bug_report_rounded) {
+    asset = 'issues';
+  } else if (icon == Icons.people_rounded) {
+    asset = 'costomer';
+  } else if (icon == Icons.history_rounded) {
+    asset = 'history';
+  } else if (icon == Icons.assessment_rounded) {
+    asset = 'report';
+  } else if (icon == Icons.search_rounded) {
+    asset = 'search';
+  } else if (icon == Icons.add_circle_rounded) {
+    asset = 'product_add';
+  } else if (icon == Icons.post_add_rounded) {
+    asset = 'add_stock';
+  } else if (icon == Icons.inventory_2_rounded) {
+    asset = 'product';
+  } else if (icon == Icons.inventory_rounded || icon == Icons.inventory_2) {
+    asset = 'product_item';
+  } else if (icon == Icons.show_chart_rounded) {
+    asset = 'analyics';
+  }
+  if (asset != null) {
+    return Container(
+      width: size + 10,
+      height: size + 10,
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Center(
+        child: ColorFiltered(
+          colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+          child: Image.asset("assets/icons/$asset.png", width: size, height: size),
+        ),
+      ),
+    );
+  }
+  return Icon(icon, size: size, color: color);
+}
+
 class _StatCard extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
   final String? subtitle;
-  final List<Color> gradientColors;
-  final Color iconBgColor;
   final String route;
 
   const _StatCard({
@@ -80,8 +127,6 @@ class _StatCard extends StatelessWidget {
     required this.label,
     required this.value,
     this.subtitle,
-    required this.gradientColors,
-    required this.iconBgColor,
     required this.route,
   });
 
@@ -94,13 +139,7 @@ class _StatCard extends StatelessWidget {
         builder: (context, isDisabled) => InkWell(
           onTap: isDisabled ? null : () => Navigator.pushNamed(context, route),
           child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: gradientColors,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
+          color: AppColors.primary,
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
@@ -112,10 +151,10 @@ class _StatCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: iconBgColor,
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(icon, color: Colors.white, size: 18),
+                      child: _iconFromAsset(icon, color: Colors.white, size: 18),
                     ),
                     const Spacer(),
                     Icon(Icons.arrow_forward_ios,

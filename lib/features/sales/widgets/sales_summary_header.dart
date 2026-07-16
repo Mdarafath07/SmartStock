@@ -24,14 +24,7 @@ class SalesSummaryHeader extends StatelessWidget {
     return Card(
       child: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              theme.colorScheme.primary,
-              theme.colorScheme.primary.withValues(alpha: 0.8),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: theme.colorScheme.primary,
         ),
         child: Padding(
           padding: const EdgeInsets.all(20),

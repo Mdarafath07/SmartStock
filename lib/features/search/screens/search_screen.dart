@@ -201,7 +201,7 @@ class _SearchScreenState extends State<SearchScreen> {
               child: Text(
                 'Search',
                 style: AppTextStyles.headlineMd.copyWith(
-                  color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
@@ -212,19 +212,19 @@ class _SearchScreenState extends State<SearchScreen> {
                 focusNode: _focusNode,
                 onChanged: _onSearchChanged,
                 style: AppTextStyles.bodyMd.copyWith(
-                  color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                  color: AppColors.textPrimary,
                 ),
                 decoration: InputDecoration(
                   hintText: 'Search products, customers, sales...',
                   hintStyle: AppTextStyles.bodyMd.copyWith(
-                    color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+                    color: AppColors.textMuted,
                   ),
                   prefixIcon: Icon(Icons.search_rounded,
-                      size: 20, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                      size: 20, color: AppColors.textMuted),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
                           icon: Icon(Icons.close_rounded, size: 18,
-                              color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                              color: AppColors.textMuted),
                           onPressed: () {
                             _searchController.clear();
                             _onSearchChanged('');
@@ -241,7 +241,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: AppColors.green.withAlpha(80), width: 1),
+                    borderSide: BorderSide(color: AppColors.success.withAlpha(80), width: 1),
                   ),
                 ),
               ),
@@ -271,7 +271,7 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget _buildResults(
       List<MapEntry<String, List<Map<String, dynamic>>>> grouped, bool isDark) {
     if (_isSearching) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.green));
+      return const Center(child: CircularProgressIndicator(color: AppColors.success));
     }
 
     if (_searchController.text.trim().isEmpty) {
@@ -308,7 +308,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   Text(
                     section.key,
                     style: AppTextStyles.labelLg.copyWith(
-                      color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -321,7 +321,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     child: Text(
                       '${items.length}',
                       style: AppTextStyles.caption.copyWith(
-                        color: isDark ? AppColors.textMuted : const Color(0xFF6B7280),
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ),

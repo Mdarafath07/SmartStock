@@ -646,7 +646,7 @@ class _ProductFormState extends State<ProductForm> {
                     child: Row(
                       children: [
                         const Icon(Icons.check_circle_outline,
-                            size: 16, color: AppColors.green),
+                            size: 16, color: AppColors.success),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(_pendingSerials[i],
@@ -854,7 +854,7 @@ class _ProductFormState extends State<ProductForm> {
           _summaryRow('Selling Total', '$symbol${totalSelling.toStringAsFixed(0)}'),
           const Divider(height: 18),
           _summaryRow('Est. Profit', '$symbol${(totalSelling - totalPurchase).toStringAsFixed(0)}',
-              valueColor: AppColors.green),
+              valueColor: AppColors.success),
         ],
       ),
     );

@@ -142,7 +142,7 @@ class AddProductScreen extends StatelessWidget {
                                       fontWeight: FontWeight.w600)),
                             ),
                             Icon(Icons.open_in_new,
-                                size: 14, color: Colors.orange),
+                                size: 14, color: AppColors.textSecondary),
                           ],
                         ),
                         const SizedBox(height: 4),
@@ -189,7 +189,7 @@ class AddProductScreen extends StatelessWidget {
                             Text('Tap to view sale details',
                                 style: TextStyle(
                                     fontSize: 10,
-                                    color: Colors.orange,
+                                    color: AppColors.textSecondary,
                                     fontStyle: FontStyle.italic)),
                         ],
                       ],

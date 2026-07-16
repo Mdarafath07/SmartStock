@@ -63,17 +63,17 @@ class _ReplacementListScreenState extends State<ReplacementListScreen>
                   Text(
                     'Replacements',
                     style: AppTextStyles.headlineMd.copyWith(
-                      color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const Spacer(),
                   Container(
                     decoration: BoxDecoration(
-                      color: AppColors.orangeBg,
+                      color: AppColors.primary.withAlpha(20),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.add_rounded, color: AppColors.orange),
+                      icon: const Icon(Icons.add_rounded, color: AppColors.primary),
                       onPressed: () async {
                         await Navigator.push(
                           context,
@@ -104,12 +104,12 @@ class _ReplacementListScreenState extends State<ReplacementListScreen>
                 isScrollable: true,
                 indicatorSize: TabBarIndicatorSize.tab,
                 indicator: BoxDecoration(
-                  color: AppColors.orangeBg,
+                  color: AppColors.primary.withAlpha(20),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 dividerColor: Colors.transparent,
-                labelColor: AppColors.orange,
-                unselectedLabelColor: isDark ? AppColors.textMuted : const Color(0xFF6B7280),
+                labelColor: AppColors.primary,
+                unselectedLabelColor: AppColors.textSecondary,
                 labelStyle: AppTextStyles.labelMd,
                 unselectedLabelStyle: AppTextStyles.labelMd,
                 tabs: const [
@@ -125,7 +125,7 @@ class _ReplacementListScreenState extends State<ReplacementListScreen>
                 builder: (context, provider, _) {
                   if (provider.isLoading && provider.replacements.isEmpty) {
                     return const Center(child: CircularProgressIndicator(
-                      color: AppColors.orange,
+                      color: AppColors.primary,
                     ));
                   }
 
@@ -168,7 +168,7 @@ class _ReplacementListScreenState extends State<ReplacementListScreen>
             Text(
               'No records found',
               style: AppTextStyles.titleSm.copyWith(
-                color: isDark ? AppColors.textMuted : const Color(0xFF6B7280),
+                color: AppColors.textSecondary,
               ),
             ),
           ],
@@ -205,13 +205,13 @@ class _ReplacementListScreenState extends State<ReplacementListScreen>
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: AppColors.orangeBg,
+                      color: AppColors.primaryContainer,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
                       Icons.swap_horiz_rounded,
                       size: 20,
-                      color: AppColors.orange,
+                      color: AppColors.primary,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -222,20 +222,20 @@ class _ReplacementListScreenState extends State<ReplacementListScreen>
                         Text(
                           item.productName,
                           style: AppTextStyles.titleSm.copyWith(
-                            color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           'SN: ${item.oldSerialNumber}',
                           style: AppTextStyles.bodySm.copyWith(
-                            color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280),
+                            color: AppColors.textSecondary,
                           ),
                         ),
                         Text(
                           item.customerName,
                           style: AppTextStyles.caption.copyWith(
-                            color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+                            color: AppColors.textMuted,
                           ),
                         ),
                       ],
@@ -255,11 +255,11 @@ class _ReplacementListScreenState extends State<ReplacementListScreen>
   Widget _buildStatusBadge(String status) {
     switch (status) {
       case 'pending':
-        return const StatusBadge(label: 'Pending', color: AppColors.orange, icon: Icons.schedule_rounded);
+        return const StatusBadge(label: 'Pending', color: AppColors.warning, icon: Icons.schedule_rounded);
       case 'completed':
-        return const StatusBadge(label: 'Completed', color: AppColors.green, icon: Icons.check_circle_rounded);
+        return const StatusBadge(label: 'Completed', color: AppColors.success, icon: Icons.check_circle_rounded);
       case 'rejected':
-        return const StatusBadge(label: 'Rejected', color: AppColors.red, icon: Icons.cancel_rounded);
+        return const StatusBadge(label: 'Rejected', color: AppColors.error, icon: Icons.cancel_rounded);
       default:
         return StatusBadge(label: status, color: AppColors.grey);
     }

@@ -82,7 +82,6 @@ class ModernCard extends StatelessWidget {
   final Color? borderColor;
   final bool hasBorder;
   final bool hasShadow;
-  final LinearGradient? gradient;
 
   const ModernCard({
     super.key,
@@ -95,7 +94,6 @@ class ModernCard extends StatelessWidget {
     this.borderColor,
     this.hasBorder = false,
     this.hasShadow = true,
-    this.gradient,
   });
 
   @override
@@ -106,8 +104,7 @@ class ModernCard extends StatelessWidget {
 
     Widget card = Container(
       decoration: BoxDecoration(
-        color: gradient == null ? bgColor : null,
-        gradient: gradient,
+        color: bgColor,
         borderRadius: BorderRadius.circular(borderRadius),
         border: hasBorder ? Border.all(color: border, width: 0.5) : null,
         boxShadow: hasShadow
@@ -186,7 +183,7 @@ class StatCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: iconColor.withAlpha(25),
+                  color: AppColors.primary.withAlpha(25),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, size: 18, color: iconColor),
@@ -195,7 +192,7 @@ class StatCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: (change! >= 0 ? AppColors.greenBg : AppColors.redBg),
+                    color: (change! >= 0 ? AppColors.statusInStockBg : AppColors.statusOutOfStockBg),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Row(
@@ -204,7 +201,7 @@ class StatCard extends StatelessWidget {
                       Icon(
                         change! >= 0 ? Icons.trending_up : Icons.trending_down,
                         size: 10,
-                        color: change! >= 0 ? AppColors.green : AppColors.red,
+                        color: change! >= 0 ? AppColors.success : AppColors.error,
                       ),
                       const SizedBox(width: 2),
                       Text(
@@ -212,7 +209,7 @@ class StatCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: change! >= 0 ? AppColors.green : AppColors.red,
+                          color: change! >= 0 ? AppColors.success : AppColors.error,
                           fontFamily: 'Geist',
                         ),
                       ),
@@ -230,7 +227,7 @@ class StatCard extends StatelessWidget {
               fontWeight: FontWeight.w700,
               height: 1.1,
               letterSpacing: -0.02,
-              color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+              color: isDark ? AppColors.textPrimary : AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
@@ -240,7 +237,7 @@ class StatCard extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 12,
               fontWeight: FontWeight.w400,
-              color: isDark ? AppColors.textMuted : const Color(0xFF6B7280),
+              color: isDark ? AppColors.textMuted : AppColors.textSecondary,
               height: 1.2,
             ),
           ),
@@ -256,75 +253,6 @@ class StatCard extends StatelessWidget {
               ),
             ),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-class GradientStatCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final LinearGradient gradient;
-  final String? subtitle;
-
-  const GradientStatCard({
-    super.key,
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.gradient,
-    this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ModernCard(
-      padding: const EdgeInsets.all(16),
-      gradient: gradient,
-      hasShadow: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(30),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, size: 18, color: Colors.white),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              fontFamily: 'Hanken Grotesk',
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              height: 1.1,
-              letterSpacing: -0.02,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              color: Colors.white.withAlpha(180),
-              height: 1.2,
-            ),
-          ),
         ],
       ),
     );

@@ -3,40 +3,10 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // ───── Brand Primary ─────
-  static const Color primary = Color(0xFF2563EB);
-  static const Color primaryDark = Color(0xFF1D4ED8);
-  static const Color primaryLight = Color(0xFF60A5FA);
-  static const Color primaryBg = Color(0xFFEFF6FF);
-
-  // ───── Accent ─────
-  static const Color blue = Color(0xFF2563EB);
-  static const Color blueLight = Color(0xFF60A5FA);
-  static const Color blueBg = Color(0xFFEFF6FF);
-  static const Color blueDark = Color(0xFF1D4ED8);
-
-  static const Color purple = Color(0xFF7C3AED);
-  static const Color purpleLight = Color(0xFFA78BFA);
-  static const Color purpleBg = Color(0xFFF5F3FF);
-
-  static const Color orange = Color(0xFFF59E0B);
-  static const Color orangeLight = Color(0xFFFBBF24);
-  static const Color orangeBg = Color(0xFFFFFBEB);
-
-  static const Color red = Color(0xFFEF4444);
-  static const Color redLight = Color(0xFFFCA5A5);
-  static const Color redBg = Color(0xFFFEF2F2);
-
-  static const Color green = Color(0xFF10B981);
-  static const Color greenLight = Color(0xFF34D399);
-  static const Color greenBg = Color(0xFFECFDF5);
-  static const Color greenDark = Color(0xFF059669);
-
-  static const Color teal = Color(0xFF14B8A6);
-  static const Color tealBg = Color(0xFFF0FDFA);
-
-  static const Color pink = Color(0xFFEC4899);
-  static const Color pinkBg = Color(0xFFFDF2F8);
+  // ───── Black Primary ─────
+  static const Color primary = Color(0xFF111111);
+  static const Color primaryDark = Color(0xFF000000);
+  static const Color primaryLight = Color(0xFF374151);
 
   // ───── Surfaces ─────
   static const Color background = Color(0xFFF8FAFC);
@@ -54,9 +24,9 @@ class AppColors {
   static const Color whiteSoft = Color(0xFFF8FAFC);
   static const Color whiteMuted = Color(0xFFE2E8F0);
   static const Color greyLight = Color(0xFFCBD5E1);
-  static const Color grey = Color(0xFF64748B);
-  static const Color greyDark = Color(0xFF475569);
-  static const Color greyDarker = Color(0xFF334155);
+  static const Color grey = Color(0xFF9CA3AF);
+  static const Color greyDark = Color(0xFF6B7280);
+  static const Color greyDarker = Color(0xFF374151);
 
   // ───── Glassmorphism ─────
   static const Color glassBg = Color(0x0DFFFFFF);
@@ -69,23 +39,29 @@ class AppColors {
   static const Color shimmerHighlight = Color(0xFFE2E8F0);
 
   // ───── Text ─────
-  static const Color textPrimary = Color(0xFF050B14);
-  static const Color textSecondary = Color(0xFF1E293B);
-  static const Color textMuted = Color(0xFF64748B);
+  static const Color textPrimary = Color(0xFF111111);
+  static const Color textNormal = Color(0xFF374151);
+  static const Color textSecondary = Color(0xFF6B7280);
+  static const Color textMuted = Color(0xFF9CA3AF);
   static const Color textOnDark = Color(0xFFF8FAFC);
 
-  // ───── Semantic ─────
+  // ───── Icons ─────
+  static const Color iconPrimaryAction = Color(0xFF111111);
+  static const Color iconCardAction = Color(0xFF374151);
+  static const Color iconNavigationActive = Color(0xFF111111);
+  static const Color iconNavigationInactive = Color(0xFF9CA3AF);
+
+  // ───── Semantic / Status ─────
   static const Color success = Color(0xFF10B981);
   static const Color warning = Color(0xFFF59E0B);
   static const Color error = Color(0xFFEF4444);
-  static const Color info = Color(0xFF2563EB);
 
   // ─── Material Design backward-compat ───
   static const Color onSurface = Color(0xFF050B14);
   static const Color onSurfaceVariant = Color(0xFF1E293B);
-  static const Color primaryContainer = Color(0xFFEFF6FF);
+  static const Color primaryContainer = Color(0xFFF3F4F6);
   static const Color onPrimary = Color(0xFFFFFFFF);
-  static const Color onPrimaryContainer = Color(0xFF1D4ED8);
+  static const Color onPrimaryContainer = Color(0xFF111111);
   static const Color surfaceContainer = Color(0xFFFFFFFF);
   static const Color surfaceContainerLow = Color(0xFFF8FAFC);
   static const Color surfaceContainerHigh = Color(0xFFE2E8F0);
@@ -94,18 +70,18 @@ class AppColors {
   static const Color inverseOnSurface = Color(0xFFF8FAFC);
   static const Color outline = Color(0xFFCBD5E1);
   static const Color outlineVariant = Color(0xFFCBD5E1);
-  static const Color secondary = Color(0xFF1E293B);
+  static const Color secondary = Color(0xFF374151);
   static const Color secondaryContainer = Color(0xFFE2E8F0);
-  static const Color tertiary = Color(0xFF7C3AED);
-  static const Color tertiaryContainer = Color(0xFFF5F3FF);
+  static const Color tertiary = Color(0xFF374151);
+  static const Color tertiaryContainer = Color(0xFFE2E8F0);
   static const Color errorContainer = Color(0xFFFEF2F2);
   static const Color onError = Color(0xFFFFFFFF);
   static const Color onErrorContainer = Color(0xFF991B1B);
   static const Color surfaceBright = Color(0xFFFFFFFF);
   static const Color surfaceDim = Color(0xFFF8FAFC);
   static const Color surfaceContainerLowest = Color(0xFFFFFFFF);
-  static const Color primaryFixed = Color(0xFFEFF6FF);
-  static const Color primaryFixedDim = Color(0xFFBFDBFE);
+  static const Color primaryFixed = Color(0xFFF3F4F6);
+  static const Color primaryFixedDim = Color(0xFFD1D5DB);
 
   // ─── Stock status ───
   static const Color statusInStock = Color(0xFF059669);
@@ -114,8 +90,8 @@ class AppColors {
   static const Color statusLowStockBg = Color(0xFFFFFBEB);
   static const Color statusOutOfStock = Color(0xFFDC2626);
   static const Color statusOutOfStockBg = Color(0xFFFEF2F2);
-  static const Color statusOverstock = Color(0xFF2563EB);
-  static const Color statusOverstockBg = Color(0xFFEFF6FF);
+  static const Color statusOverstock = Color(0xFF111111);
+  static const Color statusOverstockBg = Color(0xFFF3F4F6);
 
   // ─── Helper ───
   static Color getTextColor(BuildContext context) => textPrimary;

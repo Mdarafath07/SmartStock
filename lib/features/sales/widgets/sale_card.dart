@@ -43,9 +43,9 @@ class SaleCard extends StatelessWidget {
                       ),
                     ),
                     if (sale.warrantyClaimed || sale.isWarrantyClaim)
-                      _badge('Warranty', Colors.blue, theme)
+                      _badge('Warranty', const Color(0xFF6B7280), theme)
                     else if (sale.isReplacement)
-                      _badge('Replacement', Colors.orange, theme)
+                      _badge('Replacement', const Color(0xFF6B7280), theme)
                     else if (sale.warrantyExpiryDate.isAfter(DateTime.now()))
                       _badge('Warranty', Colors.green, theme)
                     else

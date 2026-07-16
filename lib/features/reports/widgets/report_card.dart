@@ -30,14 +30,7 @@ class ReportCard extends StatelessWidget {
           onTap: isDisabled ? null : onTap,
           child: Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                color.withValues(alpha: 0.08),
-                Colors.transparent,
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
+            color: color.withValues(alpha: 0.04),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

@@ -77,7 +77,7 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
           Row(
             children: [
               Text('Configuration', style: AppTextStyles.titleSm.copyWith(
-                color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                color: AppColors.textPrimary,
               )),
               const Spacer(),
               GestureDetector(
@@ -85,15 +85,15 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _locked ? AppColors.orange.withAlpha(20) : AppColors.green.withAlpha(20),
+                    color: _locked ? AppColors.warning.withAlpha(20) : AppColors.success.withAlpha(20),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(_locked ? Icons.lock_rounded : Icons.lock_open_rounded, size: 14, color: _locked ? AppColors.orange : AppColors.green),
+                      Icon(_locked ? Icons.lock_rounded : Icons.lock_open_rounded, size: 14, color: _locked ? AppColors.warning : AppColors.success),
                       const SizedBox(width: 4),
-                      Text(_locked ? 'Locked' : 'Unlocked', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _locked ? AppColors.orange : AppColors.green)),
+                      Text(_locked ? 'Locked' : 'Unlocked', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _locked ? AppColors.warning : AppColors.success)),
                     ],
                   ),
                 ),
@@ -153,7 +153,7 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.autorenew_rounded, size: 18, color: AppColors.green),
+                Icon(Icons.autorenew_rounded, size: 18, color: AppColors.success),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -161,10 +161,10 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
                     children: [
                       Text('Auto Backup', style: AppTextStyles.bodyMd.copyWith(
                         fontWeight: FontWeight.w500,
-                        color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                        color: AppColors.textPrimary,
                       )),
                       Text('Auto-sync all data to sheets every 5 minutes',
-                          style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8))),
+                          style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
                     ],
                   ),
                 ),
@@ -182,7 +182,7 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
                           await syncProvider.setAutoSync(v);
                           await settings.setAutoBackup(v);
                         },
-                  activeThumbColor: AppColors.green,
+                  activeThumbColor: AppColors.success,
                 ),
               ],
             ),
@@ -213,15 +213,15 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
         readOnly: readOnly,
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(fontSize: 13, color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8)),
+          hintStyle: TextStyle(fontSize: 13, color: AppColors.textMuted),
           border: InputBorder.none,
           isDense: true,
         ),
         style: TextStyle(
           fontSize: monospace ? 11 : 13,
           color: readOnly
-              ? (isDark ? AppColors.textMuted : const Color(0xFF94A3B8))
-              : (isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+              ? AppColors.textMuted
+              : AppColors.textPrimary,
           fontFamily: monospace ? 'monospace' : null,
         ),
         onChanged: readOnly ? null : onChanged,
@@ -243,7 +243,7 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
                 decoration: BoxDecoration(
                   color: syncProvider.isSyncing
                       ? AppColors.primary.withAlpha(25)
-                      : AppColors.green.withAlpha(25),
+                      : AppColors.success.withAlpha(25),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -252,7 +252,7 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
                       : Icons.cloud_done_rounded,
                   color: syncProvider.isSyncing
                       ? AppColors.primary
-                      : AppColors.green,
+                      : AppColors.success,
                   size: 22,
                 ),
               ),
@@ -266,7 +266,7 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
                           ? 'Syncing...'
                           : 'Backup Status',
                       style: AppTextStyles.titleMd.copyWith(
-                        color: isDark ? AppColors.textPrimary : const Color(0xFF0F172A),
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -275,7 +275,7 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
                           ? 'Last: ${_formatTime(syncProvider.lastSyncTime!)}'
                           : 'Not backed up yet',
                       style: AppTextStyles.caption.copyWith(
-                        color: isDark ? AppColors.textMuted : const Color(0xFF64748B),
+                        color: AppColors.textMuted,
                       ),
                     ),
                   ],
@@ -285,13 +285,13 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.orange.withAlpha(25),
+                    color: AppColors.warning.withAlpha(25),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '${syncProvider.pendingChanges} pending',
                     style: AppTextStyles.caption.copyWith(
-                      color: AppColors.orange,
+                      color: AppColors.warning,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -348,25 +348,25 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
           Text(
             'Auto-Sync Active',
             style: AppTextStyles.titleSm.copyWith(
-              color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Data will be synced to Google Sheets every 5 minutes.',
             style: AppTextStyles.caption.copyWith(
-              color: isDark ? AppColors.textMuted : const Color(0xFF64748B),
+              color: AppColors.textMuted,
             ),
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              Icon(Icons.check_circle_rounded, size: 16, color: AppColors.green),
+              Icon(Icons.check_circle_rounded, size: 16, color: AppColors.success),
               const SizedBox(width: 6),
               Text(
                 'Auto-backup every 5 min',
                 style: AppTextStyles.caption.copyWith(
-                  color: AppColors.green,
+                  color: AppColors.success,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -379,7 +379,7 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
 
   Widget _buildResultCard(BuildContext context, SyncProvider syncProvider, bool isDark) {
     final result = syncProvider.lastResult!;
-    final textColor = isDark ? AppColors.textPrimary : const Color(0xFF0F172A);
+    final textColor = AppColors.textPrimary;
 
     return ModernCard(
       padding: const EdgeInsets.all(16),
@@ -392,7 +392,7 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
                 result.hasErrors
                     ? Icons.warning_amber_rounded
                     : Icons.check_circle_rounded,
-                color: result.hasErrors ? AppColors.orange : AppColors.green,
+                color: result.hasErrors ? AppColors.warning : AppColors.success,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -414,7 +414,7 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.red.withAlpha(15),
+                color: AppColors.error.withAlpha(15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -424,7 +424,7 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
                   child: Text(
                     e,
                     style: AppTextStyles.caption.copyWith(
-                      color: AppColors.red,
+                      color: AppColors.error,
                       fontSize: 11,
                     ),
                   ),
@@ -462,7 +462,7 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
         children: [
           Expanded(
             child: Text(label, style: AppTextStyles.caption.copyWith(
-              color: const Color(0xFF64748B),
+              color: AppColors.textSecondary,
             )),
           ),
           Text(value, style: AppTextStyles.caption.copyWith(
@@ -509,7 +509,7 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
                           ? Icons.check_circle_rounded
                           : Icons.error_rounded,
                       size: 16,
-                      color: e.value >= 0 ? AppColors.green : AppColors.red,
+                      color: e.value >= 0 ? AppColors.success : AppColors.error,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -526,8 +526,8 @@ class _SyncDashboardScreenState extends State<SyncDashboardScreen> {
                       e.value >= 0 ? '${e.value} records' : 'Failed',
                       style: AppTextStyles.caption.copyWith(
                         color: e.value >= 0
-                            ? AppColors.green
-                            : AppColors.red,
+                            ? AppColors.success
+                            : AppColors.error,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

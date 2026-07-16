@@ -120,7 +120,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(width: 72, height: 72, decoration: BoxDecoration(color: AppColors.redBg, borderRadius: BorderRadius.circular(18)),
+          Container(width: 72, height: 72, decoration: BoxDecoration(color: AppColors.statusOutOfStockBg, borderRadius: BorderRadius.circular(18)),
             child: const Icon(Icons.error_outline_rounded, size: 32, color: AppColors.error)),
           const SizedBox(height: 16),
           Text(_error ?? 'Unknown error', style: AppTextStyles.bodyMd.copyWith(color: AppColors.textSecondary), textAlign: TextAlign.center),
@@ -179,8 +179,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: AppColors.purpleBg, borderRadius: BorderRadius.circular(6)),
-                        child: Text(product.categoryName, style: const TextStyle(fontFamily: 'Geist', fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.purple)),
+                        decoration: BoxDecoration(color: AppColors.primaryContainer, borderRadius: BorderRadius.circular(6)),
+                        child: Text(product.categoryName, style: const TextStyle(fontFamily: 'Geist', fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primary)),
                       ),
                     ],
                   ],
@@ -218,13 +218,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           height: 300,
           width: double.infinity,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: isDark
-                  ? [const Color(0xFF1A1A2E), const Color(0xFF0D0D0D)]
-                  : [AppColors.greenLight.withAlpha(50), const Color(0xFFF5F5F7)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
+            color: isDark ? const Color(0xFF1A1A2E) : const Color(0xFFF5F5F7),
           ),
           child: product.imageUrl.isNotEmpty
               ? GestureDetector(
@@ -285,12 +279,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(product.productName, style: AppTextStyles.headlineMd.copyWith(
-                color: product.imageUrl.isNotEmpty ? Colors.white : (isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                color: product.imageUrl.isNotEmpty ? Colors.white : (AppColors.textPrimary),
               )),
               const SizedBox(height: 2),
               Text('${product.brandName.isNotEmpty ? '${product.brandName} · ' : ''}${product.modelNumber}',
                   style: AppTextStyles.bodySm.copyWith(
-                    color: product.imageUrl.isNotEmpty ? Colors.white.withValues(alpha: 0.85) : (isDark ? AppColors.textMuted : const Color(0xFF6B7280)),
+                    color: product.imageUrl.isNotEmpty ? Colors.white.withValues(alpha: 0.85) : (AppColors.textSecondary),
                   )),
               SizedBox(height: product.imageUrl.isNotEmpty ? 16 : 8),
             ],
@@ -324,18 +318,18 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Pricing', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          Text('Pricing', style: AppTextStyles.titleSm.copyWith(color: AppColors.textPrimary)),
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _PriceTile(label: 'Purchase Price', value: fmt.format(product.purchasePrice), color: AppColors.blue, isDark: isDark)),
+              Expanded(child: _PriceTile(label: 'Purchase Price', value: fmt.format(product.purchasePrice), color: AppColors.primary, isDark: isDark)),
               const SizedBox(width: 12),
               Expanded(child: _PriceTile(label: 'Selling Price', value: fmt.format(product.sellingPrice), color: AppColors.primary, isDark: isDark)),
               const SizedBox(width: 12),
               Expanded(child: _PriceTile(
                 label: 'Margin',
                 value: '${((product.sellingPrice - product.purchasePrice) / product.purchasePrice * 100).toStringAsFixed(0)}%',
-                color: AppColors.green,
+                color: AppColors.success,
                 isDark: isDark,
               )),
             ],
@@ -352,15 +346,15 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Stock Information', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          Text('Stock Information', style: AppTextStyles.titleSm.copyWith(color: AppColors.textPrimary)),
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _StockIndicator(label: 'Available', value: '${product.availableQuantity}', color: AppColors.green, total: product.availableQuantity + product.soldQuantity, isDark: isDark)),
+              Expanded(child: _StockIndicator(label: 'Available', value: '${product.availableQuantity}', color: AppColors.success, total: product.availableQuantity + product.soldQuantity, isDark: isDark)),
               const SizedBox(width: 8),
-              Expanded(child: _StockIndicator(label: 'Sold', value: '${product.soldQuantity}', color: AppColors.blue, total: product.availableQuantity + product.soldQuantity, isDark: isDark)),
+              Expanded(child: _StockIndicator(label: 'Sold', value: '${product.soldQuantity}', color: AppColors.primary, total: product.availableQuantity + product.soldQuantity, isDark: isDark)),
               const SizedBox(width: 8),
-              Expanded(child: _StockIndicator(label: 'Issues', value: '$issueCount', color: AppColors.red, total: issueCount > 0 ? issueCount : 1, isDark: isDark)),
+              Expanded(child: _StockIndicator(label: 'Issues', value: '$issueCount', color: AppColors.error, total: issueCount > 0 ? issueCount : 1, isDark: isDark)),
             ],
           ),
         ],
@@ -374,9 +368,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Description', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          Text('Description', style: AppTextStyles.titleSm.copyWith(color: AppColors.textPrimary)),
           const SizedBox(height: 8),
-          Text(description, style: AppTextStyles.bodyMd.copyWith(color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
+          Text(description, style: AppTextStyles.bodyMd.copyWith(color: AppColors.textSecondary)),
         ],
       ),
     );
@@ -388,7 +382,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Product Details', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          Text('Product Details', style: AppTextStyles.titleSm.copyWith(color: AppColors.textPrimary)),
           const SizedBox(height: 12),
           _DetailRow(label: 'Warranty', value: '${product.warrantyMonths} months', isDark: isDark),
           _DetailRow(label: 'Created', value: df.format(product.createdAt), isDark: isDark),
@@ -415,20 +409,20 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Serial Numbers', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+              Text('Serial Numbers', style: AppTextStyles.titleSm.copyWith(color: AppColors.textPrimary)),
               Text('${available.length} available · ${sold.length} sold',
-                  style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+                  style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
             ],
           ),
           const SizedBox(height: 12),
           if (available.isNotEmpty) ...[
-            Text('Available Stock (${available.length})', style: AppTextStyles.labelSm.copyWith(color: AppColors.green)),
+            Text('Available Stock (${available.length})', style: AppTextStyles.labelSm.copyWith(color: AppColors.success)),
             const SizedBox(height: 6),
             ...available.map((serial) => _SerialTile(serial: serial, dateFormat: df, isDark: isDark)),
             const SizedBox(height: 12),
           ],
           if (sold.isNotEmpty) ...[
-            Text('Sold History (${sold.length})', style: AppTextStyles.labelSm.copyWith(color: AppColors.blue)),
+            Text('Sold History (${sold.length})', style: AppTextStyles.labelSm.copyWith(color: AppColors.primary)),
             const SizedBox(height: 6),
             ...sold.map((serial) => _SerialTile(
               serial: serial,
@@ -459,9 +453,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.bug_report_rounded, size: 16, color: AppColors.red),
+                  const Icon(Icons.bug_report_rounded, size: 16, color: AppColors.error),
                   const SizedBox(width: 6),
-                  Text('Open Issues (${issues.length})', style: AppTextStyles.titleSm.copyWith(color: AppColors.red)),
+                  Text('Open Issues (${issues.length})', style: AppTextStyles.titleSm.copyWith(color: AppColors.error)),
                 ],
               ),
               const SizedBox(height: 12),
@@ -469,9 +463,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 margin: const EdgeInsets.only(bottom: 6),
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.redBg.withAlpha(60),
+                  color: AppColors.statusOutOfStockBg.withAlpha(60),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.red.withAlpha(40)),
+                  border: Border.all(color: AppColors.error.withAlpha(40)),
                 ),
                 child: InkWell(
                   onTap: () => Navigator.pushNamed(context, AppRoutes.productIssuesDetails, arguments: issue.id),
@@ -481,13 +475,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(issue.issueType.toUpperCase(), style: AppTextStyles.labelSm.copyWith(color: AppColors.red)),
-                            Text(issue.issueDescription, style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                            Text(issue.issueType.toUpperCase(), style: AppTextStyles.labelSm.copyWith(color: AppColors.error)),
+                            Text(issue.issueDescription, style: AppTextStyles.bodySm.copyWith(color: AppColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
                             Text('SN: ${issue.serialNumber}', style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
                           ],
                         ),
                       ),
-                      Icon(Icons.chevron_right_rounded, size: 18, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                      Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textMuted),
                     ],
                   ),
                 ),
@@ -507,7 +501,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             children: [
               const Icon(Icons.inventory_2_rounded, size: 16, color: AppColors.primary),
               const SizedBox(width: 6),
-              Text('Stock Information', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+              Text('Stock Information', style: AppTextStyles.titleSm.copyWith(color: AppColors.textPrimary)),
             ],
           ),
           const SizedBox(height: 12),
@@ -545,9 +539,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
   Color _getStockColor(String status) {
     switch (status) {
-      case 'In Stock': return AppColors.green;
-      case 'Low Stock': return AppColors.orange;
-      case 'Out of Stock': return AppColors.red;
+      case 'In Stock': return AppColors.success;
+      case 'Low Stock': return AppColors.warning;
+      case 'Out of Stock': return AppColors.error;
       default: return AppColors.grey;
     }
   }
@@ -569,7 +563,7 @@ class _HeaderBtn extends StatelessWidget {
           color: (isDark ? AppColors.cardDark : Colors.white).withAlpha(220),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(icon, size: 20, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
+        child: Icon(icon, size: 20, color: AppColors.textSecondary),
       ),
     );
   }
@@ -593,7 +587,7 @@ class _PriceTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+          Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
           const SizedBox(height: 4),
           Text(value, style: AppTextStyles.amountSm.copyWith(color: color, fontSize: 16)),
         ],
@@ -623,7 +617,7 @@ class _StockIndicator extends StatelessWidget {
         children: [
           Text(value, style: AppTextStyles.amountSm.copyWith(color: color, fontSize: 18)),
           const SizedBox(height: 4),
-          Text(label, style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+          Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
           if (total > 0) ...[
             const SizedBox(height: 6),
             ClipRRect(
@@ -655,8 +649,8 @@ class _DetailRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          SizedBox(width: 100, child: Text(label, style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280)))),
-          Expanded(child: Text(value, style: TextStyle(fontFamily: mono ? 'Geist' : 'Inter', fontSize: 13, fontWeight: FontWeight.w500, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)))),
+          SizedBox(width: 100, child: Text(label, style: AppTextStyles.bodySm.copyWith(color: AppColors.textSecondary))),
+          Expanded(child: Text(value, style: TextStyle(fontFamily: mono ? 'Geist' : 'Inter', fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textPrimary))),
         ],
       ),
     );
@@ -692,7 +686,7 @@ class _SerialTile extends StatelessWidget {
           children: [
             Container(
               width: 8, height: 8,
-              decoration: BoxDecoration(color: isAvailable ? AppColors.green : AppColors.red, shape: BoxShape.circle),
+              decoration: BoxDecoration(color: isAvailable ? AppColors.success : AppColors.error, shape: BoxShape.circle),
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -705,10 +699,10 @@ class _SerialTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(serial['serialNumber'] as String, style: TextStyle(fontFamily: 'Geist', fontSize: 13, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+                    Text(serial['serialNumber'] as String, style: TextStyle(fontFamily: 'Geist', fontSize: 13, color: AppColors.textPrimary)),
                     Row(
                       children: [
-                        Text(status.toUpperCase(), style: TextStyle(fontFamily: 'Geist', fontSize: 10, fontWeight: FontWeight.w600, color: isAvailable ? AppColors.green : AppColors.red)),
+                        Text(status.toUpperCase(), style: TextStyle(fontFamily: 'Geist', fontSize: 10, fontWeight: FontWeight.w600, color: isAvailable ? AppColors.success : AppColors.error)),
                         if (hasSale) ...[
                           const SizedBox(width: 8),
                           Text('View Sale', style: TextStyle(fontFamily: 'Geist', fontSize: 10, color: AppColors.primary)),
@@ -717,12 +711,12 @@ class _SerialTile extends StatelessWidget {
                     ),
                     if (created != null)
                       Text('Added: ${dateFormat.format(created is Timestamp ? created.toDate() : DateTime.tryParse(created.toString()) ?? DateTime.now())}',
-                          style: TextStyle(fontFamily: 'Geist', fontSize: 10, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+                          style: TextStyle(fontFamily: 'Geist', fontSize: 10, color: AppColors.textMuted)),
                   ],
                 ),
               ),
             ),
-            if (hasSale) Icon(Icons.chevron_right_rounded, size: 16, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+            if (hasSale) Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.textMuted),
           ],
         ),
       ),

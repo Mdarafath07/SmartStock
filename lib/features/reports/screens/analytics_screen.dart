@@ -83,16 +83,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
   ];
 
-  List<Color> get _heroColors {
-    return [
-      [const Color(0xFF1D4ED8), const Color(0xFF3B82F6)], // daily
-      [const Color(0xFF047857), const Color(0xFF10B981)], // monthly
-      [const Color(0xFF6D28D9), const Color(0xFF8B5CF6)], // yearly
-    ][_tab];
-  }
-
-  Color get _heroAccent => _heroColors.last;
-
   @override
   void initState() {
     super.initState();
@@ -186,7 +176,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 color: isDark ? AppColors.surfaceLight.withAlpha(100) : const Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.analytics_rounded, color: isDark ? AppColors.textSecondary : const Color(0xFF64748B), size: 22),
+              child: Icon(Icons.analytics_rounded, color: AppColors.textSecondary, size: 22),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -195,11 +185,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 children: [
                   Text('Analytics',
                       style: AppTextStyles.headlineMd.copyWith(
-                          color: isDark ? AppColors.textPrimary : const Color(0xFF0F172A))),
+                          color: AppColors.textPrimary)),
                   const SizedBox(height: 2),
                   Text('Track your business performance',
                       style: AppTextStyles.bodySm.copyWith(
-                          color: isDark ? AppColors.textMuted : const Color(0xFF64748B))),
+                          color: AppColors.textMuted)),
                 ],
               ),
             ),
@@ -212,9 +202,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   // ─── Segmented Control ───
   Widget _buildSegmentedControl() {
     final items = [
-      (icon: Icons.today_rounded, label: 'Daily', color: const Color(0xFF3B82F6)),
-      (icon: Icons.calendar_month_rounded, label: 'Monthly', color: const Color(0xFF10B981)),
-      (icon: Icons.auto_graph_rounded, label: 'Yearly', color: const Color(0xFF8B5CF6)),
+      (icon: Icons.today_rounded, label: 'Daily', color: AppColors.primary),
+      (icon: Icons.calendar_month_rounded, label: 'Monthly', color: AppColors.primary),
+      (icon: Icons.auto_graph_rounded, label: 'Yearly', color: AppColors.primary),
     ];
     return Container(
       padding: const EdgeInsets.all(5),
@@ -247,7 +237,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 curve: Curves.easeOutCubic,
                 builder: (context, anim, _) {
                   final fgColor = ColorTween(
-                    begin: const Color(0xFF94A3B8),
+                    begin: AppColors.textMuted,
                     end: Colors.white,
                   ).lerp(anim)!;
                   final bgColor = ColorTween(
@@ -303,8 +293,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return Column(
       children: [
         _HeroCard(
-          colors: _heroColors,
-          accent: _heroAccent,
           icon: Icons.today_rounded,
           badge: dateStr,
           label: isToday ? "Today's Revenue" : 'Revenue for $dateStr',
@@ -329,9 +317,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         ),
         const SizedBox(height: 14),
         _StatsRow(items: [
-          _StatItem(icon: Icons.receipt_long_rounded, value: '${r?.totalTransactions ?? 0}', label: 'Transactions', color: const Color(0xFF475569)),
-          _StatItem(icon: Icons.inventory_2_rounded, value: '${r?.totalProductsSold ?? 0}', label: 'Items Sold', color: const Color(0xFF3B82F6)),
-          _StatItem(icon: Icons.shopping_cart_rounded, value: AppFormatters.formatCurrency(avg, symbol: symbol), label: 'Avg Sale', color: const Color(0xFF0D9488)),
+          _StatItem(icon: Icons.receipt_long_rounded, value: '${r?.totalTransactions ?? 0}', label: 'Transactions', color: AppColors.textSecondary),
+          _StatItem(icon: Icons.inventory_2_rounded, value: '${r?.totalProductsSold ?? 0}', label: 'Items Sold', color: AppColors.primary),
+          _StatItem(icon: Icons.shopping_cart_rounded, value: AppFormatters.formatCurrency(avg, symbol: symbol), label: 'Avg Sale', color: AppColors.greyDarker),
         ]),
       ],
     );
@@ -350,8 +338,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return Column(
       children: [
         _HeroCard(
-          colors: _heroColors,
-          accent: _heroAccent,
           icon: Icons.calendar_month_rounded,
           badge: _months[_month - 1],
           label: 'Monthly Revenue',
@@ -378,9 +364,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         ),
         const SizedBox(height: 14),
         _StatsRow(items: [
-          _StatItem(icon: Icons.receipt_long_rounded, value: '${r?.totalTransactions ?? 0}', label: 'Transactions', color: const Color(0xFF475569)),
-          _StatItem(icon: Icons.inventory_2_rounded, value: '${r?.totalProductsSold ?? 0}', label: 'Items Sold', color: const Color(0xFF3B82F6)),
-          _StatItem(icon: Icons.shopping_cart_rounded, value: AppFormatters.formatCurrency(avg, symbol: symbol), label: 'Avg Sale', color: const Color(0xFF0D9488)),
+          _StatItem(icon: Icons.receipt_long_rounded, value: '${r?.totalTransactions ?? 0}', label: 'Transactions', color: AppColors.textSecondary),
+          _StatItem(icon: Icons.inventory_2_rounded, value: '${r?.totalProductsSold ?? 0}', label: 'Items Sold', color: AppColors.primary),
+          _StatItem(icon: Icons.shopping_cart_rounded, value: AppFormatters.formatCurrency(avg, symbol: symbol), label: 'Avg Sale', color: AppColors.greyDarker),
         ]),
       ],
     );
@@ -399,8 +385,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return Column(
       children: [
         _HeroCard(
-          colors: _heroColors,
-          accent: _heroAccent,
           icon: Icons.auto_graph_rounded,
           badge: '${provider.selectedYear}',
           label: 'Yearly Revenue',
@@ -423,9 +407,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         ),
         const SizedBox(height: 14),
         _StatsRow(items: [
-          _StatItem(icon: Icons.receipt_long_rounded, value: '$totalTx', label: 'Transactions', color: const Color(0xFF475569)),
-          _StatItem(icon: Icons.inventory_2_rounded, value: '$totalItems', label: 'Items Sold', color: const Color(0xFF3B82F6)),
-          _StatItem(icon: Icons.shopping_cart_rounded, value: AppFormatters.formatCurrency(avgMo, symbol: symbol), label: 'Avg Month', color: const Color(0xFF0D9488)),
+          _StatItem(icon: Icons.receipt_long_rounded, value: '$totalTx', label: 'Transactions', color: AppColors.textSecondary),
+          _StatItem(icon: Icons.inventory_2_rounded, value: '$totalItems', label: 'Items Sold', color: AppColors.primary),
+          _StatItem(icon: Icons.shopping_cart_rounded, value: AppFormatters.formatCurrency(avgMo, symbol: symbol), label: 'Avg Month', color: AppColors.greyDarker),
         ]),
       ],
     );
@@ -452,8 +436,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             _MiniAnalytic(
               label: 'Total Profit',
               value: AppFormatters.formatCurrency(a.totalProfit, symbol: symbol),
-              color: AppColors.green,
-              animatedValue: a.totalProfit,
+          color: AppColors.success,
+          animatedValue: a.totalProfit,
             ),
           ]),
           const SizedBox(height: 10),
@@ -461,14 +445,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             _MiniAnalytic(
               label: 'Transactions',
               value: '${a.totalTransactions}',
-              color: AppColors.blue,
+              color: AppColors.primary,
               animatedValue: a.totalTransactions.toDouble(),
             ),
             const SizedBox(width: 10),
             _MiniAnalytic(
               label: 'Items Sold',
               value: '${a.totalProductsSold}',
-              color: AppColors.orange,
+              color: AppColors.warning,
               animatedValue: a.totalProductsSold.toDouble(),
             ),
           ]),
@@ -478,16 +462,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
 
   static const _categoryColors = [
-    AppColors.primary, AppColors.purple, AppColors.green,
-    AppColors.orange, AppColors.teal, AppColors.pink,
-    AppColors.blue, AppColors.red,
+    AppColors.primary,
   ];
 
   Widget _buildCategory(ReportProvider provider, String symbol) {
     final max = provider.categorySales.fold<double>(0, (m, c) => c.totalSales > m ? c.totalSales : m);
     return _SectionCard(
       icon: Icons.category_rounded,
-      iconColor: AppColors.purple,
+      iconColor: AppColors.primary,
       title: 'Sales by Category',
       child: Column(
         children: provider.categorySales.toList().asMap().entries.map((e) {
@@ -503,7 +485,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 Row(
                   children: [
                     Expanded(child: Text(c.categoryName,
-                        style: AppTextStyles.bodySm.copyWith(fontWeight: FontWeight.w500, color: const Color(0xFF1E293B)),
+                        style: AppTextStyles.bodySm.copyWith(fontWeight: FontWeight.w500, color: AppColors.textSecondary),
                         maxLines: 1, overflow: TextOverflow.ellipsis)),
                     Text(AppFormatters.formatCurrency(c.totalSales, symbol: symbol),
                         style: AppTextStyles.labelSm.copyWith(fontWeight: FontWeight.w700, color: color)),
@@ -535,7 +517,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     final top = provider.topSellingProducts.take(5).toList();
     return _SectionCard(
       icon: Icons.trending_up_rounded,
-      iconColor: AppColors.orange,
+      iconColor: AppColors.warning,
       title: 'Top Selling Products',
       child: Column(
         children: top.asMap().entries.map((e) {
@@ -568,7 +550,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   child: Text('${rank + 1}',
                       style: TextStyle(
                           fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w700,
-                          color: isMedal ? _medalColors[rank] : const Color(0xFF94A3B8))),
+                          color: isMedal ? _medalColors[rank] : AppColors.textMuted)),
                 ),
               ),
               const SizedBox(width: 10),
@@ -593,7 +575,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                         maxLines: 1, overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 2),
                     Text('Model: ${p.modelNumber}',
-                        style: AppTextStyles.caption.copyWith(color: const Color(0xFF64748B))),
+                        style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
                   ],
                 ),
               ),
@@ -613,7 +595,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(AppFormatters.formatCurrency(p.totalRevenue, symbol: symbol),
-                      style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w500, color: const Color(0xFF64748B))),
+                      style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
                 ],
               ),
             ]),
@@ -626,7 +608,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   Widget _buildChart(ReportProvider provider) {
     return _SectionCard(
       icon: Icons.bar_chart_rounded,
-      iconColor: AppColors.teal,
+      iconColor: AppColors.primary,
       title: 'Monthly Breakdown',
       child: SizedBox(
         height: 200,
@@ -643,7 +625,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         children: [
           Container(
             width: 72, height: 72,
-            decoration: BoxDecoration(color: AppColors.redBg, borderRadius: BorderRadius.circular(18)),
+            decoration: BoxDecoration(color: AppColors.statusOutOfStockBg, borderRadius: BorderRadius.circular(18)),
             child: const Icon(Icons.error_outline_rounded, size: 32, color: AppColors.error),
           ),
           const SizedBox(height: 16),
@@ -700,9 +682,7 @@ class _ShimmerBlock extends StatelessWidget {
 //  Widgets
 // ══════════════════════════════════════════════════
 
-class _HeroCard extends StatefulWidget {
-  final List<Color> colors;
-  final Color accent;
+class _HeroCard extends StatelessWidget {
   final IconData icon;
   final String badge;
   final String label;
@@ -712,8 +692,6 @@ class _HeroCard extends StatefulWidget {
   final VoidCallback? onNext;
 
   const _HeroCard({
-    required this.colors,
-    required this.accent,
     required this.icon,
     required this.badge,
     required this.label,
@@ -724,152 +702,87 @@ class _HeroCard extends StatefulWidget {
   });
 
   @override
-  State<_HeroCard> createState() => _HeroCardState();
-}
-
-class _HeroCardState extends State<_HeroCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      duration: const Duration(seconds: 4),
-      vsync: this,
-    )..repeat(reverse: true);
-    _pulseAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _pulseAnimation,
-      builder: (_, child) {
-        final pulseVal = _pulseAnimation.value;
-        final shiftedColors = [
-          Color.lerp(widget.colors[0], widget.colors[0].withAlpha(180), pulseVal)!,
-          Color.lerp(widget.colors[1], widget.colors[1].withAlpha(220), pulseVal)!,
-        ];
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: BackdropFilter(
-            filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-            child: Stack(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: shiftedColors,
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.white.withAlpha(80), width: 1),
-                    boxShadow: [
-                      BoxShadow(
-                        color: widget.accent.withAlpha(80),
-                        blurRadius: 32,
-                        offset: const Offset(0, 12),
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 46, height: 46,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withAlpha(30),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Icon(widget.icon, size: 24, color: Colors.white),
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: widget.onPrev != null ? 4 : 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.white.withAlpha(30),
-                                  Colors.white.withAlpha(15),
-                                ],
-                                begin: Alignment.topLeft, end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.white.withAlpha(40), width: 0.5),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (widget.onPrev != null)
-                                  GestureDetector(
-                                    onTap: widget.onPrev,
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                                      child: Icon(Icons.chevron_left_rounded, size: 18, color: Colors.white.withAlpha(200)),
-                                    ),
-                                  ),
-                                Icon(Icons.calendar_today_rounded, size: 11, color: Colors.white.withAlpha(200)),
-                                const SizedBox(width: 5),
-                                Text(widget.badge,
-                                    style: const TextStyle(
-                                        fontFamily: 'Inter', fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)),
-                                if (widget.onNext != null)
-                                  GestureDetector(
-                                    onTap: widget.onNext,
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                                      child: Icon(Icons.chevron_right_rounded, size: 18, color: Colors.white.withAlpha(200)),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      Text(widget.label,
-                          style: const TextStyle(
-                              fontFamily: 'Inter', fontSize: 14, color: Colors.white, fontWeight: FontWeight.w400, letterSpacing: 0.3)),
-                      const SizedBox(height: 8),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Text(widget.amount,
-                          style: const TextStyle(
-                              fontFamily: 'Hanken Grotesk', fontSize: 38, fontWeight: FontWeight.w700,
-                              color: Colors.white, height: 1.1, letterSpacing: -0.03)),
-                      ),
-                      const SizedBox(height: 22),
-                      Row(
-                        children: widget.stats.map((s) => Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.only(right: widget.stats.last == s ? 0 : 14),
-                            child: _HeroStat(label: s.label, value: s.value),
-                          ),
-                        )).toList(),
-                      ),
-                    ],
-                  ),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 46, height: 46,
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha(30),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-              ],
-            ),
+                child: Icon(icon, size: 24, color: Colors.white),
+              ),
+              const Spacer(),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: onPrev != null ? 4 : 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha(25),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white.withAlpha(40), width: 0.5),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (onPrev != null)
+                      GestureDetector(
+                        onTap: onPrev,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Icon(Icons.chevron_left_rounded, size: 18, color: Colors.white.withAlpha(200)),
+                        ),
+                      ),
+                    Icon(Icons.calendar_today_rounded, size: 11, color: Colors.white.withAlpha(200)),
+                    const SizedBox(width: 5),
+                    Text(badge,
+                        style: const TextStyle(
+                            fontFamily: 'Inter', fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)),
+                    if (onNext != null)
+                      GestureDetector(
+                        onTap: onNext,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Icon(Icons.chevron_right_rounded, size: 18, color: Colors.white.withAlpha(200)),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        );
-      },
+          const SizedBox(height: 24),
+          Text(label,
+              style: const TextStyle(
+                  fontFamily: 'Inter', fontSize: 14, color: Colors.white, fontWeight: FontWeight.w400, letterSpacing: 0.3)),
+          const SizedBox(height: 8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(amount,
+              style: const TextStyle(
+                  fontFamily: 'Hanken Grotesk', fontSize: 38, fontWeight: FontWeight.w700,
+                  color: Colors.white, height: 1.1, letterSpacing: -0.03)),
+          ),
+          const SizedBox(height: 22),
+          Row(
+            children: stats.map((s) => Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(right: stats.last == s ? 0 : 14),
+                child: _HeroStat(label: s.label, value: s.value),
+              ),
+            )).toList(),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -979,7 +892,7 @@ class _StatCard extends StatelessWidget {
           Text(item.label,
               style: const TextStyle(
                   fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w500,
-                  color: Color(0xFF64748B), height: 1.2)),
+                  color: AppColors.textSecondary, height: 1.2)),
         ],
       ),
     );

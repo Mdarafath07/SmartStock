@@ -72,7 +72,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
           Container(
             width: 40, height: 40,
             decoration: BoxDecoration(
-              color: AppColors.primaryBg,
+              color: AppColors.primaryContainer,
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(Icons.category_rounded,
@@ -98,7 +98,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
           ),
           Container(
             decoration: BoxDecoration(
-              color: AppColors.primaryBg,
+              color: AppColors.primaryContainer,
               borderRadius: BorderRadius.circular(12),
             ),
             child: IconButton(
@@ -184,7 +184,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                 Container(
                   width: 72, height: 72,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryBg,
+                    color: AppColors.primaryContainer,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Icon(Icons.category_rounded,
@@ -252,11 +252,11 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
             Container(
               width: 36, height: 36,
               decoration: BoxDecoration(
-                color: AppColors.orangeBg,
+                color: AppColors.primaryContainer,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(Icons.edit_outlined,
-                  color: AppColors.orange, size: 20),
+                  color: AppColors.warning, size: 20),
             ),
             const SizedBox(width: 12),
             Text('Edit Category',
@@ -275,20 +275,20 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.orangeBg,
+                color: AppColors.primaryContainer,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(Icons.warning_amber_rounded,
-                      size: 18, color: AppColors.orange),
+                      size: 18, color: AppColors.warning),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'All products in this category will be updated to the new name.',
                       style: AppTextStyles.bodySm.copyWith(
-                          color: AppColors.orange),
+                          color: AppColors.warning),
                     ),
                   ),
                 ],

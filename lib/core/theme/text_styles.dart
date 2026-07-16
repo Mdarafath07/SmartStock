@@ -31,13 +31,13 @@ class AppTextStyles {
     fontSize: 14, fontWeight: FontWeight.w600, height: 1.3, letterSpacing: 0.01,
   );
   static const TextStyle bodyLg = TextStyle(
-    fontSize: 16, fontWeight: FontWeight.w400, height: 1.5,
+    fontSize: 16, fontWeight: FontWeight.w500, height: 1.5,
   );
   static const TextStyle bodyMd = TextStyle(
-    fontSize: 14, fontWeight: FontWeight.w400, height: 1.5,
+    fontSize: 14, fontWeight: FontWeight.w500, height: 1.5,
   );
   static const TextStyle bodySm = TextStyle(
-    fontSize: 13, fontWeight: FontWeight.w400, height: 1.4,
+    fontSize: 13, fontWeight: FontWeight.w500, height: 1.4,
   );
   static const TextStyle labelLg = TextStyle(
     fontSize: 13, fontWeight: FontWeight.w600, height: 1.3, letterSpacing: 0.05,

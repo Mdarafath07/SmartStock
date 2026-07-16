@@ -86,9 +86,9 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                                 ?.copyWith(fontWeight: FontWeight.bold)),
                         const Spacer(),
                         if (sale.isReplacement)
-                          _badge('Replacement', Colors.orange)
+                          _badge('Replacement', const Color(0xFF6B7280))
                         else if (sale.isWarrantyClaim)
-                          _badge('Warranty Claim', Colors.blue),
+                          _badge('Warranty Claim', const Color(0xFF6B7280)),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -145,7 +145,7 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                       _buildInfoRow(theme, 'Serial Number', sale.serialNumber),
                       if (sale.newSerialNumber != null)
                         _buildInfoRow(theme, 'New Serial', sale.newSerialNumber!,
-                            valueColor: Colors.green),
+                            valueColor: theme.colorScheme.primary),
                     ] else
                       _buildInfoRow(theme, 'Serial Number', sale.serialNumber, onLongPress: () {
                         Clipboard.setData(ClipboardData(text: sale.serialNumber));
@@ -192,7 +192,7 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                           child: Icon(
                             _hideSensitive ? Icons.visibility_off_rounded : Icons.visibility_rounded,
                             size: 20,
-                            color: _hideSensitive ? Colors.orange : theme.colorScheme.onSurfaceVariant,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],

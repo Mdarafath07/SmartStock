@@ -468,7 +468,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.check_circle_outline, size: 16, color: AppColors.green),
+                    const Icon(Icons.check_circle_outline, size: 16, color: AppColors.success),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(_pendingSerials[i],
@@ -563,7 +563,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
           _summaryRow('Selling Total', '$symbol${totalSelling.toStringAsFixed(0)}'),
           const Divider(height: 18),
           _summaryRow('Est. Profit', '$symbol${(totalSelling - totalPurchase).toStringAsFixed(0)}',
-              valueColor: AppColors.green),
+              valueColor: AppColors.success),
         ],
       ),
     );
@@ -768,7 +768,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                                       fontWeight: FontWeight.w600)),
                             ),
                             Icon(Icons.open_in_new,
-                                size: 14, color: Colors.orange),
+                                size: 14, color: AppColors.textSecondary),
                           ],
                         ),
                         const SizedBox(height: 4),
@@ -814,7 +814,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                             Text('Tap to view sale details',
                                 style: TextStyle(
                                     fontSize: 10,
-                                    color: Colors.orange,
+                                    color: AppColors.textSecondary,
                                     fontStyle: FontStyle.italic)),
                         ],
                       ],

@@ -199,22 +199,22 @@ class _ProductAddedTile extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.greenBg,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            product.categoryName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTextStyles.labelSm.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Stock: ${product.availableQuantity}',
+                  color: AppColors.statusInStockBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  product.categoryName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.labelSm.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Stock: ${product.availableQuantity}',
                           style: AppTextStyles.labelSm.copyWith(
                             color: product.availableQuantity == 0
                                 ? AppColors.error
@@ -366,7 +366,7 @@ class _RecentProductTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.greenBg,
+                  color: AppColors.statusInStockBg,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(

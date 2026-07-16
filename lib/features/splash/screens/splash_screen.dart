@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smartstock/core/routes/app_routes.dart';
+import 'package:smartstock/core/theme/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -54,7 +55,7 @@ class _SplashScreenState extends State<SplashScreen> {
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 14,
-                color: const Color(0xFF64748B).withAlpha(180),
+                color: AppColors.textSecondary.withAlpha(180),
               ),
             ),
           ],

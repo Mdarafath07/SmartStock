@@ -47,7 +47,7 @@ class EmptyState extends StatelessWidget {
             Text(
               title,
               style: AppTextStyles.headlineSm.copyWith(
-                color: isDark ? AppColors.textMuted : const Color(0xFF6B7280),
+                color: AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -56,7 +56,7 @@ class EmptyState extends StatelessWidget {
               Text(
                 subtitle!,
                 style: AppTextStyles.bodySm.copyWith(
-                  color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+                  color: AppColors.textMuted,
                 ),
                 textAlign: TextAlign.center,
               ),

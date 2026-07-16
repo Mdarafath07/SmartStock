@@ -46,7 +46,7 @@ class StatisticsGrid extends StatelessWidget {
           'Transactions',
           totalTransactions.toString(),
           Icons.receipt_long_rounded,
-          AppColors.info,
+          AppColors.primary,
         ),
         _statCard(context,
           'Products Sold',

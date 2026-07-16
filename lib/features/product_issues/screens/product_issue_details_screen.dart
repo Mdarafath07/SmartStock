@@ -84,7 +84,7 @@ class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _sectionHeader(Icons.inventory_2, AppColors.blue,
+                      _sectionHeader(Icons.inventory_2, AppColors.primary,
                           'Product Information'),
                       const SizedBox(height: 16),
                       _infoRow('Product', issue.productName),
@@ -98,7 +98,7 @@ class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _sectionHeader(Icons.report_problem, AppColors.orange,
+                      _sectionHeader(Icons.report_problem, AppColors.warning,
                           'Issue Details'),
                       const SizedBox(height: 16),
                       _infoRow('Type', _getIssueTypeLabel(issue.issueType)),
@@ -114,7 +114,7 @@ class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _sectionHeader(
-                            Icons.person, AppColors.green, 'Customer Info'),
+                            Icons.person, AppColors.success, 'Customer Info'),
                         const SizedBox(height: 16),
                         _infoRow('Name', issue.customerName!),
                         if (issue.customerPhone != null)
@@ -129,7 +129,7 @@ class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _sectionHeader(Icons.check_circle, AppColors.green,
+                        _sectionHeader(Icons.check_circle, AppColors.success,
                             'Resolution'),
                         const SizedBox(height: 16),
                         if (issue.resolutionNotes != null)
@@ -148,7 +148,7 @@ class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _sectionHeader(Icons.check_circle_rounded,
-                            AppColors.green, 'Resolve Issue'),
+                            AppColors.success, 'Resolve Issue'),
                         const SizedBox(height: 16),
                         TextField(
                           controller: _resolutionController,
@@ -172,7 +172,7 @@ class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> {
                           child: FilledButton.icon(
                             onPressed: _isSubmitting ? null : _resolveIssue,
                             style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.green,
+                              backgroundColor: AppColors.success,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -193,9 +193,9 @@ class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> {
                     child: OutlinedButton.icon(
                       onPressed: () => _deleteIssue(issue.id),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.red,
+                        foregroundColor: AppColors.error,
                         side: BorderSide(
-                            color: AppColors.red.withAlpha(60)),
+                            color: AppColors.error.withAlpha(60)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -237,15 +237,15 @@ class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> {
     IconData icon;
     switch (status) {
       case 'open':
-        color = AppColors.red;
+        color = AppColors.error;
         label = 'Open';
         icon = Icons.bug_report;
       case 'in_progress':
-        color = AppColors.orange;
+        color = AppColors.warning;
         label = 'In Progress';
         icon = Icons.engineering;
       case 'resolved':
-        color = AppColors.green;
+        color = AppColors.success;
         label = 'Resolved';
         icon = Icons.check_circle;
       default:
@@ -316,9 +316,7 @@ class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> {
             child: Text(
               value,
               style: AppTextStyles.bodySm.copyWith(
-                color: isDark
-                    ? AppColors.textPrimary
-                    : const Color(0xFF1A1A2E),
+                color: AppColors.textPrimary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -394,7 +392,7 @@ class _ProductIssueDetailsScreenState extends State<ProductIssueDetailsScreen> {
               onPressed:
                   isDisabled ? null : () => Navigator.pop(ctx, true),
               child: const Text('Delete',
-                  style: TextStyle(color: AppColors.red)),
+                  style: TextStyle(color: AppColors.error)),
             ),
           ),
         ],

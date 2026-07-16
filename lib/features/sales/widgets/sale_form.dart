@@ -375,9 +375,9 @@ class _SaleFormState extends State<SaleForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('New Sale', style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+                Text('New Sale', style: AppTextStyles.headlineMd.copyWith(color: AppColors.textPrimary)),
                 Text(_currentPage == 0 ? 'Customer Information' : 'Cart Review',
-                    style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+                    style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
               ],
             ),
           ),
@@ -404,10 +404,10 @@ class _SaleFormState extends State<SaleForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Customer Details', style: AppTextStyles.titleMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          Text('Customer Details', style: AppTextStyles.titleMd.copyWith(color: AppColors.textPrimary)),
           const SizedBox(height: 4),
           Text('Enter customer information for the sale',
-              style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+              style: AppTextStyles.bodySm.copyWith(color: AppColors.textSecondary)),
           const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.all(4),
@@ -422,7 +422,7 @@ class _SaleFormState extends State<SaleForm> {
                   focusNode: _customerNameFocus,
                   decoration: InputDecoration(
                     hintText: 'Search or enter customer name',
-                    prefixIcon: Icon(Icons.person_rounded, size: 20, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                    prefixIcon: Icon(Icons.person_rounded, size: 20, color: AppColors.textMuted),
                     suffixIcon: _selectedCustomer != null
                         ? IconButton(
                             icon: const Icon(Icons.close_rounded, size: 18),
@@ -440,7 +440,7 @@ class _SaleFormState extends State<SaleForm> {
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
-                  style: TextStyle(fontFamily: 'Inter', fontSize: 15, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 15, color: AppColors.textPrimary),
                   textInputAction: TextInputAction.next,
                   onChanged: _onCustomerNameChanged,
                   onFieldSubmitted: (_) => _customerPhoneFocus.requestFocus(),
@@ -482,9 +482,9 @@ class _SaleFormState extends State<SaleForm> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(c.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+                                      Text(c.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
                                       if (c.phone.isNotEmpty)
-                                        Text(c.phone, style: TextStyle(fontSize: 11, color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+                                        Text(c.phone, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                                     ],
                                   ),
                                 ),
@@ -502,12 +502,12 @@ class _SaleFormState extends State<SaleForm> {
                   focusNode: _customerPhoneFocus,
                   decoration: InputDecoration(
                     hintText: 'Phone Number',
-                    prefixIcon: Icon(Icons.phone_rounded, size: 20, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                    prefixIcon: Icon(Icons.phone_rounded, size: 20, color: AppColors.textMuted),
                     filled: false,
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
-                  style: TextStyle(fontFamily: 'Inter', fontSize: 15, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 15, color: AppColors.textPrimary),
                   keyboardType: TextInputType.phone,
                 ),
               ],
@@ -535,10 +535,10 @@ class _SaleFormState extends State<SaleForm> {
               ),
             ),
           const SizedBox(height: 20),
-          Text('Sale Date & Time', style: AppTextStyles.titleMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          Text('Sale Date & Time', style: AppTextStyles.titleMd.copyWith(color: AppColors.textPrimary)),
           const SizedBox(height: 4),
           Text('Set the date and time for this sale',
-              style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+              style: AppTextStyles.bodySm.copyWith(color: AppColors.textSecondary)),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(12),
@@ -653,9 +653,9 @@ class _SaleFormState extends State<SaleForm> {
                     child: Icon(Icons.shopping_cart_rounded, size: 32, color: isDark ? AppColors.greyDarker : const Color(0xFFD1D5DB)),
                   ),
                   const SizedBox(height: 16),
-                  Text('Cart is empty', style: AppTextStyles.headlineSm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+                  Text('Cart is empty', style: AppTextStyles.headlineSm.copyWith(color: AppColors.textSecondary)),
                   const SizedBox(height: 4),
-                  Text('Add items to start a sale', style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+                  Text('Add items to start a sale', style: AppTextStyles.bodySm.copyWith(color: AppColors.textMuted)),
                   const SizedBox(height: 20),
                   FilledButton.icon(
                     onPressed: _showAddItemSheet,
@@ -707,9 +707,9 @@ class _SaleFormState extends State<SaleForm> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('$_totalItems items', style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+                      Text('$_totalItems items', style: AppTextStyles.bodySm.copyWith(color: AppColors.textSecondary)),
                       Text('$symbol${_cartTotal.toStringAsFixed(0)}',
-                          style: AppTextStyles.amountLg.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E), fontSize: 24)),
+                          style: AppTextStyles.amountLg.copyWith(color: AppColors.textPrimary, fontSize: 24)),
                     ],
                   ),
                 ),
@@ -721,7 +721,7 @@ class _SaleFormState extends State<SaleForm> {
                 label: const Text('Add'),
                 style: FilledButton.styleFrom(
                   backgroundColor: isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6),
-                  foregroundColor: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                  foregroundColor: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(width: 8),
@@ -809,14 +809,14 @@ class _CartItemTile extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(item.product.productName, style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+                child: Text(item.product.productName, style: AppTextStyles.titleSm.copyWith(color: AppColors.textPrimary)),
               ),
               GestureDetector(
                 onTap: onRemoveAll,
                 child: Container(
                   width: 32, height: 32,
-                  decoration: BoxDecoration(color: AppColors.redBg, borderRadius: BorderRadius.circular(8)),
-                  child: const Icon(Icons.delete_rounded, size: 16, color: AppColors.red),
+                  decoration: BoxDecoration(color: AppColors.statusOutOfStockBg, borderRadius: BorderRadius.circular(8)),
+                  child: const Icon(Icons.delete_rounded, size: 16, color: AppColors.error),
                 ),
               ),
             ],
@@ -827,10 +827,10 @@ class _CartItemTile extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 4),
               child: Row(
                 children: [
-                  Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle)),
+                  Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle)),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(s.serialNumber, style: TextStyle(fontFamily: 'Geist', fontSize: 12, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
+                    child: Text(s.serialNumber, style: TextStyle(fontFamily: 'Geist', fontSize: 12, color: AppColors.textSecondary)),
                   ),
                   Text('$symbol${item.product.sellingPrice.toStringAsFixed(0)}',
                       style: AppTextStyles.labelMd.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)),
@@ -839,8 +839,8 @@ class _CartItemTile extends StatelessWidget {
                     onTap: () => onRemoveSerial(s),
                     child: Container(
                       width: 24, height: 24,
-                      decoration: BoxDecoration(color: AppColors.redBg, borderRadius: BorderRadius.circular(6)),
-                      child: const Icon(Icons.close_rounded, size: 14, color: AppColors.red),
+                      decoration: BoxDecoration(color: AppColors.statusOutOfStockBg, borderRadius: BorderRadius.circular(6)),
+                      child: const Icon(Icons.close_rounded, size: 14, color: AppColors.error),
                     ),
                   ),
                 ],
@@ -850,15 +850,15 @@ class _CartItemTile extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text('${item.serials.length} items × $symbol${item.product.sellingPrice.toStringAsFixed(0)}',
-                    style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+                    style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
               ),
           ] else ...[
             Row(
               children: [
-                Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle)),
+                Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle)),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text('Quantity: ${item.quantity}', style: TextStyle(fontFamily: 'Geist', fontSize: 12, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
+                  child: Text('Quantity: ${item.quantity}', style: TextStyle(fontFamily: 'Geist', fontSize: 12, color: AppColors.textSecondary)),
                 ),
                 Text('$symbol${item.product.sellingPrice.toStringAsFixed(0)} × ${item.quantity}',
                     style: AppTextStyles.caption.copyWith(color: AppColors.primary)),
@@ -940,22 +940,22 @@ class _PriceDialogState extends State<_PriceDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.productName, style: AppTextStyles.titleMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+            Text(widget.productName, style: AppTextStyles.titleMd.copyWith(color: AppColors.textPrimary)),
             const SizedBox(height: 4),
             Text('Serial: ${widget.serialNumber} · Model: ${widget.modelNumber}',
-                style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+                style: AppTextStyles.bodySm.copyWith(color: AppColors.textSecondary)),
             const SizedBox(height: 16),
             TextField(
               controller: _priceController,
               decoration: InputDecoration(
                 labelText: 'Sale Price',
                 prefixText: '$symbol ',
-                prefixStyle: TextStyle(fontFamily: 'Inter', fontSize: 16, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                prefixStyle: TextStyle(fontFamily: 'Inter', fontSize: 16, color: AppColors.textPrimary),
               ),
               keyboardType: TextInputType.number,
               autofocus: true,
               onChanged: widget.onPriceChanged,
-              style: TextStyle(fontFamily: 'Inter', fontSize: 16, fontWeight: FontWeight.w600, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+              style: TextStyle(fontFamily: 'Inter', fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
             ),
             const SizedBox(height: 12),
             Row(
@@ -973,7 +973,7 @@ class _PriceDialogState extends State<_PriceDialog> {
                     ),
                     keyboardType: _noWarranty ? TextInputType.none : TextInputType.number,
                     onChanged: widget.onWarrantyValueChanged,
-                    style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                    style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.textPrimary),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -1024,7 +1024,7 @@ class _PriceDialogState extends State<_PriceDialog> {
                     setState(() => _noWarranty = !_noWarranty);
                     widget.onNoWarrantyChanged(!_noWarranty);
                   },
-                  child: Text('No warranty', style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+                  child: Text('No warranty', style: AppTextStyles.bodySm.copyWith(color: AppColors.textSecondary)),
                 ),
               ],
             ),
@@ -1183,7 +1183,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
             child: Row(
               children: [
                 Expanded(
-                  child: Text('Add Item', style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+                  child: Text('Add Item', style: AppTextStyles.headlineMd.copyWith(color: AppColors.textPrimary)),
                 ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1195,14 +1195,14 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                         controller: _serialSearchController,
                         decoration: InputDecoration(
                           hintText: 'Search serial...',
-                          prefixIcon: Icon(Icons.search_rounded, size: 16, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                          prefixIcon: Icon(Icons.search_rounded, size: 16, color: AppColors.textMuted),
                           filled: true,
                           fillColor: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                           isDense: true,
                         ),
-                        style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                        style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.textPrimary),
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -1294,7 +1294,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                 const Spacer(),
                 if (_productId != null)
                   Text('${_selectedSerialIds.length} selected',
-                      style: AppTextStyles.labelSm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+                      style: AppTextStyles.labelSm.copyWith(color: AppColors.textMuted)),
                 const SizedBox(width: 12),
                 FilledButton(
                   onPressed: _selectedSerialIds.isEmpty
@@ -1335,7 +1335,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
       return Center(
         child: Text(
           _serialQuery.isNotEmpty ? 'No matching products' : 'Select a category to see products',
-          style: AppTextStyles.bodyMd.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280)),
+          style: AppTextStyles.bodyMd.copyWith(color: AppColors.textSecondary),
         ),
       );
     }
@@ -1411,7 +1411,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                         children: [
                                           Text(p.productName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                                           if (p.modelNumber.isNotEmpty)
-                                            Text(p.modelNumber, style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+                                            Text(p.modelNumber, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                                         ],
                                       ),
                                     ),
@@ -1425,15 +1425,15 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          const Text('Stock', style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
-                                          Text('$maxStock available', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E))),
+                                          const Text('Stock', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                                          Text('$maxStock available', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                                         ],
                                       ),
                                       const SizedBox(height: 8),
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          const Text('Unit Price', style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
+                                          const Text('Unit Price', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                                           Text('$sym${p.sellingPrice.toStringAsFixed(0)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary)),
                                         ],
                                       ),
@@ -1448,7 +1448,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
                                             Text('Total: $sym${(p.sellingPrice * selectedQty).toStringAsFixed(0)}',
-                                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E))),
+                                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                                             Row(
                                               children: [
                                                 _QtyButton(
@@ -1457,7 +1457,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                                                 ),
                                                 SizedBox(
                                                   width: 40,
-                                                  child: Text('$selectedQty', textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E))),
+                                                  child: Text('$selectedQty', textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                                                 ),
                                                 _QtyButton(
                                                   icon: Icons.add_rounded,
@@ -1502,8 +1502,8 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                     child: p.imageUrl.isNotEmpty
                         ? ClipRRect(borderRadius: BorderRadius.circular(10),
                             child: Image.network(p.imageUrl, fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => Icon(Icons.inventory_2_rounded, size: 22, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))))
-                        : Icon(Icons.inventory_2_rounded, size: 22, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                              errorBuilder: (_, _, _) => Icon(Icons.inventory_2_rounded, size: 22, color: AppColors.textMuted)))
+                        : Icon(Icons.inventory_2_rounded, size: 22, color: AppColors.textMuted),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -1516,8 +1516,8 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                               child: Text(p.productName,
                                   style: AppTextStyles.titleSm.copyWith(
                                     color: inCart
-                                        ? (isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))
-                                        : (isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                                        ? (AppColors.textMuted)
+                                        : (AppColors.textPrimary),
                                   ),
                                   maxLines: 1, overflow: TextOverflow.ellipsis),
                             ),
@@ -1525,11 +1525,11 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: AppColors.green.withAlpha(20),
+                                  color: AppColors.success.withAlpha(20),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text('In Cart',
-                                    style: TextStyle(fontFamily: 'Geist', fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.green)),
+                                    style: TextStyle(fontFamily: 'Geist', fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.success)),
                               ),
                           ],
                         ),
@@ -1537,7 +1537,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                             style: AppTextStyles.caption.copyWith(
                               color: inCart
                                   ? (isDark ? AppColors.greyDarker : const Color(0xFFD1D5DB))
-                                  : (isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                                  : (AppColors.textMuted),
                             )),
                         const SizedBox(height: 4),
                         Text('$symbol${p.sellingPrice.toStringAsFixed(0)}',
@@ -1550,11 +1550,11 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                   if (inCart)
                     Container(
                       width: 24, height: 24,
-                      decoration: BoxDecoration(color: AppColors.green, borderRadius: BorderRadius.circular(6)),
+                      decoration: BoxDecoration(color: AppColors.success, borderRadius: BorderRadius.circular(6)),
                       child: const Icon(Icons.check_rounded, size: 16, color: Colors.white),
                     )
                   else
-                    Icon(Icons.chevron_right_rounded, size: 20, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                    Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textMuted),
                 ],
               ),
             ),
@@ -1594,18 +1594,18 @@ class _AddItemSheetState extends State<_AddItemSheet> {
               child: _product!.imageUrl.isNotEmpty
                   ? ClipRRect(borderRadius: BorderRadius.circular(10),
                       child: Image.network(_product!.imageUrl, fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => Icon(Icons.inventory_2_rounded, size: 22, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))))
-                  : Icon(Icons.inventory_2_rounded, size: 22, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                        errorBuilder: (_, _, _) => Icon(Icons.inventory_2_rounded, size: 22, color: AppColors.textMuted)))
+                  : Icon(Icons.inventory_2_rounded, size: 22, color: AppColors.textMuted),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_product!.productName, style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                  Text(_product!.productName, style: AppTextStyles.titleSm.copyWith(color: AppColors.textPrimary),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
                   Text('${_product!.brandName} ${_product!.modelNumber}',
-                      style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+                      style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
                 ],
               ),
             ),
@@ -1620,14 +1620,14 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                 decoration: InputDecoration(
                   labelText: 'Price',
                   prefixText: '$symbol ',
-                  prefixStyle: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                  prefixStyle: TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.textPrimary),
                   filled: true,
                   fillColor: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
                 keyboardType: TextInputType.number,
-                style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.textPrimary),
               ),
             ),
             const SizedBox(width: 8),
@@ -1643,7 +1643,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
                 keyboardType: _noWarranty ? TextInputType.none : TextInputType.number,
-                style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.textPrimary),
               ),
             ),
             const SizedBox(width: 8),
@@ -1683,12 +1683,12 @@ class _AddItemSheetState extends State<_AddItemSheet> {
             const SizedBox(width: 4),
             GestureDetector(
               onTap: () => setState(() => _noWarranty = !_noWarranty),
-              child: Text('No warranty', style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+              child: Text('No warranty', style: AppTextStyles.bodySm.copyWith(color: AppColors.textMuted)),
             ),
           ],
         ),
         const SizedBox(height: 12),
-        Text('Serials (${_serialNumbers.length})', style: AppTextStyles.labelMd.copyWith(color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
+        Text('Serials (${_serialNumbers.length})', style: AppTextStyles.labelMd.copyWith(color: AppColors.textSecondary)),
         const SizedBox(height: 8),
         if (saleProvider.isLoading)
           const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()))
@@ -1701,8 +1701,8 @@ class _AddItemSheetState extends State<_AddItemSheet> {
           )
         else
           ..._serialNumbers.map((sn) => CheckboxListTile(
-            title: Text(sn.serialNumber, style: TextStyle(fontFamily: 'Geist', fontSize: 13, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
-            subtitle: Text('Serial #${sn.serialNumber}', style: TextStyle(fontFamily: 'Inter', fontSize: 10, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+            title: Text(sn.serialNumber, style: TextStyle(fontFamily: 'Geist', fontSize: 13, color: AppColors.textPrimary)),
+            subtitle: Text('Serial #${sn.serialNumber}', style: TextStyle(fontFamily: 'Inter', fontSize: 10, color: AppColors.textMuted)),
             value: _selectedSerialIds.contains(sn.id),
             onChanged: (checked) {
               setState(() {
@@ -1765,7 +1765,7 @@ class _CategoryChip extends StatelessWidget {
             width: 0.5,
           ),
         ),
-        child: Text(label, style: AppTextStyles.labelSm.copyWith(color: selected ? AppColors.primary : (isDark ? AppColors.textSecondary : const Color(0xFF6B7280)))),
+        child: Text(label, style: AppTextStyles.labelSm.copyWith(color: selected ? AppColors.primary : (AppColors.textSecondary))),
       ),
     );
   }

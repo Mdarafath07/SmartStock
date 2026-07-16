@@ -113,9 +113,9 @@ class PurchaseHistoryTable extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     if (sale.isReplacement)
-                      _badge('Replacement', Colors.orange)
+                      _badge('Replacement', const Color(0xFF6B7280))
                     else if (sale.isWarrantyClaim)
-                      _badge('Warranty Claim', Colors.blue)
+                      _badge('Warranty Claim', const Color(0xFF6B7280))
                     else
                       _buildWarrantyBadge(theme, sale),
                   ],

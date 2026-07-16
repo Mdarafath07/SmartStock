@@ -12,13 +12,6 @@ class CategoryTile extends StatelessWidget {
 
   static const _colors = [
     AppColors.primary,
-    AppColors.purple,
-    AppColors.orange,
-    AppColors.green,
-    AppColors.red,
-    AppColors.teal,
-    AppColors.pink,
-    AppColors.blue,
   ];
 
   const CategoryTile({
@@ -109,7 +102,7 @@ class CategoryTile extends StatelessWidget {
               child: Container(
                 width: 32, height: 32,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryBg,
+                  color: AppColors.primaryContainer,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(Icons.edit_outlined,

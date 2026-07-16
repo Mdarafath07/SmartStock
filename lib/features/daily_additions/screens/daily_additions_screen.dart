@@ -117,7 +117,7 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                         ],
                       ),
                       child: Icon(Icons.arrow_back_rounded, size: 18,
-                          color: isDark ? AppColors.textPrimary : const Color(0xFF475569)),
+                          color: AppColors.textPrimary),
                     ),
                   ),
                   Consumer<DailyAdditionProvider>(
@@ -132,7 +132,7 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                                 fontFamily: 'Hanken Grotesk',
                                 fontSize: 17,
                                 fontWeight: FontWeight.w700,
-                                color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                                color: AppColors.textPrimary,
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -146,7 +146,7 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(Icons.calendar_today_rounded, size: 11,
-                                      color: isDark ? AppColors.textMuted : const Color(0xFF6B7280)),
+                                      color: AppColors.textSecondary),
                                   const SizedBox(width: 3),
                                   Text(
                                     DateFormat('MMM dd, yyyy').format(provider.selectedDate),
@@ -154,12 +154,12 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                                       fontFamily: 'Inter',
                                       fontSize: 11,
                                       fontWeight: FontWeight.w500,
-                                      color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280),
+                                      color: AppColors.textSecondary,
                                     ),
                                   ),
                                   const SizedBox(width: 2),
                                   Icon(Icons.keyboard_arrow_down_rounded, size: 14,
-                                      color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                                      color: AppColors.textMuted),
                                 ],
                               ),
                             ),
@@ -171,11 +171,7 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                   const Spacer(),
                   Container(
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [AppColors.green, AppColors.green.withAlpha(180)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                      color: AppColors.primary,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: IconButton(
@@ -204,10 +200,10 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                   hintStyle: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 12,
-                    color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+                    color: AppColors.textMuted,
                   ),
                   prefixIcon: Icon(Icons.search_rounded,
-                      size: 18, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                      size: 18, color: AppColors.textMuted),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
                           onPressed: () {
@@ -215,7 +211,7 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                             setState(() => _searchQuery = '');
                           },
                           icon: Icon(Icons.clear_rounded, size: 16,
-                              color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                              color: AppColors.textMuted),
                         )
                       : null,
                   filled: true,
@@ -227,13 +223,13 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: AppColors.green.withAlpha(100), width: 1),
+                    borderSide: BorderSide(color: AppColors.primary.withAlpha(100), width: 1),
                   ),
                 ),
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 12,
-                  color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
@@ -242,7 +238,7 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                 builder: (context, provider, _) {
                   if (provider.isLoading && provider.additions.isEmpty) {
                     return const Center(child: CircularProgressIndicator(
-                      color: AppColors.green,
+                      color: AppColors.primary,
                     ));
                   }
 
@@ -257,18 +253,11 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                             width: 72,
                             height: 72,
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppColors.green.withAlpha(20),
-                                  AppColors.green.withAlpha(5),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(24),
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(24),
                             ),
                             child: Icon(Icons.inbox_rounded,
-                                size: 32, color: AppColors.green.withAlpha(100)),
+                                size: 32, color: Colors.white),
                           ),
                           const SizedBox(height: 20),
                           Text(
@@ -279,7 +268,7 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                               fontFamily: 'Hanken Grotesk',
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: isDark ? AppColors.textMuted : const Color(0xFF6B7280),
+                              color: AppColors.textSecondary,
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -315,14 +304,7 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                         ModernCard(
                           margin: const EdgeInsets.only(bottom: 8),
                           padding: const EdgeInsets.all(12),
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.green.withAlpha(12),
-                              AppColors.green.withAlpha(4),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
+                          color: Colors.white,
                           onTap: null,
                           child: Row(
                             children: [
@@ -330,11 +312,7 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                                 width: 34,
                                 height: 34,
                                 decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [AppColors.green, AppColors.green.withAlpha(180)],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
+                                  color: AppColors.primary,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Icon(Icons.receipt_long_rounded, size: 18, color: Colors.white),
@@ -349,7 +327,7 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                                     fontFamily: 'Hanken Grotesk',
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
-                                    color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
                               ),
@@ -361,7 +339,7 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                                   fontFamily: 'Hanken Grotesk',
                                   fontSize: 15,
                                   fontWeight: FontWeight.w900,
-                                  color: AppColors.green,
+                                  color: AppColors.textPrimary,
                                   letterSpacing: -0.5,
                                 ),
                               ),
@@ -402,14 +380,10 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.green.withAlpha(25), AppColors.green.withAlpha(8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.inventory_2_rounded, size: 18, color: AppColors.green),
+                child: const Icon(Icons.inventory_2_rounded, size: 18, color: Colors.white),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -422,14 +396,14 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                           fontFamily: 'Hanken Grotesk',
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                          color: AppColors.textPrimary,
                         )),
                     if (first.categoryName.isNotEmpty)
                       Text(first.categoryName, maxLines: 1, overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 10,
-                            color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+                            color: AppColors.textMuted,
                           )),
                   ],
                 ),
@@ -446,7 +420,7 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                       fontFamily: 'Hanken Grotesk',
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.green,
+                      color: AppColors.textPrimary,
                       letterSpacing: -0.3,
                     ),
                   ),
@@ -455,7 +429,7 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 9,
-                      color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+                      color: AppColors.textMuted,
                     ),
                   ),
                 ],
@@ -476,7 +450,7 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.schedule_rounded, size: 10, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                      Icon(Icons.schedule_rounded, size: 10, color: AppColors.textMuted),
                       const SizedBox(width: 3),
                       Text(
                         DateFormat('h:mm a').format(item.dateAdded),
@@ -484,7 +458,7 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                           fontFamily: 'Inter',
                           fontSize: 9,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280),
+                          color: AppColors.textSecondary,
                         ),
                       ),
                       const Spacer(),
@@ -494,7 +468,7 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                           fontFamily: 'Inter',
                           fontSize: 9,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.green,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ],
@@ -507,9 +481,9 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                       children: item.serialNumbers.map((sn) => Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.green.withAlpha(15),
+                          color: AppColors.primary.withAlpha(15),
                           borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: AppColors.green.withAlpha(30), width: 0.5),
+                          border: Border.all(color: AppColors.primary.withAlpha(30), width: 0.5),
                         ),
                         child: Text(
                           sn,
@@ -517,7 +491,7 @@ class _DailyAdditionsScreenState extends State<DailyAdditionsScreen> {
                             fontFamily: 'Inter',
                             fontSize: 8,
                             fontWeight: FontWeight.w500,
-                            color: AppColors.green,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       )).toList(),

@@ -39,7 +39,7 @@ class IconPicker extends StatelessWidget {
               onTap: () => onSelected(name),
               child: Container(
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primaryBg : Colors.transparent,
+                  color: isSelected ? AppColors.primaryContainer : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: isSelected ? AppColors.primary : AppColors.greyLight,

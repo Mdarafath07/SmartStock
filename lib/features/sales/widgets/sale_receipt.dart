@@ -115,7 +115,7 @@ class _ReceiptScreen extends StatelessWidget {
                 Text(storeName,
                     style: TextStyle(
                       fontFamily: 'Geist', fontSize: 20, fontWeight: FontWeight.w900,
-                      letterSpacing: 1, color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                      letterSpacing: 1, color: isDark ? Colors.white : AppColors.textPrimary,
                     )),
                 if (storeAddress.isNotEmpty) ...[
                   const SizedBox(height: 4),
@@ -123,7 +123,7 @@ class _ReceiptScreen extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: 'Geist', fontSize: 9, height: 1.4,
-                        color: isDark ? Colors.white54 : const Color(0xFF6B7280),
+                        color: isDark ? Colors.white54 : AppColors.textSecondary,
                       )),
                 ],
                 if (storePhone.isNotEmpty) ...[
@@ -131,7 +131,7 @@ class _ReceiptScreen extends StatelessWidget {
                   Text(storePhone,
                       style: TextStyle(
                         fontFamily: 'Geist', fontSize: 9,
-                        color: isDark ? Colors.white38 : const Color(0xFF9CA3AF),
+                        color: isDark ? Colors.white38 : AppColors.textMuted,
                       )),
                 ],
                 if (storeEmail.isNotEmpty) ...[
@@ -139,14 +139,14 @@ class _ReceiptScreen extends StatelessWidget {
                   Text(storeEmail,
                       style: TextStyle(
                         fontFamily: 'Geist', fontSize: 9,
-                        color: isDark ? Colors.white38 : const Color(0xFF9CA3AF),
+                        color: isDark ? Colors.white38 : AppColors.textMuted,
                       )),
                 ],
                 const SizedBox(height: 10),
                 Text('INVOICE',
                     style: TextStyle(
                       fontFamily: 'Geist', fontSize: 10, fontWeight: FontWeight.w600,
-                      letterSpacing: 5, color: isDark ? Colors.white38 : const Color(0xFF9CA3AF),
+                      letterSpacing: 5, color: isDark ? Colors.white38 : AppColors.textMuted,
                     )),
                 const SizedBox(height: 14),
                 _dashedLine(isDark),
@@ -174,11 +174,11 @@ class _ReceiptScreen extends StatelessWidget {
                   child: Row(
                     children: [
                       Expanded(flex: 3, child: Text('ITEM',
-                          style: TextStyle(fontFamily: 'Geist', fontSize: 8, fontWeight: FontWeight.w700, letterSpacing: 1, color: isDark ? Colors.white54 : const Color(0xFF6B7280)))),
+                          style: TextStyle(fontFamily: 'Geist', fontSize: 8, fontWeight: FontWeight.w700, letterSpacing: 1, color: isDark ? Colors.white54 : AppColors.textSecondary))),
                       Expanded(flex: 1, child: Text('QTY', textAlign: TextAlign.center,
-                          style: TextStyle(fontFamily: 'Geist', fontSize: 8, fontWeight: FontWeight.w700, letterSpacing: 1, color: isDark ? Colors.white54 : const Color(0xFF6B7280)))),
+                          style: TextStyle(fontFamily: 'Geist', fontSize: 8, fontWeight: FontWeight.w700, letterSpacing: 1, color: isDark ? Colors.white54 : AppColors.textSecondary))),
                       Expanded(flex: 2, child: Text('AMOUNT', textAlign: TextAlign.right,
-                          style: TextStyle(fontFamily: 'Geist', fontSize: 8, fontWeight: FontWeight.w700, letterSpacing: 1, color: isDark ? Colors.white54 : const Color(0xFF6B7280)))),
+                          style: TextStyle(fontFamily: 'Geist', fontSize: 8, fontWeight: FontWeight.w700, letterSpacing: 1, color: isDark ? Colors.white54 : AppColors.textSecondary))),
                     ],
                   ),
                 ),
@@ -198,18 +198,18 @@ class _ReceiptScreen extends StatelessWidget {
                               child: Text(item.productName,
                                   style: TextStyle(
                                     fontFamily: 'Geist', fontSize: 9, fontWeight: FontWeight.w600,
-                                    color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                                    color: isDark ? Colors.white : AppColors.textPrimary,
                                   )),
                             ),
                             Expanded(
                               flex: 1,
                               child: Text('${item.quantity}', textAlign: TextAlign.center,
-                                  style: TextStyle(fontFamily: 'Geist', fontSize: 9, color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+                                  style: TextStyle(fontFamily: 'Geist', fontSize: 9, color: isDark ? Colors.white : AppColors.textPrimary)),
                             ),
                             Expanded(
                               flex: 2,
                               child: Text('$symbol${(item.price * item.quantity).toStringAsFixed(0)}', textAlign: TextAlign.right,
-                                  style: TextStyle(fontFamily: 'Geist', fontSize: 10, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+                                  style: TextStyle(fontFamily: 'Geist', fontSize: 10, fontWeight: FontWeight.w700, color: isDark ? Colors.white : AppColors.textPrimary)),
                             ),
                           ],
                         ),
@@ -217,13 +217,13 @@ class _ReceiptScreen extends StatelessWidget {
                           Padding(
                             padding: const EdgeInsets.only(top: 1),
                             child: Text('Model: ${item.modelNumber}',
-                                style: TextStyle(fontFamily: 'Geist', fontSize: 7, color: isDark ? Colors.white38 : const Color(0xFF9CA3AF))),
+                                style: TextStyle(fontFamily: 'Geist', fontSize: 7, color: isDark ? Colors.white38 : AppColors.textMuted)),
                           ),
                         if (item.serialNumber.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(top: 1),
                             child: Text('SN: ${item.serialNumber}',
-                                style: TextStyle(fontFamily: 'Geist', fontSize: 7, color: isDark ? Colors.white38 : const Color(0xFF9CA3AF))),
+                                style: TextStyle(fontFamily: 'Geist', fontSize: 7, color: isDark ? Colors.white38 : AppColors.textMuted)),
                           ),
                       ],
                     ),
@@ -236,7 +236,7 @@ class _ReceiptScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('TOTAL',
-                        style: TextStyle(fontFamily: 'Geist', fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 1, color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+                        style: TextStyle(fontFamily: 'Geist', fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 1, color: isDark ? Colors.white : AppColors.textPrimary)),
                     Text('$symbol${total.toStringAsFixed(0)}',
                         style: TextStyle(fontFamily: 'Geist', fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.primary)),
                   ],
@@ -246,17 +246,17 @@ class _ReceiptScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('Total Items',
-                        style: TextStyle(fontFamily: 'Geist', fontSize: 9, color: isDark ? Colors.white54 : const Color(0xFF6B7280))),
+                        style: TextStyle(fontFamily: 'Geist', fontSize: 9, color: isDark ? Colors.white54 : AppColors.textSecondary)),
                     Text('${items.fold(0, (s, i) => s + i.quantity)} ${items.fold(0, (s, i) => s + i.quantity) == 1 ? 'item' : 'items'}',
                         style: TextStyle(fontFamily: 'Geist', fontSize: 9, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : const Color(0xFF374151))),
                   ],
                 ),
                 const SizedBox(height: 20),
                 Text('Thank you for your purchase!',
-                    style: TextStyle(fontFamily: 'Geist', fontSize: 10, color: isDark ? Colors.white54 : const Color(0xFF6B7280))),
+                    style: TextStyle(fontFamily: 'Geist', fontSize: 10, color: isDark ? Colors.white54 : AppColors.textSecondary)),
                 const SizedBox(height: 4),
                 Text('Visit again',
-                    style: TextStyle(fontFamily: 'Geist', fontSize: 9, color: isDark ? Colors.white38 : const Color(0xFF9CA3AF))),
+                    style: TextStyle(fontFamily: 'Geist', fontSize: 9, color: isDark ? Colors.white38 : AppColors.textMuted)),
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
@@ -369,9 +369,9 @@ class _ReceiptScreen extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label,
-            style: TextStyle(fontFamily: 'Geist', fontSize: 9, color: isDark ? Colors.white54 : const Color(0xFF6B7280))),
+            style: TextStyle(fontFamily: 'Geist', fontSize: 9, color: isDark ? Colors.white54 : AppColors.textSecondary)),
         Text(value,
-            style: TextStyle(fontFamily: 'Geist', fontSize: 9, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+            style: TextStyle(fontFamily: 'Geist', fontSize: 9, fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColors.textPrimary)),
       ],
     );
   }
@@ -456,7 +456,7 @@ class _PrinterSelectorSheetState extends State<_PrinterSelectorSheet> {
           const SizedBox(height: 16),
           Text('Select Printer', style: TextStyle(
             fontSize: 16, fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+            color: isDark ? Colors.white : AppColors.textPrimary,
           )),
           const SizedBox(height: 16),
           if (_scanning) ...[
@@ -466,7 +466,7 @@ class _PrinterSelectorSheetState extends State<_PrinterSelectorSheet> {
                 children: [
                   CircularProgressIndicator(),
                   SizedBox(height: 12),
-                  Text('Scanning for printers...', style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
+                  Text('Scanning for printers...', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                 ],
               ),
             ),
@@ -475,9 +475,9 @@ class _PrinterSelectorSheetState extends State<_PrinterSelectorSheet> {
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Column(
                 children: [
-                  Icon(Icons.error_outline, size: 40, color: isDark ? Colors.white38 : const Color(0xFF9CA3AF)),
+                  Icon(Icons.error_outline, size: 40, color: isDark ? Colors.white38 : AppColors.textMuted),
                   const SizedBox(height: 8),
-                  Text('Could not find printers', style: TextStyle(color: isDark ? Colors.white54 : const Color(0xFF6B7280), fontSize: 13)),
+                  Text('Could not find printers', style: TextStyle(color: isDark ? Colors.white54 : AppColors.textSecondary, fontSize: 13)),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
                     onPressed: () { setState(() { _scanning = true; _error = null; }); _scan(); },
@@ -492,9 +492,9 @@ class _PrinterSelectorSheetState extends State<_PrinterSelectorSheet> {
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Column(
                 children: [
-                  Icon(Icons.print_disabled_rounded, size: 40, color: isDark ? Colors.white38 : const Color(0xFF9CA3AF)),
+                  Icon(Icons.print_disabled_rounded, size: 40, color: isDark ? Colors.white38 : AppColors.textMuted),
                   const SizedBox(height: 8),
-                  Text('No printers found', style: TextStyle(color: isDark ? Colors.white54 : const Color(0xFF6B7280), fontSize: 13)),
+                  Text('No printers found', style: TextStyle(color: isDark ? Colors.white54 : AppColors.textSecondary, fontSize: 13)),
                   const SizedBox(height: 4),
                   Text('Turn on Bluetooth or connect to WiFi printer', style: TextStyle(color: isDark ? Colors.white24 : const Color(0xFF9CA3AF), fontSize: 11)),
                   const SizedBox(height: 12),
@@ -523,8 +523,8 @@ class _PrinterSelectorSheetState extends State<_PrinterSelectorSheet> {
                   };
                   return ListTile(
                     leading: Icon(icon, color: AppColors.primary),
-                    title: Text(p.name, style: TextStyle(fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
-                    subtitle: Text(p.connectionType.name, style: TextStyle(fontSize: 11, color: isDark ? Colors.white38 : const Color(0xFF9CA3AF))),
+                    title: Text(p.name, style: TextStyle(fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColors.textPrimary)),
+                    subtitle: Text(p.connectionType.name, style: TextStyle(fontSize: 11, color: isDark ? Colors.white38 : AppColors.textMuted)),
                     onTap: () => widget.onPrint(p),
                   );
                 },

@@ -64,7 +64,7 @@ class _ProductIssueListScreenState extends State<ProductIssueListScreen>
                   ],
                 ),
                 indicatorSize: TabBarIndicatorSize.tab,
-                labelColor: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                labelColor: AppColors.textPrimary,
                 unselectedLabelColor: AppColors.textMuted,
                 labelStyle: AppTextStyles.labelSm,
                 unselectedLabelStyle: AppTextStyles.labelSm,
@@ -197,9 +197,7 @@ class _ProductIssueListScreenState extends State<ProductIssueListScreen>
                         Text(
                           issue.productName,
                           style: AppTextStyles.titleSm.copyWith(
-                            color: isDark
-                                ? AppColors.textPrimary
-                                : const Color(0xFF1A1A2E),
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -237,11 +235,11 @@ class _ProductIssueListScreenState extends State<ProductIssueListScreen>
   Color _getStatusColor(String status) {
     switch (status) {
       case 'open':
-        return AppColors.red;
+        return AppColors.error;
       case 'in_progress':
-        return AppColors.orange;
+        return AppColors.warning;
       case 'resolved':
-        return AppColors.green;
+        return AppColors.success;
       default:
         return AppColors.grey;
     }

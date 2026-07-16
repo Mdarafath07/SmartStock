@@ -13,19 +13,19 @@ class AppTheme {
       colorScheme: ColorScheme.light(
         primary: AppColors.primary,
         onPrimary: Colors.white,
-        primaryContainer: AppColors.primaryBg,
-        onPrimaryContainer: AppColors.primaryDark,
-        secondary: AppColors.blue,
+        primaryContainer: AppColors.primaryContainer,
+        onPrimaryContainer: AppColors.onPrimaryContainer,
+        secondary: AppColors.secondary,
         onSecondary: Colors.white,
-        secondaryContainer: AppColors.blueBg,
-        onSecondaryContainer: AppColors.blueDark,
-        tertiary: AppColors.purple,
+        secondaryContainer: AppColors.secondaryContainer,
+        onSecondaryContainer: AppColors.greyDarker,
+        tertiary: AppColors.tertiary,
         onTertiary: Colors.white,
-        tertiaryContainer: AppColors.purpleBg,
+        tertiaryContainer: AppColors.tertiaryContainer,
         error: AppColors.error,
         onError: Colors.white,
-        errorContainer: AppColors.redBg,
-        onErrorContainer: AppColors.red,
+        errorContainer: AppColors.errorContainer,
+        onErrorContainer: AppColors.onErrorContainer,
         surface: AppColors.surface,
         onSurface: AppColors.textPrimary,
         onSurfaceVariant: AppColors.textSecondary,
@@ -52,12 +52,12 @@ class AppTheme {
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.grey,
+        selectedItemColor: AppColors.iconNavigationActive,
+        unselectedItemColor: AppColors.iconNavigationInactive,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
-        selectedLabelStyle: AppTextStyles.labelSm,
-        unselectedLabelStyle: AppTextStyles.labelSm,
+        selectedLabelStyle: AppTextStyles.labelSm.copyWith(color: AppColors.iconNavigationActive),
+        unselectedLabelStyle: AppTextStyles.labelSm.copyWith(color: AppColors.iconNavigationInactive),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -109,9 +109,9 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.whiteMuted,
-        selectedColor: AppColors.primaryBg,
+        selectedColor: AppColors.primary,
         labelStyle: AppTextStyles.labelSm.copyWith(color: AppColors.textSecondary),
-        secondaryLabelStyle: AppTextStyles.labelSm.copyWith(color: AppColors.primary),
+        secondaryLabelStyle: AppTextStyles.labelSm.copyWith(color: Colors.white),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
@@ -160,10 +160,6 @@ class AppTheme {
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) return AppColors.primary.withAlpha(50);
           return AppColors.greyLight;
-
-
-
-
         }),
       ),
       checkboxTheme: CheckboxThemeData(

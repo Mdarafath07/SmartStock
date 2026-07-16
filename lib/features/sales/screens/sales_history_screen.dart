@@ -174,7 +174,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                   Text(
                     'Sales History',
                     style: AppTextStyles.titleLg.copyWith(
-                      color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ],
@@ -230,17 +230,17 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
           onChanged: _onSearch,
           decoration: InputDecoration(
             hintText: 'Search by product, serial, or customer...',
-            prefixIcon: Icon(Icons.search_rounded, size: 20, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+            prefixIcon: Icon(Icons.search_rounded, size: 20, color: AppColors.textMuted),
             suffixIcon: _searchQuery.isNotEmpty
                 ? IconButton(
                     onPressed: () { _searchController.clear(); _onSearch(''); },
-                    icon: Icon(Icons.clear_rounded, size: 18, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                    icon: Icon(Icons.clear_rounded, size: 18, color: AppColors.textMuted),
                   )
                 : null,
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(vertical: 10),
           ),
-          style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+          style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.textPrimary),
         ),
       ),
     );
@@ -277,11 +277,11 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.calendar_month, size: 14,
-                      color: isDark ? AppColors.textMuted : const Color(0xFF6B7280)),
+                      color: AppColors.textSecondary),
                   const SizedBox(width: 4),
                   Text(label,
                       style: AppTextStyles.caption.copyWith(
-                        color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280),
+                        color: AppColors.textSecondary,
                       )),
                 ],
               ),
@@ -300,12 +300,12 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           color: isActive
-              ? AppColors.greenBg
+              ? AppColors.statusInStockBg
               : (isDark ? AppColors.surface : Colors.white),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isActive
-                ? AppColors.green.withAlpha(60)
+                ? AppColors.success.withAlpha(60)
                 : (isDark ? AppColors.greyDarker.withAlpha(40) : const Color(0xFFE5E7EB)),
             width: 0.5,
           ),
@@ -316,7 +316,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
             fontFamily: 'Inter',
             fontSize: 12,
             fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-            color: isActive ? AppColors.green : (isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
+            color: isActive ? AppColors.success : (AppColors.textSecondary),
           ),
         ),
       ),
@@ -335,7 +335,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
               label: 'Sales',
               value: '$totalSales',
               icon: Icons.shopping_bag_rounded,
-              iconColor: AppColors.info,
+              iconColor: AppColors.primary,
               bg: cardBg,
             ),
           ),
@@ -345,7 +345,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
               label: 'Revenue',
               value: currencyFormat.format(totalRevenue),
               icon: Icons.monetization_on_rounded,
-              iconColor: AppColors.green,
+              iconColor: AppColors.success,
               bg: cardBg,
             ),
           ),
@@ -355,7 +355,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
               label: 'Profit',
               value: currencyFormat.format(totalProfit),
               icon: Icons.trending_up_rounded,
-              iconColor: totalProfit >= 0 ? AppColors.green : AppColors.red,
+              iconColor: totalProfit >= 0 ? AppColors.success : AppColors.error,
               bg: cardBg,
             ),
           ),
@@ -443,12 +443,12 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
           const SizedBox(height: 16),
           Text('No sales found',
               style: AppTextStyles.titleSm.copyWith(
-                color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280),
+                color: AppColors.textSecondary,
               )),
           const SizedBox(height: 4),
           Text('Select a date to view sales',
               style: AppTextStyles.bodySm.copyWith(
-                color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+                color: AppColors.textMuted,
               )),
         ],
       ),
@@ -480,7 +480,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                   width: 28,
                   height: 28,
                   decoration: BoxDecoration(
-                    color: AppColors.greenBg,
+                    color: AppColors.statusInStockBg,
                     borderRadius: BorderRadius.circular(7),
                   ),
                   child: Center(
@@ -492,7 +492,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                         fontFamily: 'Inter',
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.green,
+                        color: AppColors.success,
                       ),
                     ),
                   ),
@@ -507,14 +507,14 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                             fontFamily: 'Inter',
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                            color: AppColors.textPrimary,
                           )),
                       if (sales.isNotEmpty && sales.first.customerPhone.isNotEmpty)
                         Text(sales.first.customerPhone,
                             style: TextStyle(
                               fontFamily: 'Geist',
                               fontSize: 11,
-                              color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF),
+                              color: AppColors.textMuted,
                             )),
                     ],
                   ),
@@ -522,7 +522,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                   decoration: BoxDecoration(
-                    color: AppColors.greenBg,
+                    color: AppColors.statusInStockBg,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -531,7 +531,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                       fontFamily: 'Geist',
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.green,
+                      color: AppColors.success,
                     ),
                   ),
                 ),
@@ -569,7 +569,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                     fontFamily: 'Hanken Grotesk',
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.green,
+                    color: AppColors.success,
                   ),
                 ),
               ],
@@ -593,8 +593,8 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                         height: 32,
                         decoration: BoxDecoration(
                           color: sale.profit >= 0
-                              ? AppColors.green
-                              : AppColors.red,
+                              ? AppColors.success
+                              : AppColors.error,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -611,18 +611,18 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                         fontFamily: 'Inter',
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
-                                        color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                                        color: AppColors.textPrimary,
                                       )),
                                 ),
                                 if (sale.isReplacement)
                                   const Padding(
                                     padding: EdgeInsets.only(left: 4),
-                                    child: StatusBadge(label: 'Replacement', color: AppColors.orange, fontSize: 8),
+                                    child: StatusBadge(label: 'Replacement', color: AppColors.warning, fontSize: 8),
                                   )
                                 else if (sale.isWarrantyClaim)
                                   const Padding(
                                     padding: EdgeInsets.only(left: 4),
-                                    child: StatusBadge(label: 'Warranty', color: AppColors.info, fontSize: 8),
+                                    child: StatusBadge(label: 'Warranty', color: AppColors.primary, fontSize: 8),
                                   ),
                               ],
                             ),
@@ -638,7 +638,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                 style: TextStyle(
                                   fontFamily: 'Geist',
                                   fontSize: 10,
-                                  color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
+                                  color: AppColors.textSecondary),
                               ),
                             ),
                           ],
@@ -650,7 +650,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                         style: TextStyle(
                           fontFamily: 'Geist',
                           fontSize: 10,
-                          color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                          color: AppColors.textMuted),
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -659,7 +659,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                           fontFamily: 'Hanken Grotesk',
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ],

@@ -52,10 +52,10 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
         elevation: 0,
         scrolledUnderElevation: 0.5,
         titleTextStyle: AppTextStyles.titleMd.copyWith(
-          color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+          color: AppColors.textPrimary,
         ),
         iconTheme: IconThemeData(
-          color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+          color: AppColors.textPrimary,
         ),
       ),
       body: Consumer<WarrantyProvider>(
@@ -76,9 +76,7 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
             return Center(
               child: Text('Warranty not found',
                   style: AppTextStyles.bodyMd.copyWith(
-                    color: isDark
-                        ? AppColors.textMuted
-                        : const Color(0xFF6B7280),
+                    color: AppColors.textSecondary,
                   )),
             );
           }
@@ -213,9 +211,9 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
     }
 
     final textMuted =
-        isDark ? AppColors.textMuted : const Color(0xFF6B7280);
+        AppColors.textSecondary;
     final textPrimary =
-        isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E);
+        AppColors.textPrimary;
 
     return ModernCard(
       child: Column(
@@ -227,11 +225,11 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: AppColors.orange.withAlpha(25),
+                  color: AppColors.warning.withAlpha(25),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.assignment_rounded,
-                    size: 16, color: AppColors.orange),
+                    size: 16, color: AppColors.warning),
               ),
               const SizedBox(width: 10),
               Text('Claim Summary',
@@ -324,7 +322,7 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
                           : const Color(0xFFE5E7EB)),
                 ),
                 icon:
-                    const Icon(Icons.receipt, size: 18, color: AppColors.blue),
+                    const Icon(Icons.receipt, size: 18, color: AppColors.primary),
                 label: Text(
                     isClaimSale ? 'View Original Sale' : 'View Claim Sale'),
               ),
@@ -344,18 +342,18 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
     final String? statusSubtext;
 
     if (isClaimed) {
-      accentColor = AppColors.orange;
+      accentColor = AppColors.warning;
       bannerIcon = Icons.assignment_rounded;
       statusText = 'Warranty Claimed';
       statusSubtext = 'Old S/N: ${warranty.serialNumber}';
     } else if (warranty.isActive) {
-      accentColor = AppColors.green;
+      accentColor = AppColors.success;
       bannerIcon = Icons.check_circle_rounded;
       statusText = 'Warranty Active';
       statusSubtext =
           'Valid until ${AppDateUtils.formatDate(warranty.expiryDate)}';
     } else {
-      accentColor = AppColors.red;
+      accentColor = AppColors.error;
       bannerIcon = Icons.cancel_rounded;
       statusText = 'Warranty Expired';
       statusSubtext =
@@ -384,9 +382,7 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
                     Text(
                       statusText,
                       style: AppTextStyles.titleSm.copyWith(
-                        color: isDark
-                            ? AppColors.textPrimary
-                            : const Color(0xFF1A1A2E),
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -397,9 +393,7 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
                 Text(
                   statusSubtext,
                   style: AppTextStyles.bodySm.copyWith(
-                    color: isDark
-                        ? AppColors.textMuted
-                        : const Color(0xFF6B7280),
+                    color: AppColors.textSecondary,
                   ),
                 ),
                 if (isClaimed && warranty.newSerialNumber != null) ...[
@@ -407,7 +401,7 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
                   Text(
                     'New S/N: ${warranty.newSerialNumber}',
                     style: AppTextStyles.bodySm.copyWith(
-                      color: AppColors.blue,
+                      color: AppColors.primary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -446,9 +440,7 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
                 Text(
                   warranty.productName,
                   style: AppTextStyles.titleMd.copyWith(
-                    color: isDark
-                        ? AppColors.textPrimary
-                        : const Color(0xFF1A1A2E),
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -502,7 +494,7 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
             'Customer',
             style: AppTextStyles.labelMd.copyWith(
               color:
-                  isDark ? AppColors.textMuted : const Color(0xFF6B7280),
+                  AppColors.textSecondary,
               letterSpacing: 0.08,
             ),
           ),
@@ -528,7 +520,7 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
             'Sale Info',
             style: AppTextStyles.labelMd.copyWith(
               color:
-                  isDark ? AppColors.textMuted : const Color(0xFF6B7280),
+                  AppColors.textSecondary,
               letterSpacing: 0.08,
             ),
           ),
@@ -563,7 +555,7 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
         : 0.0;
 
     final progressColor =
-        warranty.isActive ? AppColors.green : AppColors.red;
+        warranty.isActive ? AppColors.success : AppColors.error;
 
     return ModernCard(
       child: Column(
@@ -572,9 +564,7 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
           Text(
             'Warranty Timeline',
             style: AppTextStyles.labelMd.copyWith(
-              color: isDark
-                  ? AppColors.textMuted
-                  : const Color(0xFF6B7280),
+              color: AppColors.textSecondary,
               letterSpacing: 0.08,
             ),
           ),
@@ -582,18 +572,12 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
           Row(
             children: [
               _timelineDot(
-                  Icons.add_shopping_cart_rounded, AppColors.blue),
+                  Icons.add_shopping_cart_rounded, AppColors.primary),
               Expanded(
                 child: Container(
                   height: 2,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.blue,
-                        progressColor,
-                      ],
-                      stops: [progress, progress],
-                    ),
+                    color: progressColor,
                   ),
                 ),
               ),
@@ -612,9 +596,7 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
               Text(
                 AppDateUtils.formatDate(warranty.purchaseDate),
                 style: AppTextStyles.labelSm.copyWith(
-                  color: isDark
-                      ? AppColors.textMuted
-                      : const Color(0xFF6B7280),
+                  color: AppColors.textSecondary,
                 ),
               ),
               Text(
@@ -622,9 +604,7 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
                     ? 'Today'
                     : AppDateUtils.formatDate(warranty.expiryDate),
                 style: AppTextStyles.labelSm.copyWith(
-                  color: isDark
-                      ? AppColors.textMuted
-                      : const Color(0xFF6B7280),
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],
@@ -647,9 +627,7 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
                 ? '${elapsed.inDays} of ${total.inDays} days used (${(progress * 100).round()}%)'
                 : 'Warranty period ended (${total.inDays} days total)',
             style: AppTextStyles.bodySm.copyWith(
-              color: isDark
-                  ? AppColors.textMuted
-                  : const Color(0xFF6B7280),
+              color: AppColors.textSecondary,
             ),
           ),
           if (warranty.isActive)
@@ -659,7 +637,7 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
                 '${total.inDays - elapsed.inDays} days remaining',
                 style: AppTextStyles.bodySm.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.green,
+                  color: AppColors.success,
                 ),
               ),
             ),
@@ -688,9 +666,9 @@ class _WarrantyDetailsScreenState extends State<WarrantyDetailsScreen> {
     required bool isDark,
   }) {
     final iconColor = customColor ??
-        (isDark ? AppColors.textMuted : const Color(0xFF6B7280));
+        (AppColors.textSecondary);
     final textColor = customColor ??
-        (isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E));
+        (AppColors.textPrimary);
     return Row(
       children: [
         Icon(icon, size: 18, color: iconColor),
@@ -766,9 +744,7 @@ class _ClaimFormDialogState extends State<_ClaimFormDialog> {
           Text(
             'Claim Warranty',
             style: AppTextStyles.titleSm.copyWith(
-              color: isDark
-                  ? AppColors.textPrimary
-                  : const Color(0xFF1A1A2E),
+              color: AppColors.textPrimary,
             ),
           ),
         ],
@@ -785,9 +761,7 @@ class _ClaimFormDialogState extends State<_ClaimFormDialog> {
               decoration: InputDecoration(
                 labelText: 'New Serial Number',
                 labelStyle: AppTextStyles.labelMd.copyWith(
-                  color: isDark
-                      ? AppColors.textMuted
-                      : const Color(0xFF6B7280),
+                  color: AppColors.textSecondary,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -808,9 +782,7 @@ class _ClaimFormDialogState extends State<_ClaimFormDialog> {
                 suffixIcon: const Icon(Icons.arrow_drop_down),
                 helperText: 'Tap to select from available stock',
                 helperStyle: AppTextStyles.caption.copyWith(
-                  color: isDark
-                      ? AppColors.textMuted
-                      : const Color(0xFF9CA3AF),
+                  color: AppColors.textMuted,
                 ),
               ),
               onTap: () async {
@@ -834,9 +806,7 @@ class _ClaimFormDialogState extends State<_ClaimFormDialog> {
               decoration: InputDecoration(
                 labelText: 'Reason',
                 labelStyle: AppTextStyles.labelMd.copyWith(
-                  color: isDark
-                      ? AppColors.textMuted
-                      : const Color(0xFF6B7280),
+                  color: AppColors.textSecondary,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -869,7 +839,7 @@ class _ClaimFormDialogState extends State<_ClaimFormDialog> {
             onPressed: isDisabled ? null : () => Navigator.pop(context),
             style: TextButton.styleFrom(
               foregroundColor:
-                  isDark ? AppColors.textMuted : const Color(0xFF6B7280),
+                  AppColors.textSecondary,
             ),
             child: Text('Cancel',
                 style: AppTextStyles.button.copyWith(fontSize: 13)),

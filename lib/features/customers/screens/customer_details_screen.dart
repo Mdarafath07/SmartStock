@@ -89,10 +89,10 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
                     width: 28,
                     height: 28,
                     decoration: BoxDecoration(
-                      color: AppColors.blue.withAlpha(25),
-                      borderRadius: BorderRadius.circular(7),
+                      color: AppColors.primary.withAlpha(25),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(Icons.receipt_long, size: 14, color: AppColors.blue),
+                    child: Icon(Icons.receipt_long, size: 14, color: AppColors.primary),
                   ),
                   const SizedBox(width: 10),
                   Text('Purchase History', style: AppTextStyles.titleSm),

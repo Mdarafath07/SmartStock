@@ -59,16 +59,14 @@ class SalesBarChart extends StatelessWidget {
                         '$symbol${report.totalSales.toStringAsFixed(0)}',
                         style: AppTextStyles.labelSm.copyWith(
                           fontSize: 9,
-                          color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
+                          color: isDark ? AppColors.textSecondary : AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Container(
                         height: barHeight.clamp(4.0, maxBarHeight),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(
-                            alpha: 0.6 + (0.4 * (index / data.length)),
-                          ),
+                          color: AppColors.primary,
                           borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(4),
                           ),
@@ -79,7 +77,7 @@ class SalesBarChart extends StatelessWidget {
                         _formatLabel(report.date),
                         style: AppTextStyles.labelSm.copyWith(
                           fontSize: 9,
-                          color: isDark ? AppColors.textSecondary : const Color(0xFF454652),
+                          color: isDark ? AppColors.textSecondary : AppColors.textPrimary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

@@ -110,7 +110,7 @@ class SearchResultTile extends StatelessWidget {
       case 'customer':
         return AppColors.success;
       case 'sale':
-        return AppColors.info;
+        return AppColors.primary;
       default:
         return const Color(0xFF454652);
     }

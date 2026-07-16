@@ -149,9 +149,9 @@ class _ProductListScreenState extends State<ProductListScreen>
                   decoration: BoxDecoration(color: isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB), borderRadius: BorderRadius.circular(2))),
               ),
               const SizedBox(height: 16),
-              Text('Price Filter', style: AppTextStyles.headlineSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+              Text('Price Filter', style: AppTextStyles.headlineSm.copyWith(color: AppColors.textPrimary)),
               const SizedBox(height: 4),
-              Text('Set a price range to filter products', style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+              Text('Set a price range to filter products', style: AppTextStyles.bodySm.copyWith(color: AppColors.textSecondary)),
               const SizedBox(height: 20),
               Row(
                 children: [
@@ -166,7 +166,7 @@ class _ProductListScreenState extends State<ProductListScreen>
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                       ),
                       keyboardType: TextInputType.number,
-                      style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                      style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.textPrimary),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -181,7 +181,7 @@ class _ProductListScreenState extends State<ProductListScreen>
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                       ),
                       keyboardType: TextInputType.number,
-                      style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                      style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.textPrimary),
                     ),
                   ),
                 ],
@@ -278,7 +278,7 @@ class _ProductListScreenState extends State<ProductListScreen>
           Text(
             'Products',
             style: AppTextStyles.headlineMd.copyWith(
-              color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+              color: AppColors.textPrimary,
             ),
           ),
           const Spacer(),
@@ -325,17 +325,17 @@ class _ProductListScreenState extends State<ProductListScreen>
                 onChanged: _onSearch,
                 decoration: InputDecoration(
                   hintText: 'Search products...',
-                  prefixIcon: Icon(Icons.search_rounded, size: 20, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                  prefixIcon: Icon(Icons.search_rounded, size: 20, color: AppColors.textMuted),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
                           onPressed: () { _searchController.clear(); _onSearch(''); },
-                          icon: Icon(Icons.clear_rounded, size: 18, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                          icon: Icon(Icons.clear_rounded, size: 18, color: AppColors.textMuted),
                         )
                       : null,
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.textPrimary),
               ),
             ),
           ),
@@ -398,13 +398,13 @@ class _ProductListScreenState extends State<ProductListScreen>
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          _MiniStat(label: 'Items', value: '$totalItems', color: AppColors.blue, isDark: isDark),
+          _MiniStat(label: 'Items', value: '$totalItems', color: AppColors.primary, isDark: isDark),
           const SizedBox(width: 8),
-          _MiniStat(label: 'In Stock', value: '$inStockProducts', color: AppColors.green, isDark: isDark),
+          _MiniStat(label: 'In Stock', value: '$inStockProducts', color: AppColors.success, isDark: isDark),
           const SizedBox(width: 8),
-          _MiniStat(label: 'Low', value: '$lowStockProducts', color: AppColors.orange, isDark: isDark),
+          _MiniStat(label: 'Low', value: '$lowStockProducts', color: AppColors.warning, isDark: isDark),
           const SizedBox(width: 8),
-          _MiniStat(label: 'Out', value: '$outOfStockProducts', color: AppColors.red, isDark: isDark),
+          _MiniStat(label: 'Out', value: '$outOfStockProducts', color: AppColors.error, isDark: isDark),
         ],
       ),
     );
@@ -426,9 +426,9 @@ class _ProductListScreenState extends State<ProductListScreen>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(_sortNewestFirst ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded, size: 14, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
+                  Icon(_sortNewestFirst ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded, size: 14, color: AppColors.textSecondary),
                   const SizedBox(width: 4),
-                  Text(_sortNewestFirst ? 'Newest' : 'Oldest', style: AppTextStyles.labelSm.copyWith(color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
+                  Text(_sortNewestFirst ? 'Newest' : 'Oldest', style: AppTextStyles.labelSm.copyWith(color: AppColors.textSecondary)),
                 ],
               ),
             ),
@@ -445,9 +445,9 @@ class _ProductListScreenState extends State<ProductListScreen>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(_sortPriceAsc ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded, size: 14, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
+                  Icon(_sortPriceAsc ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded, size: 14, color: AppColors.textSecondary),
                   const SizedBox(width: 4),
-                  Text('Price ${_sortPriceAsc ? "↑" : "↓"}', style: AppTextStyles.labelSm.copyWith(color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
+                  Text('Price ${_sortPriceAsc ? "↑" : "↓"}', style: AppTextStyles.labelSm.copyWith(color: AppColors.textSecondary)),
                 ],
               ),
             ),
@@ -465,9 +465,9 @@ class _ProductListScreenState extends State<ProductListScreen>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.filter_list_rounded, size: 14, color: _priceFilterActive ? AppColors.primary : (isDark ? AppColors.textSecondary : const Color(0xFF6B7280))),
+                  Icon(Icons.filter_list_rounded, size: 14, color: _priceFilterActive ? AppColors.primary : (AppColors.textSecondary)),
                   const SizedBox(width: 4),
-                  Text('Filter', style: AppTextStyles.labelSm.copyWith(color: _priceFilterActive ? AppColors.primary : (isDark ? AppColors.textSecondary : const Color(0xFF6B7280)))),
+                  Text('Filter', style: AppTextStyles.labelSm.copyWith(color: _priceFilterActive ? AppColors.primary : (AppColors.textSecondary))),
                 ],
               ),
             ),
@@ -481,7 +481,7 @@ class _ProductListScreenState extends State<ProductListScreen>
                 color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(_isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded, size: 16, color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
+              child: Icon(_isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded, size: 16, color: AppColors.textSecondary),
             ),
           ),
         ],
@@ -523,7 +523,7 @@ class _ProductListScreenState extends State<ProductListScreen>
             children: [
               Container(
                 width: 72, height: 72,
-                decoration: BoxDecoration(color: AppColors.redBg, borderRadius: BorderRadius.circular(18)),
+                decoration: BoxDecoration(color: AppColors.statusOutOfStockBg, borderRadius: BorderRadius.circular(18)),
                 child: const Icon(Icons.error_outline_rounded, size: 32, color: AppColors.error),
               ),
               const SizedBox(height: 16),
@@ -551,9 +551,9 @@ class _ProductListScreenState extends State<ProductListScreen>
               child: Icon(Icons.inventory_2_rounded, size: 36, color: isDark ? AppColors.greyDarker : const Color(0xFFD1D5DB)),
             ),
             const SizedBox(height: 16),
-            Text('No products found', style: AppTextStyles.headlineSm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+            Text('No products found', style: AppTextStyles.headlineSm.copyWith(color: AppColors.textSecondary)),
             const SizedBox(height: 4),
-            Text("Tap + to add your first product", style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+            Text("Tap + to add your first product", style: AppTextStyles.bodySm.copyWith(color: AppColors.textMuted)),
           ],
         ),
       );
@@ -648,7 +648,7 @@ class _FilterChip extends StatelessWidget {
         child: Text(
           label,
           style: AppTextStyles.labelSm.copyWith(
-            color: selected ? AppColors.primary : (isDark ? AppColors.textSecondary : const Color(0xFF6B7280)),
+            color: selected ? AppColors.primary : (AppColors.textSecondary),
           ),
         ),
       ),
@@ -676,7 +676,7 @@ class _MiniStat extends StatelessWidget {
         child: Column(
           children: [
             Text(value, style: AppTextStyles.labelMd.copyWith(color: color, fontWeight: FontWeight.w700)),
-            Text(label, style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+            Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
           ],
         ),
       ),

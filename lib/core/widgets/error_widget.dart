@@ -24,13 +24,13 @@ class AppErrorWidget extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: AppColors.redBg,
+                color: AppColors.statusOutOfStockBg,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: const Icon(
                 Icons.cloud_off_rounded,
                 size: 32,
-                color: AppColors.red,
+                color: AppColors.error,
               ),
             ),
             const SizedBox(height: 20),

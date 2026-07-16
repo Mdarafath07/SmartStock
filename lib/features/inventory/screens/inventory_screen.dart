@@ -112,7 +112,7 @@ class _InventoryScreenState extends State<InventoryScreen>
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text('${filtered.length} result(s)',
-                    style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+                    style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
               ),
             ),
           Expanded(child: _buildContent(inventoryProvider, filtered, isDark)),
@@ -128,10 +128,10 @@ class _InventoryScreenState extends State<InventoryScreen>
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: Icon(Icons.arrow_back_rounded, size: 22, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+            icon: Icon(Icons.arrow_back_rounded, size: 22, color: AppColors.textPrimary),
           ),
           const SizedBox(width: 4),
-          Text('Inventory', style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          Text('Inventory', style: AppTextStyles.headlineMd.copyWith(color: AppColors.textPrimary)),
         ],
       ),
     );
@@ -154,15 +154,15 @@ class _InventoryScreenState extends State<InventoryScreen>
                 onChanged: _onSearch,
                 decoration: InputDecoration(
                   hintText: 'Search by name, model or category...',
-                  prefixIcon: Icon(Icons.search_rounded, size: 20, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                  prefixIcon: Icon(Icons.search_rounded, size: 20, color: AppColors.textMuted),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(onPressed: () { _searchController.clear(); _onSearch(''); },
-                          icon: Icon(Icons.clear_rounded, size: 18, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)))
+                          icon: Icon(Icons.clear_rounded, size: 18, color: AppColors.textMuted))
                       : null,
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.textPrimary),
               ),
             ),
           ),
@@ -185,15 +185,15 @@ class _InventoryScreenState extends State<InventoryScreen>
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          _SumChip(label: 'Total', value: '${provider.totalProducts}', color: AppColors.blue, isDark: isDark),
+          _SumChip(label: 'Total', value: '${provider.totalProducts}', color: AppColors.primary, isDark: isDark),
           const SizedBox(width: 6),
-          _SumChip(label: 'Available', value: '${provider.totalAvailable}', color: AppColors.green, isDark: isDark),
+          _SumChip(label: 'Available', value: '${provider.totalAvailable}', color: AppColors.success, isDark: isDark),
           const SizedBox(width: 6),
-          _SumChip(label: 'Low', value: '${provider.lowStockCount}', color: AppColors.orange, isDark: isDark),
+          _SumChip(label: 'Low', value: '${provider.lowStockCount}', color: AppColors.warning, isDark: isDark),
           const SizedBox(width: 6),
-          _SumChip(label: 'Over', value: '${provider.overstockCount}', color: AppColors.blue, isDark: isDark),
+          _SumChip(label: 'Over', value: '${provider.overstockCount}', color: AppColors.primary, isDark: isDark),
           const SizedBox(width: 6),
-          _SumChip(label: 'Out', value: '${provider.outOfStockCount}', color: AppColors.red, isDark: isDark),
+          _SumChip(label: 'Out', value: '${provider.outOfStockCount}', color: AppColors.error, isDark: isDark),
         ],
       ),
     );
@@ -313,10 +313,10 @@ class _InventoryScreenState extends State<InventoryScreen>
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'in_stock': return AppColors.green;
-      case 'low_stock': return AppColors.orange;
-      case 'out_of_stock': return AppColors.red;
-      case 'overstock': return AppColors.blue;
+      case 'in_stock': return AppColors.success;
+      case 'low_stock': return AppColors.warning;
+      case 'out_of_stock': return AppColors.error;
+      case 'overstock': return AppColors.primary;
       default: return AppColors.grey;
     }
   }
@@ -340,7 +340,7 @@ class _InventoryScreenState extends State<InventoryScreen>
       return Center(child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(width: 72, height: 72, decoration: BoxDecoration(color: AppColors.redBg, borderRadius: BorderRadius.circular(18)),
+          Container(width: 72, height: 72, decoration: BoxDecoration(color: AppColors.statusOutOfStockBg, borderRadius: BorderRadius.circular(18)),
             child: const Icon(Icons.error_outline_rounded, size: 32, color: AppColors.error)),
           const SizedBox(height: 16),
           Text(provider.error!, style: AppTextStyles.bodyMd.copyWith(color: AppColors.textSecondary), textAlign: TextAlign.center),
@@ -357,7 +357,7 @@ class _InventoryScreenState extends State<InventoryScreen>
             color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200), borderRadius: BorderRadius.circular(20)),
             child: Icon(Icons.inventory_2_rounded, size: 36, color: isDark ? AppColors.greyDarker : const Color(0xFFD1D5DB))),
           const SizedBox(height: 16),
-          Text('No inventory items', style: AppTextStyles.headlineSm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF6B7280))),
+          Text('No inventory items', style: AppTextStyles.headlineSm.copyWith(color: AppColors.textSecondary)),
         ],
       ));
     }
@@ -406,7 +406,7 @@ class _SectionHeader extends StatelessWidget {
           Container(width: 3, height: 16, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
           const SizedBox(width: 8),
           Text(title, style: AppTextStyles.labelMd.copyWith(
-            color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+            color: AppColors.textPrimary,
             fontWeight: FontWeight.w700,
           )),
           const SizedBox(width: 6),
@@ -437,7 +437,7 @@ class _SumChip extends StatelessWidget {
         child: Column(
           children: [
             Text(value, style: AppTextStyles.labelMd.copyWith(color: color, fontWeight: FontWeight.w700)),
-            Text(label, style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+            Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
           ],
         ),
       ),
@@ -463,7 +463,7 @@ class _FilterBtn extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: selected ? AppColors.primary.withAlpha(80) : (isDark ? AppColors.greyDarker : const Color(0xFFE5E7EB)).withAlpha(60), width: 0.5),
         ),
-        child: Text(label, style: AppTextStyles.labelSm.copyWith(color: selected ? AppColors.primary : (isDark ? AppColors.textSecondary : const Color(0xFF6B7280)))),
+        child: Text(label, style: AppTextStyles.labelSm.copyWith(color: selected ? AppColors.primary : (AppColors.textSecondary))),
       ),
     );
   }
@@ -497,25 +497,25 @@ class _InventoryRow extends StatelessWidget {
               decoration: BoxDecoration(color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200), borderRadius: BorderRadius.circular(10)),
               child: item.imageUrl.isNotEmpty
                   ? ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(item.imageUrl, fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Icon(Icons.inventory_2_rounded, size: 22, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))))
-                  : Icon(Icons.inventory_2_rounded, size: 22, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                      errorBuilder: (_, _, _) => Icon(Icons.inventory_2_rounded, size: 22, color: AppColors.textMuted)))
+                  : Icon(Icons.inventory_2_rounded, size: 22, color: AppColors.textMuted),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item.productName, style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                  Text(item.productName, style: AppTextStyles.titleSm.copyWith(color: AppColors.textPrimary),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      Text(item.modelNumber, style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF))),
+                      Text(item.modelNumber, style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
                       const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                        decoration: BoxDecoration(color: AppColors.purpleBg, borderRadius: BorderRadius.circular(4)),
-                        child: Text(item.categoryName, style: const TextStyle(fontFamily: 'Geist', fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.purple)),
+                        decoration: BoxDecoration(color: AppColors.primaryContainer, borderRadius: BorderRadius.circular(4)),
+                        child: Text(item.categoryName, style: const TextStyle(fontFamily: 'Geist', fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.primary)),
                       ),
                     ],
                   ),
@@ -529,14 +529,14 @@ class _InventoryRow extends StatelessWidget {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(color: AppColors.greenBg, borderRadius: BorderRadius.circular(4)),
-                      child: Text('${item.availableStock}', style: AppTextStyles.labelSm.copyWith(color: AppColors.green, fontWeight: FontWeight.w700)),
+                      decoration: BoxDecoration(color: AppColors.statusInStockBg, borderRadius: BorderRadius.circular(4)),
+                      child: Text('${item.availableStock}', style: AppTextStyles.labelSm.copyWith(color: AppColors.success, fontWeight: FontWeight.w700)),
                     ),
                     const SizedBox(width: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(color: AppColors.blueBg, borderRadius: BorderRadius.circular(4)),
-                      child: Text('${item.soldStock}', style: AppTextStyles.labelSm.copyWith(color: AppColors.blue, fontWeight: FontWeight.w700)),
+                      decoration: BoxDecoration(color: AppColors.primaryContainer, borderRadius: BorderRadius.circular(4)),
+                      child: Text('${item.soldStock}', style: AppTextStyles.labelSm.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)),
                     ),
                   ],
                 ),
@@ -556,10 +556,10 @@ class _InventoryRow extends StatelessWidget {
 
   Color _getStatusColor(String status) {
     switch (status) {
-      case 'in_stock': return AppColors.green;
-      case 'low_stock': return AppColors.orange;
-      case 'out_of_stock': return AppColors.red;
-      case 'overstock': return AppColors.blue;
+      case 'in_stock': return AppColors.success;
+      case 'low_stock': return AppColors.warning;
+      case 'out_of_stock': return AppColors.error;
+      case 'overstock': return AppColors.primary;
       default: return AppColors.grey;
     }
   }

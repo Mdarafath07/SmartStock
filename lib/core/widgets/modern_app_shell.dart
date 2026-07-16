@@ -8,17 +8,17 @@ import 'package:smartstock/features/reports/screens/analytics_screen.dart';
 import 'package:smartstock/features/settings/screens/settings_screen.dart';
 
 class _TabItem {
-  final IconData icon;
+  final String asset;
   final String label;
-  const _TabItem(this.icon, this.label);
+  const _TabItem(this.asset, this.label);
 }
 
 const _tabs = [
-  _TabItem(Icons.grid_view_rounded, 'Dashboard'),
-  _TabItem(Icons.inventory_2_rounded, 'Products'),
-  _TabItem(Icons.add_circle_rounded, 'Sale'),
-  _TabItem(Icons.analytics_rounded, 'Analytics'),
-  _TabItem(Icons.person_rounded, 'Profile'),
+  _TabItem('assets/icons/dashboard.png', 'Dashboard'),
+  _TabItem('assets/icons/product.png', 'Products'),
+  _TabItem('assets/icons/sell.png', 'Sale'),
+  _TabItem('assets/icons/analyics.png', 'Analytics'),
+  _TabItem('assets/icons/store.png', 'Profile'),
 ];
 
 class ModernAppShell extends StatefulWidget {
@@ -128,22 +128,27 @@ class ModernAppShellState extends State<ModernAppShell>
                     child: InkWell(
                       onTap: () => switchToTab(i),
                       borderRadius: BorderRadius.circular(16),
-                      splashColor: AppColors.primary.withAlpha(30),
-                      highlightColor: AppColors.primary.withAlpha(15),
+                      splashColor: AppColors.primary.withAlpha(20),
+                      highlightColor: AppColors.primary.withAlpha(10),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
                         curve: Curves.easeOutCubic,
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         decoration: BoxDecoration(
-                          color: active ? AppColors.primaryBg : AppColors.surface,
+                          color: active ? AppColors.primary : AppColors.surface,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(_tabs[i].icon, size: 20,
-                              color: active ? AppColors.primary : AppColors.grey),
+                            ColorFiltered(
+                              colorFilter: ColorFilter.mode(
+                                active ? AppColors.white : AppColors.iconNavigationInactive,
+                                BlendMode.srcIn,
+                              ),
+                              child: Image.asset(_tabs[i].asset, width: 20, height: 20),
+                            ),
                             ClipRect(
                               child: AnimatedAlign(
                                 alignment: Alignment.topCenter,
@@ -160,7 +165,7 @@ class ModernAppShellState extends State<ModernAppShell>
                                       style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w600,
-                                        color: active ? AppColors.primary : AppColors.grey,
+                                        color: active ? AppColors.white : AppColors.iconNavigationInactive,
                                       ),
                                     ),
                                   ),
@@ -191,11 +196,11 @@ class ModernAppShellState extends State<ModernAppShell>
         if (_isFabOpen) ...[
           _fabItem(Icons.add_box_rounded, 'Add Product', AppColors.primary, () => _quickAction('add_product')),
           const SizedBox(height: 10),
-          _fabItem(Icons.category_rounded, 'Add Category', AppColors.purple, () => _quickAction('add_category')),
+          _fabItem(Icons.category_rounded, 'Add Category', AppColors.primary, () => _quickAction('add_category')),
           const SizedBox(height: 10),
-          _fabItem(Icons.verified_rounded, 'Warranty', AppColors.blue, () => _quickAction('warranty')),
+          _fabItem(Icons.verified_rounded, 'Warranty', AppColors.primary, () => _quickAction('warranty')),
           const SizedBox(height: 10),
-          _fabItem(Icons.bug_report_rounded, 'Issue', AppColors.orange, () => _quickAction('issue')),
+          _fabItem(Icons.bug_report_rounded, 'Issue', AppColors.primary, () => _quickAction('issue')),
           const SizedBox(height: 10),
         ],
         FloatingActionButton(

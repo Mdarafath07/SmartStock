@@ -44,16 +44,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           color: isDark ? AppColors.surfaceLight.withAlpha(100) : const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(Icons.settings_rounded, color: isDark ? AppColors.textSecondary : const Color(0xFF64748B), size: 22),
+                        child: Icon(Icons.settings_rounded, color: isDark ? AppColors.textSecondary : AppColors.iconPrimaryAction, size: 22),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Settings', style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF0F172A))),
+                            Text('Settings', style: AppTextStyles.headlineMd.copyWith(color: isDark ? AppColors.textPrimary : AppColors.textPrimary)),
                             const SizedBox(height: 2),
-                            Text('Manage your shop preferences', style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF64748B))),
+                            Text('Manage your shop preferences', style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : AppColors.textSecondary)),
                           ],
                         ),
                       ),
@@ -87,7 +87,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Container(
             width: 56, height: 56,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryDark]),
+              color: AppColors.primary,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Center(
@@ -103,9 +103,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(settings.storeName, style: AppTextStyles.titleMd.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+                Text(settings.storeName, style: AppTextStyles.titleMd.copyWith(color: isDark ? AppColors.textPrimary : AppColors.textPrimary)),
                 if (settings.storeAddress.isNotEmpty)
-                  Text(settings.storeAddress, style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF64748B))),
+                  Text(settings.storeAddress, style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : AppColors.textSecondary)),
               ],
             ),
           ),
@@ -120,7 +120,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Shop Information', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          Text('Shop Information', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : AppColors.textPrimary)),
           const SizedBox(height: 12),
           _settingRow(icon: Icons.store_rounded, label: 'Store Name', value: settings.storeName, isDark: isDark, onTap: () => _showEditStoreNameDialog(settings)),
           Divider(height: 1, color: isDark ? AppColors.greyDarker.withAlpha(60) : const Color(0xFFE2E8F0)),
@@ -144,7 +144,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Inventory Settings', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          Text('Inventory Settings', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : AppColors.textPrimary)),
           const SizedBox(height: 12),
           _settingRow(icon: Icons.inventory_2_rounded, label: 'Low Stock Threshold', value: '≤ ${settings.lowStockThreshold} units', isDark: isDark, onTap: () => _showThresholdDialog(settings, 'low')),
           Divider(height: 1, color: isDark ? AppColors.greyDarker.withAlpha(60) : const Color(0xFFE2E8F0)),
@@ -164,18 +164,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Container(width: 42, height: 42,
               decoration: BoxDecoration(
-                color: AppColors.green.withAlpha(25),
+                color: AppColors.primary.withAlpha(25),
                 borderRadius: BorderRadius.circular(12)),
-              child: Icon(Icons.table_chart_rounded, size: 20, color: AppColors.green)),
+              child: Icon(Icons.table_chart_rounded, size: 20, color: AppColors.primary)),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Google Sheets Backup', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+                  Text('Google Sheets Backup', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : AppColors.textPrimary)),
                   const SizedBox(height: 2),
                   Text('Configure and sync data to Google Sheets',
-                      style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8))),
+                      style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : AppColors.textSecondary)),
                 ],
               ),
             ),
@@ -184,8 +184,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 color: (isDark ? AppColors.surfaceLight : const Color(0xFFF1F5F9)).withAlpha(150),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(Icons.chevron_right_rounded, size: 16, color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8)),
-            ),
+                child: Icon(Icons.chevron_right_rounded, size: 16, color: isDark ? AppColors.textMuted : AppColors.iconCardAction),
+              ),
           ],
         ),
       ),
@@ -198,7 +198,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Data', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          Text('Data', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : AppColors.textPrimary)),
           const SizedBox(height: 12),
           _settingRow(icon: Icons.download_rounded, label: 'Download Data', value: 'Save all data as CSV file', isDark: isDark, onTap: () => _showSnackBar('Download started')),
         ],
@@ -212,7 +212,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('About', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+          Text('About', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : AppColors.textPrimary)),
           const SizedBox(height: 12),
           _settingRow(icon: Icons.info_outline_rounded, label: 'Version', value: '1.0.0', isDark: isDark),
         ],
@@ -237,7 +237,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 16),
               Text('Loading settings...',
-                  style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8))),
+                  style: AppTextStyles.bodySm.copyWith(color: isDark ? AppColors.textMuted : AppColors.textSecondary)),
             ],
           ),
         ),
@@ -254,16 +254,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Container(width: 38, height: 38,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
-                    (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(100),
-                  ],
-                  begin: Alignment.topLeft, end: Alignment.bottomRight,
-                ),
+                color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200),
                 borderRadius: BorderRadius.circular(11),
               ),
-              child: Icon(icon, size: 18, color: isDark ? AppColors.textSecondary : const Color(0xFF64748B))),
+              child: Icon(icon, size: 18, color: isDark ? AppColors.textSecondary : AppColors.iconCardAction)),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -271,9 +265,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   Text(label, style: AppTextStyles.bodyMd.copyWith(
                       fontWeight: FontWeight.w500,
-                      color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E))),
+                      color: isDark ? AppColors.textPrimary : AppColors.textPrimary)),
                   const SizedBox(height: 2),
-                  Text(value, style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8))),
+                  Text(value, style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMuted : AppColors.textSecondary)),
                 ],
               ),
             ),
@@ -284,7 +278,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   color: (isDark ? AppColors.surfaceLight : const Color(0xFFF1F5F9)).withAlpha(150),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(Icons.chevron_right_rounded, size: 16, color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8)),
+                child: Icon(Icons.chevron_right_rounded, size: 16, color: isDark ? AppColors.textMuted : AppColors.iconCardAction),
               ),
           ],
         ),
@@ -446,6 +440,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Color _getTextColor(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.dark ? AppColors.textPrimary : const Color(0xFF1A1A2E);
+    return AppColors.textPrimary;
   }
 }

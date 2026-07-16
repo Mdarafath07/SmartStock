@@ -182,6 +182,7 @@ class ReportService {
           (data['salePrice'] as num?)?.toDouble() ?? 0.0;
       monthlyMap[monthKey]!.totalProfit +=
           (data['profit'] as num?)?.toDouble() ?? 0.0;
+      monthlyMap[monthKey]!.totalProducts++;
       final billKey = (data['batchId'] as String?) ?? doc.id;
       if (monthBills[monthKey]!.add(billKey)) {
         monthlyMap[monthKey]!.totalTransactions++;
@@ -194,7 +195,7 @@ class ReportService {
         totalSales: e.value.totalSales,
         totalProfit: e.value.totalProfit,
         totalTransactions: e.value.totalTransactions,
-        totalProductsSold: e.value.totalTransactions,
+        totalProductsSold: e.value.totalProducts,
       );
     }).toList()
       ..sort((a, b) => a.date.compareTo(b.date));
@@ -206,6 +207,7 @@ class ReportService {
     double totalSales = 0;
     double totalProfit = 0;
     int totalTransactions = 0;
+    int totalProducts = 0;
     final seenBills = <String>{};
 
     for (final doc in snapshot.docs) {
@@ -213,6 +215,7 @@ class ReportService {
       if (data['saleType'] == 'warranty_claim') continue;
       totalSales += (data['salePrice'] as num?)?.toDouble() ?? 0.0;
       totalProfit += (data['profit'] as num?)?.toDouble() ?? 0.0;
+      totalProducts++;
       final billKey = (data['batchId'] as String?) ?? doc.id;
       if (seenBills.add(billKey)) {
         totalTransactions++;
@@ -224,7 +227,7 @@ class ReportService {
       totalSales: totalSales,
       totalProfit: totalProfit,
       totalTransactions: totalTransactions,
-      totalProductsSold: totalTransactions,
+      totalProductsSold: totalProducts,
     );
   }
 
@@ -284,6 +287,7 @@ class _DailyAggregate {
   double totalSales = 0.0;
   double totalProfit = 0.0;
   int totalTransactions = 0;
+  int totalProducts = 0;
 
   _DailyAggregate({required this.date});
 }

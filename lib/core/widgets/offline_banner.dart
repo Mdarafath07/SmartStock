@@ -18,7 +18,7 @@ class OfflineBanner extends StatelessWidget {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
-                color: AppColors.orange,
+                color: AppColors.warning,
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

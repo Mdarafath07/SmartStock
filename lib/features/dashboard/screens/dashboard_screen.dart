@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/routes/app_routes.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
@@ -117,218 +118,136 @@ class _DashboardScreenState extends State<DashboardScreen>
     final storeName = settings.storeName;
 
     return Container(
-      clipBehavior: Clip.antiAlias,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: (isDark ? const Color(0xFF0F172A) : const Color(0xFF1E3A8A))
-                .withAlpha(60),
-            blurRadius: 32,
-            offset: const Offset(0, 12),
-          ),
-        ],
+        color: isDark ? const Color(0xFF1A1A2E) : const Color(0xFF111111),
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isDark
-                    ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
-                    : [const Color(0xFF2563EB), const Color(0xFF1E3A8A)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF4ADE80),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Good ${_timeGreeting()}!',
-                                style: const TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF93C5FD),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            storeName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontFamily: 'Hanken Grotesk',
-                              fontSize: 26,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                              height: 1.1,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                        ],
+                    Text(
+                      'Good ${_timeGreeting()}!',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF9CA3AF),
                       ),
                     ),
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.white.withAlpha(30),
-                            Colors.white.withAlpha(10),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Colors.white.withAlpha(25),
-                          width: 1,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.store_rounded,
+                    const SizedBox(height: 4),
+                    Text(
+                      storeName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
                         color: Colors.white,
-                        size: 24,
+                        height: 1.1,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(15),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.white.withAlpha(12),
-                      width: 0.5,
-                    ),
-                  ),
-                  child: Row(
+              ),
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha(20),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: _iconFromAsset(Icons.store_rounded, size: 22, color: Colors.white),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Today's Revenue",
-                              style: const TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFFBFDBFE),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerLeft,
-                              child: AnimatedCounter(
-                                target: provider.stats?.todaySalesAmount ?? 0,
-                                prefix: symbol,
-                                style: const TextStyle(
-                                  fontFamily: 'Hanken Grotesk',
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                            ),
-                          ],
+                      Text(
+                        "Today's Revenue",
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF9CA3AF),
                         ),
                       ),
-                      Container(
-                        width: 1,
-                        height: 40,
-                        color: Colors.white.withAlpha(15),
-                      ),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Today's Profit",
-                                style: const TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFFBFDBFE),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: AnimatedCounter(
-                                  target: provider.stats?.todayProfit ?? 0,
-                                  prefix: symbol,
-                                  style: const TextStyle(
-                                    fontFamily: 'Hanken Grotesk',
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                    letterSpacing: -0.5,
-                                  ),
-                                ),
-                              ),
-                            ],
+                      const SizedBox(height: 6),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: AnimatedCounter(
+                          target: provider.stats?.todaySalesAmount ?? 0,
+                          prefix: symbol,
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
+                Container(
+                  width: 1,
+                  height: 40,
+                  color: Colors.white.withAlpha(20),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Today's Profit",
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF9CA3AF),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: AnimatedCounter(
+                            target: provider.stats?.todayProfit ?? 0,
+                            prefix: symbol,
+                            style: const TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
-            ),
-          ),
-          Positioned(
-            top: -30,
-            right: -30,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withAlpha(6),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -20,
-            left: -20,
-            child: Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withAlpha(4),
-              ),
             ),
           ),
         ],
@@ -355,29 +274,24 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildKpiRow(BuildContext context, DashboardStats stats) {
     final symbol = context.watch<SettingsProvider>().currencySymbol;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       children: [
         Expanded(
           child: _kpiCard(
-            icon: null,
-            iconColor: AppColors.blue,
-            bgColor: AppColors.blueBg,
             label: 'Selling Value',
             value: '$symbol${_fmtAmount(stats.totalStockValue)}',
             subtitle: 'At customer price',
-            isDark: Theme.of(context).brightness == Brightness.dark,
+            isDark: isDark,
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         Expanded(
           child: _kpiCard(
-            icon: null,
-            iconColor: AppColors.orange,
-            bgColor: AppColors.orangeBg,
             label: 'Stock Cost',
             value: '$symbol${_fmtAmount(stats.totalStockCost)}',
             subtitle: 'Total invested',
-            isDark: Theme.of(context).brightness == Brightness.dark,
+            isDark: isDark,
           ),
         ),
       ],
@@ -385,91 +299,61 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _kpiCard({
-    required IconData? icon,
-    required Color iconColor,
-    required Color bgColor,
     required String label,
     required String value,
     required String subtitle,
     required bool isDark,
   }) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [const Color(0xFF1E293B), const Color(0xFF162032)]
-              : [Colors.white, const Color(0xFFF8FAFC)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(18),
+        color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark
-              ? AppColors.greyDarker.withAlpha(60)
-              : iconColor.withAlpha(25),
-          width: 0.5,
+              ? const Color(0xFF2A2A3E)
+              : const Color(0xFFE5E7EB),
+          width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: iconColor.withAlpha(10),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
-      child: Row(
-        mainAxisAlignment: icon == null ? MainAxisAlignment.center : MainAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (icon != null) ...[
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [iconColor.withAlpha(30), iconColor.withAlpha(10)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white : const Color(0xFF111111),
               ),
-              child: Icon(icon, size: 18, color: iconColor),
             ),
-            const SizedBox(width: 12),
-          ],
-          Flexible(
-            child: Column(
-              crossAxisAlignment: icon == null ? CrossAxisAlignment.center : CrossAxisAlignment.start,
-              children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: icon == null ? Alignment.center : Alignment.centerLeft,
-                  child: Text(
-                    value,
-                    maxLines: 1,
-                    style: TextStyle(
-                      fontFamily: 'Hanken Grotesk',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: isDark ? AppColors.textPrimary : const Color(0xFF0F172A),
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: icon == null ? TextAlign.center : TextAlign.start,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.textSecondary : const Color(0xFF475569),
-                  ),
-                ),
-              ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 10,
+              color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
             ),
           ),
         ],
@@ -484,20 +368,23 @@ class _DashboardScreenState extends State<DashboardScreen>
     final total = stats.totalProducts > 0 ? stats.totalProducts : 1;
 
     final stockGroups = [
-      _GroupData('Products', AppColors.blue, [
-        _ItemData(Icons.inventory_2_rounded, '${stats.totalProducts}', 'Product Types', AppColors.blue, route: AppRoutes.products),
-        _ItemData(Icons.inventory_rounded, '${stats.totalAvailableStock}', 'Total Items', AppColors.teal, route: AppRoutes.products),
-        _ItemData(Icons.add_circle_rounded, '${stats.todayAddedQuantity}', 'Added Today', AppColors.primary, route: AppRoutes.dailyAdditions),
+      _GroupData('Products', [
+        _ItemData(Icons.inventory_2_rounded, '${stats.totalProducts}', 'Product Types', route: AppRoutes.products),
+        _ItemData(Icons.inventory_rounded, '${stats.totalAvailableStock}', 'Total Items', route: AppRoutes.products),
+        _ItemData(Icons.add_circle_rounded, '${stats.todayAddedQuantity}', 'Added Today', route: AppRoutes.dailyAdditions),
       ]),
-      _GroupData('Stock Health', AppColors.green, [
-        _ItemData(Icons.check_circle_rounded, '${stats.totalProducts - stats.outOfStockProducts}', 'In Stock', AppColors.green, barValue: ((stats.totalProducts - stats.outOfStockProducts) / total * 100).clamp(0, 100), route: AppRoutes.products),
-        _ItemData(Icons.warning_rounded, '${stats.lowStockProducts}', 'Low Stock', AppColors.orange, barValue: (stats.lowStockProducts / total * 100).clamp(0, 100), route: AppRoutes.products),
-        _ItemData(Icons.error_outline_rounded, '${stats.outOfStockProducts}', 'Out of Stock', AppColors.red, barValue: (stats.outOfStockProducts / total * 100).clamp(0, 100), route: AppRoutes.products),
+      _GroupData('Stock Health', [
+        _ItemData(Icons.check_circle_rounded, '${stats.totalProducts - stats.outOfStockProducts}', 'In Stock',
+            badgeColor: const Color(0xFF22C55E), barValue: ((stats.totalProducts - stats.outOfStockProducts) / total * 100).clamp(0, 100), route: AppRoutes.products),
+        _ItemData(Icons.warning_rounded, '${stats.lowStockProducts}', 'Low Stock',
+            badgeColor: const Color(0xFFF59E0B), barValue: (stats.lowStockProducts / total * 100).clamp(0, 100), route: AppRoutes.products),
+        _ItemData(Icons.error_outline_rounded, '${stats.outOfStockProducts}', 'Out of Stock',
+            badgeColor: const Color(0xFFEF4444), barValue: (stats.outOfStockProducts / total * 100).clamp(0, 100), route: AppRoutes.products),
       ]),
-      _GroupData('Activity', AppColors.purple, [
-        _ItemData(Icons.shopping_cart_rounded, '${stats.todaySoldProducts}', 'Sold Today', AppColors.purple, route: AppRoutes.salesToday),
-        _ItemData(Icons.verified_rounded, '${stats.activeWarranties}', 'Warranties', AppColors.pink, route: AppRoutes.warranty),
-        _ItemData(Icons.bug_report_rounded, '${stats.openIssueCount}', 'Product Issues', AppColors.orange, route: AppRoutes.productIssues),
+      _GroupData('Activity', [
+        _ItemData(Icons.shopping_cart_rounded, '${stats.todaySoldProducts}', 'Sold Today', route: AppRoutes.salesToday),
+        _ItemData(Icons.verified_rounded, '${stats.activeWarranties}', 'Warranties', route: AppRoutes.warranty),
+        _ItemData(Icons.bug_report_rounded, '${stats.openIssueCount}', 'Product Issues', route: AppRoutes.productIssues),
       ]),
     ];
 
@@ -508,21 +395,14 @@ class _DashboardScreenState extends State<DashboardScreen>
         const SizedBox(height: 14),
         Container(
           decoration: BoxDecoration(
-            color: isDark ? AppColors.cardDark : Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isDark
-                  ? AppColors.greyDarker.withAlpha(60)
-                  : const Color(0xFFE5E7EB).withAlpha(140),
-              width: 0.5,
+                  ? const Color(0xFF2A2A3E)
+                  : const Color(0xFFE5E7EB),
+              width: 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(6),
-                blurRadius: 18,
-                offset: const Offset(0, 4),
-              ),
-            ],
           ),
           child: Column(
             children: stockGroups.asMap().entries.map((entry) {
@@ -540,15 +420,15 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildGroup(_GroupData g, bool isDark, BuildContext context,
       {required bool showBorder}) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: showBorder
           ? BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: isDark
-                      ? AppColors.greyDarker.withAlpha(60)
-                      : const Color(0xFFE5E7EB).withAlpha(140),
-                  width: 0.5,
+                    color: isDark
+                        ? AppColors.greyDarker
+                        : AppColors.primary,
+                  width: 1,
                 ),
               ),
             )
@@ -556,29 +436,17 @@ class _DashboardScreenState extends State<DashboardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 3,
-                height: 14,
-                decoration: BoxDecoration(
-                  color: g.accent,
-                  borderRadius: BorderRadius.circular(1.5),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                g.title,
-                style: TextStyle(
-                  fontFamily: 'Hanken Grotesk',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? AppColors.textPrimary : const Color(0xFF0F172A),
-                ),
-              ),
-            ],
+          Text(
+            g.title,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
+              letterSpacing: 0.5,
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Row(
             children: g.items.map((item) {
               return Expanded(
@@ -599,36 +467,29 @@ class _DashboardScreenState extends State<DashboardScreen>
       child: Column(
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [item.color.withAlpha(25), item.color.withAlpha(8)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: isDark
+                  ? const Color(0xFF2A2A3E)
+                  : const Color(0xFFF3F4F6),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: item.color.withAlpha(15),
-                width: 0.5,
-              ),
             ),
-            child: Icon(item.icon, size: 18, color: item.color),
+                        child: _iconFromAsset(item.icon, size: 20, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF374151)),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             item.value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontFamily: 'Hanken Grotesk',
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: isDark ? AppColors.textPrimary : const Color(0xFF0F172A),
-              letterSpacing: -0.3,
+              fontFamily: 'Inter',
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : const Color(0xFF111111),
             ),
           ),
-          const SizedBox(height: 1),
+          const SizedBox(height: 2),
           Text(
             item.label,
             maxLines: 1,
@@ -636,22 +497,24 @@ class _DashboardScreenState extends State<DashboardScreen>
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'Inter',
-              fontSize: 9,
+              fontSize: 10,
               fontWeight: FontWeight.w500,
-              color: isDark ? AppColors.textMuted : const Color(0xFF64748B),
+              color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
             ),
           ),
           if (item.barValue != null) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             ClipRRect(
               borderRadius: BorderRadius.circular(2),
               child: LinearProgressIndicator(
                 value: item.barValue! / 100,
                 minHeight: 3,
                 backgroundColor: isDark
-                    ? AppColors.greyDarker.withAlpha(80)
+                    ? const Color(0xFF2A2A3E)
                     : const Color(0xFFE5E7EB),
-                valueColor: AlwaysStoppedAnimation(item.color),
+                valueColor: AlwaysStoppedAnimation(
+                  item.badgeColor ?? const Color(0xFF22C55E),
+                ),
               ),
             ),
           ],
@@ -688,11 +551,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                 value: '$symbol${_fmtAmount(stats.todaySalesAmount)}',
                 pct: todayVsAvg,
                 bars: salesBars,
-                color: AppColors.blue,
                 isDark: isDark,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: _chartCard(
                 title: 'Profit',
@@ -704,7 +566,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                         * 100
                     : 0.0,
                 bars: profitBars,
-                color: AppColors.green,
                 isDark: isDark,
               ),
             ),
@@ -719,28 +580,20 @@ class _DashboardScreenState extends State<DashboardScreen>
     required String value,
     required double pct,
     required List<double> bars,
-    required Color color,
     required bool isDark,
   }) {
     final isUp = pct >= 0;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : Colors.white,
+        color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark
-              ? AppColors.greyDarker.withAlpha(60)
-              : const Color(0xFFE5E7EB).withAlpha(120),
-          width: 0.5,
+              ? const Color(0xFF2A2A3E)
+              : const Color(0xFFE5E7EB),
+          width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(6),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -752,57 +605,59 @@ class _DashboardScreenState extends State<DashboardScreen>
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: color.withAlpha(20),
+                  color: isDark
+                      ? const Color(0xFF2A2A3E)
+                      : const Color(0xFFF3F4F6),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  title == 'Sales'
-                      ? Icons.trending_up_rounded
-                      : Icons.show_chart_rounded,
+                child: _iconFromAsset(
+                  title == 'Sales' ? Icons.trending_up_rounded : Icons.show_chart_rounded,
                   size: 15,
-                  color: color,
+                  color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF374151),
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                 decoration: BoxDecoration(
-                  color: (isUp ? AppColors.greenBg : AppColors.redBg)
-                      .withAlpha(200),
+                  color: isUp
+                      ? const Color(0xFF22C55E).withAlpha(20)
+                      : const Color(0xFFEF4444).withAlpha(20),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   '${isUp ? '+' : ''}${pct.toStringAsFixed(1)}%',
                   style: TextStyle(
-                    fontFamily: 'Geist',
+                    fontFamily: 'Inter',
                     fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: isUp ? AppColors.green : AppColors.red,
+                    fontWeight: FontWeight.w600,
+                    color: isUp
+                        ? const Color(0xFF22C55E)
+                        : const Color(0xFFEF4444),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             title,
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 10,
               fontWeight: FontWeight.w500,
-              color: isDark ? AppColors.textMuted : const Color(0xFF64748B),
+              color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontFamily: 'Hanken Grotesk',
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              color: isDark ? AppColors.textPrimary : const Color(0xFF0F172A),
-              letterSpacing: -0.5,
+              fontFamily: 'Inter',
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : const Color(0xFF111111),
             ),
           ),
           const SizedBox(height: 14),
@@ -815,12 +670,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                   child: Container(
                     height: 36 * b,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [color.withAlpha(180), color.withAlpha(50)],
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                      ),
-                      borderRadius: BorderRadius.circular(3),
+                      color: isDark
+                          ? const Color(0xFF2A2A3E)
+                          : const Color(0xFFE5E7EB),
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
@@ -833,7 +686,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   List<double> _normBars(List<double> values) {
-    if (values.isEmpty) return List.filled(7, 0.08);
+    if (values.isEmpty) return List.filled(30, 0.08);
     final max = values.reduce((a, b) => a > b ? a : b);
     if (max == 0) return List.filled(values.length, 0.08);
     return values.map((v) => (v / max).clamp(0.05, 1.0)).toList();
@@ -854,7 +707,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           flex: 2,
           child: _healthCard(health, stats, isDark),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         Expanded(
           flex: 3,
           child: _topSellingCard(top, isDark, context),
@@ -865,132 +718,210 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _healthCard(
       double health, DashboardStats stats, bool isDark) {
+    final stockHealth = _calcStockHealth(stats);
+    final salesHealth = _calcSalesMomentum(stats);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : Colors.white,
+        color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark
-              ? AppColors.greyDarker.withAlpha(60)
-              : const Color(0xFFE5E7EB).withAlpha(120),
-          width: 0.5,
+          color: isDark ? const Color(0xFF2A2A3E) : const Color(0xFFE5E7EB),
+          width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(6),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-        ],
       ),
       child: Column(
         children: [
           SizedBox(
-            width: 68,
-            height: 68,
+            width: 80,
+            height: 80,
             child: Stack(
               alignment: Alignment.center,
               children: [
-                CircularProgressIndicator(
-                  value: health / 100,
-                  strokeWidth: 5,
-                  backgroundColor: isDark
-                      ? AppColors.greyDarker.withAlpha(80)
-                      : const Color(0xFFE5E7EB),
-                  valueColor: AlwaysStoppedAnimation(
-                    health >= 80
-                        ? AppColors.green
-                        : health >= 60
-                            ? AppColors.orange
-                            : AppColors.red,
+                SizedBox(
+                  width: 80,
+                  height: 80,
+                  child: CircularProgressIndicator(
+                    value: health / 100,
+                    strokeWidth: 6,
+                    backgroundColor: isDark ? AppColors.greyDarker : AppColors.greyLight,
+                    valueColor: const AlwaysStoppedAnimation(AppColors.primary),
                   ),
                 ),
-                Text(
-                  health.toStringAsFixed(0),
-                  style: TextStyle(
-                    fontFamily: 'Hanken Grotesk',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: health >= 80
-                        ? AppColors.green
-                        : health >= 60
-                            ? AppColors.orange
-                            : AppColors.red,
-                  ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      health.toStringAsFixed(0),
+                      style: TextStyle(
+                        fontFamily: 'Hanken Grotesk',
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        height: 1,
+                      ),
+                    ),
+                    Text(
+                      'score',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 8,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textMuted,
+                        height: 1,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            health >= 80
-                ? 'Excellent'
-                : health >= 60
-                    ? 'Good'
-                    : 'Needs Work',
-            style: TextStyle(
-              fontFamily: 'Hanken Grotesk',
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: isDark ? AppColors.textPrimary : const Color(0xFF0F172A),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              health >= 80
+                  ? 'Excellent'
+                  : health >= 60
+                      ? 'Good'
+                      : 'Needs Work',
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
             ),
           ),
-          const SizedBox(height: 8),
-          _healthRow('Stock', _calcStockHealth(stats), isDark),
-          const SizedBox(height: 4),
-          _healthRow('Sales', _calcSalesMomentum(stats), isDark),
+          const SizedBox(height: 12),
+          _healthRow(
+            icon: Icons.inventory_2_rounded,
+            label: 'Stock',
+            value: stockHealth,
+            detail: '${stats.outOfStockProducts} out',
+            isDark: isDark,
+          ),
+          const SizedBox(height: 6),
+          _healthRow(
+            icon: Icons.trending_up_rounded,
+            label: 'Sales',
+            value: salesHealth,
+            detail: '${stats.todaySoldProducts} today',
+            isDark: isDark,
+          ),
+          if (stats.lowStockProducts > 0) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.warning.withAlpha(20),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_rounded, size: 12, color: AppColors.warning),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${stats.lowStockProducts} low stock ${stats.lowStockProducts == 1 ? 'item' : 'items'}',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.warning,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _healthRow(String label, double value, bool isDark) {
-    return Row(
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 10,
-            color: isDark ? AppColors.textMuted : const Color(0xFF64748B),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: value / 100,
-              minHeight: 5,
-              backgroundColor: isDark
-                  ? AppColors.greyDarker.withAlpha(80)
-                  : const Color(0xFFE5E7EB),
-              valueColor: AlwaysStoppedAnimation(
-                value >= 70
-                    ? AppColors.green
-                    : value >= 40
-                        ? AppColors.orange
-                        : AppColors.red,
+  Widget _healthRow({
+    required IconData icon,
+    required String label,
+    required double value,
+    required String detail,
+    required bool isDark,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E30) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 10, color: AppColors.textSecondary),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                ),
               ),
-            ),
+              const Spacer(),
+              Text(
+                detail,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 8,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(width: 6),
-        SizedBox(
-          width: 28,
-          child: Text(
-            '${value.toStringAsFixed(0)}%',
-            textAlign: TextAlign.right,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 9,
-              fontWeight: FontWeight.w600,
-              color: isDark ? AppColors.textSecondary : const Color(0xFF475569),
-            ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(3),
+                  child: LinearProgressIndicator(
+                    value: value / 100,
+                    minHeight: 6,
+                    backgroundColor: isDark ? const Color(0xFF2A2A3E) : const Color(0xFFE5E7EB),
+                    valueColor: AlwaysStoppedAnimation(
+                      value >= 70
+                          ? AppColors.primary
+                          : value >= 40
+                              ? AppColors.warning
+                              : AppColors.error,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              SizedBox(
+                width: 28,
+                child: Text(
+                  '${value.toStringAsFixed(0)}%',
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -999,42 +930,34 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : Colors.white,
+        color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark
-              ? AppColors.greyDarker.withAlpha(60)
-              : const Color(0xFFE5E7EB).withAlpha(120),
-          width: 0.5,
+              ? const Color(0xFF2A2A3E)
+              : const Color(0xFFE5E7EB),
+          width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(6),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.trending_up_rounded,
-                  size: 16, color: AppColors.green),
-              const SizedBox(width: 6),
+              _iconFromAsset(Icons.trending_up_rounded, size: 16, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF374151)),
+              const SizedBox(width: 8),
               Text(
                 'Top Selling',
                 style: TextStyle(
-                  fontFamily: 'Hanken Grotesk',
+                  fontFamily: 'Inter',
                   fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? AppColors.textPrimary : const Color(0xFF0F172A),
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : const Color(0xFF111111),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           if (top.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1044,7 +967,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 11,
-                    color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8),
+                    color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
                   ),
                 ),
               ),
@@ -1053,36 +976,32 @@ class _DashboardScreenState extends State<DashboardScreen>
             ...top.asMap().entries.map((e) {
               final i = e.key;
               final p = e.value;
-              final colors = [
-                AppColors.blue,
-                AppColors.purple,
-                AppColors.orange
-              ];
-              final c = colors[i];
               return Padding(
-                padding: EdgeInsets.only(bottom: i < top.length - 1 ? 8 : 0),
+                padding: EdgeInsets.only(bottom: i < top.length - 1 ? 10 : 0),
                 child: Row(
                   children: [
                     Container(
                       width: 24,
                       height: 24,
                       decoration: BoxDecoration(
-                        color: c.withAlpha(15),
+                        color: isDark
+                            ? const Color(0xFF2A2A3E)
+                            : const Color(0xFFF3F4F6),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Center(
                         child: Text(
                           '${i + 1}',
                           style: TextStyle(
-                            fontFamily: 'Hanken Grotesk',
+                            fontFamily: 'Inter',
                             fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: c,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         p.productName,
@@ -1091,10 +1010,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                         style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? AppColors.textPrimary
-                              : const Color(0xFF0F172A),
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? Colors.white : const Color(0xFF111111),
                         ),
                       ),
                     ),
@@ -1102,7 +1019,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: c.withAlpha(15),
+                        color: isDark
+                            ? const Color(0xFF2A2A3E)
+                            : const Color(0xFFF3F4F6),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -1110,8 +1029,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                         style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: c,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
                         ),
                       ),
                     ),
@@ -1134,28 +1053,25 @@ class _DashboardScreenState extends State<DashboardScreen>
         icon: Icons.add_circle_rounded,
         title: 'Products Added Today',
         value: '${stats.recentlyAddedProducts.length}',
-        color: AppColors.blue,
         route: AppRoutes.dailyAdditions,
       ),
       _Activity(
         icon: Icons.shopping_cart_rounded,
         title: 'Products Sold Today',
         value: '${stats.todaySoldProducts}',
-        color: AppColors.green,
         route: AppRoutes.salesToday,
       ),
       _Activity(
         icon: Icons.warning_rounded,
         title: 'Low Stock Items',
         value: '${stats.lowStockProducts}',
-        color: AppColors.orange,
+        valueColor: stats.lowStockProducts > 0 ? const Color(0xFFF59E0B) : null,
         route: AppRoutes.inventory,
       ),
       _Activity(
         icon: Icons.verified_rounded,
         title: 'Active Warranties',
         value: '${stats.activeWarranties}',
-        color: AppColors.purple,
         route: AppRoutes.warranty,
       ),
     ];
@@ -1163,25 +1079,18 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle(context, 'Recent Activity', 'Today\'s updates'),
+        _sectionTitle(context, 'Recent Activity', "Today's updates"),
         const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
-            color: isDark ? AppColors.cardDark : Colors.white,
+            color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isDark
-                  ? AppColors.greyDarker.withAlpha(60)
-                  : const Color(0xFFE5E7EB).withAlpha(120),
-              width: 0.5,
+                  ? const Color(0xFF2A2A3E)
+                  : const Color(0xFFE5E7EB),
+              width: 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(6),
-                blurRadius: 12,
-                offset: const Offset(0, 3),
-              ),
-            ],
           ),
           child: Column(
             children: activities.asMap().entries.map((e) {
@@ -1203,9 +1112,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                         ? Border(
                             bottom: BorderSide(
                               color: isDark
-                                  ? AppColors.greyDarker.withAlpha(60)
-                                  : const Color(0xFFE5E7EB).withAlpha(100),
-                              width: 0.5,
+                                  ? const Color(0xFF2A2A3E)
+                                  : const Color(0xFFE5E7EB),
+                              width: 1,
                             ),
                           )
                         : null,
@@ -1216,10 +1125,12 @@ class _DashboardScreenState extends State<DashboardScreen>
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: a.color.withAlpha(15),
+                          color: isDark
+                              ? const Color(0xFF2A2A3E)
+                              : const Color(0xFFF3F4F6),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Icon(a.icon, size: 18, color: a.color),
+                        child: _iconFromAsset(a.icon, size: 18, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF374151)),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -1231,9 +1142,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                             fontFamily: 'Inter',
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
-                            color: isDark
-                                ? AppColors.textPrimary
-                                : const Color(0xFF0F172A),
+                            color: isDark ? Colors.white : const Color(0xFF111111),
                           ),
                         ),
                       ),
@@ -1241,16 +1150,17 @@ class _DashboardScreenState extends State<DashboardScreen>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: a.color.withAlpha(12),
+                          color: (a.valueColor ?? const Color(0xFF9CA3AF))
+                              .withAlpha(15),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           a.value,
                           style: TextStyle(
-                            fontFamily: 'Hanken Grotesk',
+                            fontFamily: 'Inter',
                             fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: a.color,
+                            fontWeight: FontWeight.w600,
+                            color: a.valueColor ?? (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280)),
                           ),
                         ),
                       ),
@@ -1270,46 +1180,14 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildQuickActions(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final actions = <_QuickAction>[
-      _QuickAction(
-          icon: Icons.add_circle_rounded,
-          label: 'Add Product',
-          color: AppColors.blue,
-          route: AppRoutes.productsAdd),
-      _QuickAction(
-          icon: Icons.add_shopping_cart_rounded,
-          label: 'New Sale',
-          color: AppColors.green,
-          route: AppRoutes.salesNew),
-      _QuickAction(
-          icon: Icons.post_add_rounded,
-          label: 'Add Stock',
-          color: AppColors.orange,
-          route: AppRoutes.dailyAdditions),
-      _QuickAction(
-          icon: Icons.people_rounded,
-          label: 'Customers',
-          color: AppColors.purple,
-          route: AppRoutes.customers),
-      _QuickAction(
-          icon: Icons.history_rounded,
-          label: 'Sales History',
-          color: AppColors.teal,
-          route: AppRoutes.salesHistory),
-      _QuickAction(
-          icon: Icons.assessment_rounded,
-          label: 'Reports',
-          color: AppColors.red,
-          route: AppRoutes.reports),
-      _QuickAction(
-          icon: Icons.search_rounded,
-          label: 'Search',
-          color: AppColors.grey,
-          route: AppRoutes.search),
-      _QuickAction(
-          icon: Icons.settings_rounded,
-          label: 'Settings',
-          color: AppColors.greyDark,
-          route: AppRoutes.settings),
+      _QuickAction(icon: Icons.add_circle_rounded, label: 'Add Product', route: AppRoutes.productsAdd),
+      _QuickAction(icon: Icons.add_shopping_cart_rounded, label: 'New Sale', route: AppRoutes.salesNew),
+      _QuickAction(icon: Icons.post_add_rounded, label: 'Add Stock', route: AppRoutes.dailyAdditions),
+      _QuickAction(icon: Icons.people_rounded, label: 'Customers', route: AppRoutes.customers),
+      _QuickAction(icon: Icons.history_rounded, label: 'Sales History', route: AppRoutes.salesHistory),
+      _QuickAction(icon: Icons.assessment_rounded, label: 'Reports', route: AppRoutes.reports),
+      _QuickAction(icon: Icons.search_rounded, label: 'Search', route: AppRoutes.search),
+      _QuickAction(icon: Icons.settings_rounded, label: 'Settings', route: AppRoutes.settings),
     ];
 
     return Column(
@@ -1327,35 +1205,32 @@ class _DashboardScreenState extends State<DashboardScreen>
               child: GestureDetector(
                 onTap: () => Navigator.pushNamed(context, a.route),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.cardDark : Colors.white,
+                    color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: a.color.withAlpha(20),
-                      width: 0.5,
+                      color: isDark
+                          ? const Color(0xFF2A2A3E)
+                          : const Color(0xFFE5E7EB),
+                      width: 1,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: a.color.withAlpha(8),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        width: 34,
-                        height: 34,
+                        width: 36,
+                        height: 36,
                         decoration: BoxDecoration(
-                          color: a.color.withAlpha(15),
+                          color: isDark
+                              ? const Color(0xFF2A2A3E)
+                              : const Color(0xFFF3F4F6),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Icon(a.icon, size: 17, color: a.color),
+                        child: _iconFromAsset(a.icon, size: 18, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF374151)),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
                       Text(
                         a.label,
                         maxLines: 1,
@@ -1365,9 +1240,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                           fontFamily: 'Inter',
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
-                          color: isDark
-                              ? AppColors.textSecondary
-                              : const Color(0xFF475569),
+                          color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
                         ),
                       ),
                     ],
@@ -1383,6 +1256,64 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   // ─── HELPERS ──────────────────────────────────────────────
 
+  Widget _iconFromAsset(IconData icon, {double size = 24, required Color color}) {
+    String? asset;
+    if (icon == Icons.store_rounded) {
+      asset = 'store';
+    } else if (icon == Icons.check_circle_rounded || icon == Icons.check_circle) {
+      asset = 'instock';
+    } else if (icon == Icons.warning_rounded || icon == Icons.warning) {
+      asset = 'warning';
+    } else if (icon == Icons.error_outline_rounded) {
+      asset = 'sold_out';
+    } else if (icon == Icons.shopping_cart_rounded || icon == Icons.add_shopping_cart_rounded || icon == Icons.payments) {
+      asset = 'sell';
+    } else if (icon == Icons.trending_up_rounded) {
+      asset = 'top_sell';
+    } else if (icon == Icons.verified_rounded) {
+      asset = 'warranty';
+    } else if (icon == Icons.bug_report_rounded) {
+      asset = 'issues';
+    } else if (icon == Icons.people_rounded) {
+      asset = 'costomer';
+    } else if (icon == Icons.history_rounded) {
+      asset = 'history';
+    } else if (icon == Icons.assessment_rounded) {
+      asset = 'report';
+    } else if (icon == Icons.search_rounded) {
+      asset = 'search';
+    } else if (icon == Icons.add_circle_rounded) {
+      asset = 'product_add';
+    } else if (icon == Icons.post_add_rounded) {
+      asset = 'add_stock';
+    } else if (icon == Icons.inventory_2_rounded) {
+      asset = 'product';
+    } else if (icon == Icons.inventory_rounded || icon == Icons.inventory_2) {
+      asset = 'product_item';
+    } else if (icon == Icons.show_chart_rounded) {
+      asset = 'analyics';
+    }
+    if (asset != null) {
+      return Container(
+        width: size + 10,
+        height: size + 10,
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Center(
+          child: ColorFiltered(
+            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+            child: Image.asset("assets/icons/$asset.png", width: size, height: size),
+          ),
+        ),
+      );
+    }
+    return Icon(icon, size: size, color: color);
+  }
+
+
+
   Widget _sectionTitle(BuildContext context, String title, String subtitle) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
@@ -1396,10 +1327,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontFamily: 'Hanken Grotesk',
+                  fontFamily: 'Inter',
                   fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? AppColors.textPrimary : const Color(0xFF0F172A),
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : const Color(0xFF111111),
                 ),
               ),
               const SizedBox(height: 2),
@@ -1410,7 +1341,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 12,
-                  color: isDark ? AppColors.textMuted : const Color(0xFF64748B),
+                  color: isDark ? AppColors.textMuted : AppColors.textSecondary,
                 ),
               ),
             ],
@@ -1451,51 +1382,33 @@ class _DashboardScreenState extends State<DashboardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _skeleton(h: 130, isDark: isDark),
+          _skeleton(h: 140, isDark: isDark),
           const SizedBox(height: 20),
           Row(children: [
             Expanded(child: _skeleton(h: 90, isDark: isDark)),
-            const SizedBox(width: 10),
-            Expanded(child: _skeleton(h: 90, isDark: isDark)),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(child: _skeleton(h: 90, isDark: isDark)),
           ]),
           const SizedBox(height: 20),
           _skeleton(h: 16, w: 160, isDark: isDark),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
+          _skeleton(h: 200, isDark: isDark),
+          const SizedBox(height: 20),
+          _skeleton(h: 16, w: 160, isDark: isDark),
+          const SizedBox(height: 14),
           Row(children: [
-            Expanded(child: _skeleton(h: 72, isDark: isDark)),
-            const SizedBox(width: 10),
-            Expanded(child: _skeleton(h: 72, isDark: isDark)),
-          ]),
-          const SizedBox(height: 10),
-          Row(children: [
-            Expanded(child: _skeleton(h: 72, isDark: isDark)),
-            const SizedBox(width: 10),
-            Expanded(child: _skeleton(h: 72, isDark: isDark)),
-          ]),
-          const SizedBox(height: 10),
-          Row(children: [
-            Expanded(child: _skeleton(h: 72, isDark: isDark)),
-            const SizedBox(width: 10),
-            Expanded(child: _skeleton(h: 72, isDark: isDark)),
+            Expanded(child: _skeleton(h: 160, isDark: isDark)),
+            const SizedBox(width: 12),
+            Expanded(child: _skeleton(h: 160, isDark: isDark)),
           ]),
           const SizedBox(height: 20),
           _skeleton(h: 16, w: 160, isDark: isDark),
-          const SizedBox(height: 12),
-          Row(children: [
-            Expanded(child: _skeleton(h: 150, isDark: isDark)),
-            const SizedBox(width: 10),
-            Expanded(child: _skeleton(h: 150, isDark: isDark)),
-          ]),
+          const SizedBox(height: 14),
+          _skeleton(h: 160, isDark: isDark),
           const SizedBox(height: 20),
           _skeleton(h: 16, w: 160, isDark: isDark),
-          const SizedBox(height: 12),
-          _skeleton(h: 180, isDark: isDark),
-          const SizedBox(height: 20),
-          _skeleton(h: 16, w: 160, isDark: isDark),
-          const SizedBox(height: 12),
-          _skeleton(h: 100, isDark: isDark),
+          const SizedBox(height: 14),
+          _skeleton(h: 120, isDark: isDark),
         ],
       ),
     );
@@ -1510,8 +1423,8 @@ class _DashboardScreenState extends State<DashboardScreen>
       height: h,
       width: w,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.shimmerBase : const Color(0xFFE5E7EB),
-        borderRadius: BorderRadius.circular(14),
+        color: isDark ? const Color(0xFF2A2A3E) : const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(16),
       ),
     );
   }
@@ -1519,6 +1432,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   // ─── ERROR ────────────────────────────────────────────────
 
   Widget _buildErrorState(DashboardProvider provider) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -1529,20 +1443,20 @@ class _DashboardScreenState extends State<DashboardScreen>
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.redBg,
+                color: isDark ? const Color(0xFF2A2A3E) : const Color(0xFFF3F4F6),
                 borderRadius: BorderRadius.circular(24),
               ),
-              child: const Icon(Icons.cloud_off_rounded,
-                  size: 36, color: AppColors.red),
+              child: Icon(Icons.cloud_off_rounded,
+                  size: 36, color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF)),
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Connection Error',
               style: TextStyle(
-                fontFamily: 'Hanken Grotesk',
+                fontFamily: 'Inter',
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: isDark ? Colors.white : const Color(0xFF111111),
               ),
             ),
             const SizedBox(height: 8),
@@ -1551,10 +1465,10 @@ class _DashboardScreenState extends State<DashboardScreen>
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 13,
-                color: AppColors.textSecondary,
+                color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
               ),
             ),
             const SizedBox(height: 24),
@@ -1563,6 +1477,8 @@ class _DashboardScreenState extends State<DashboardScreen>
               icon: const Icon(Icons.refresh_rounded, size: 18),
               label: const Text('Retry'),
               style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF111111),
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1581,25 +1497,24 @@ class _DashboardScreenState extends State<DashboardScreen>
 
 class _GroupData {
   final String title;
-  final Color accent;
   final List<_ItemData> items;
-  const _GroupData(this.title, this.accent, this.items);
+  const _GroupData(this.title, this.items);
 }
 
 class _ItemData {
   final IconData icon;
   final String value;
   final String label;
-  final Color color;
   final String? route;
   final double? barValue;
+  final Color? badgeColor;
   const _ItemData(
     this.icon,
     this.value,
-    this.label,
-    this.color, {
+    this.label, {
     this.route,
     this.barValue,
+    this.badgeColor,
   });
 }
 
@@ -1607,13 +1522,13 @@ class _Activity {
   final IconData icon;
   final String title;
   final String value;
-  final Color color;
+  final Color? valueColor;
   final String route;
   const _Activity({
     required this.icon,
     required this.title,
     required this.value,
-    required this.color,
+    this.valueColor,
     required this.route,
   });
 }
@@ -1621,12 +1536,10 @@ class _Activity {
 class _QuickAction {
   final IconData icon;
   final String label;
-  final Color color;
   final String route;
   const _QuickAction({
     required this.icon,
     required this.label,
-    required this.color,
     required this.route,
   });
 }

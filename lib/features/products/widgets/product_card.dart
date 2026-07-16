@@ -90,14 +90,7 @@ class ProductCard extends StatelessWidget {
                   height: 100,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.primaryBg,
-                        isDark ? AppColors.surfaceContainerHigh : AppColors.surfaceContainerLow,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    color: isDark ? AppColors.surfaceContainerHigh : AppColors.surfaceContainerLow,
                   ),
                   child: _buildProductImage(context),
                 ),
@@ -296,14 +289,7 @@ class ProductCard extends StatelessWidget {
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.primaryBg,
-                          isDark ? AppColors.surfaceContainerHigh : AppColors.surfaceContainerLow,
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                      color: isDark ? AppColors.surfaceContainerHigh : AppColors.surfaceContainerLow,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     clipBehavior: Clip.antiAlias,

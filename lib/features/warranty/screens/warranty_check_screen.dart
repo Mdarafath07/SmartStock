@@ -83,9 +83,7 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
                 child: Text(
                   'Warranty Check',
                   style: AppTextStyles.titleLg.copyWith(
-                    color: isDark
-                        ? AppColors.textPrimary
-                        : const Color(0xFF1A1A2E),
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
@@ -104,7 +102,7 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
                   label: 'Active',
                   value: '$activeCount',
                   icon: Icons.check_circle_rounded,
-                  iconColor: AppColors.green,
+                  iconColor: AppColors.success,
                 ),
               ),
               const SizedBox(width: 8),
@@ -113,7 +111,7 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
                   label: 'Expired',
                   value: '$expiredCount',
                   icon: Icons.cancel_rounded,
-                  iconColor: AppColors.red,
+                  iconColor: AppColors.error,
                 ),
               ),
               const SizedBox(width: 8),
@@ -122,7 +120,7 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
                   label: 'Total',
                   value: '$totalCount',
                   icon: Icons.inventory_2_rounded,
-                  iconColor: AppColors.blue,
+                  iconColor: AppColors.primary,
                 ),
               ),
             ],
@@ -254,12 +252,8 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
             textAlign: TextAlign.center,
             style: AppTextStyles.labelMd.copyWith(
               color: isSelected
-                  ? (isDark
-                      ? AppColors.textPrimary
-                      : const Color(0xFF1A1A2E))
-                  : (isDark
-                      ? AppColors.textMuted
-                      : const Color(0xFF6B7280)),
+                  ? AppColors.textPrimary
+                  : AppColors.textSecondary,
             ),
           ),
         ),
@@ -307,9 +301,9 @@ class _WarrantyCheckScreenState extends State<WarrantyCheckScreen> {
   Widget _buildWarrantyItem(Warranty warranty) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
-        isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E);
+        AppColors.textPrimary;
     final textMuted =
-        isDark ? AppColors.textMuted : const Color(0xFF6B7280);
+        AppColors.textSecondary;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),

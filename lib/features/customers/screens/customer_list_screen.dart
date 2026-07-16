@@ -54,9 +54,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                       TextStyle(color: AppColors.textMuted),
                 ),
                 style: TextStyle(
-                    color: isDark
-                        ? AppColors.textPrimary
-                        : const Color(0xFF1A1A2E)),
+                    color: AppColors.textPrimary),
                 onChanged: (query) {
                   customerProvider.loadCustomers(searchQuery: query);
                 },
@@ -151,11 +149,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? AppColors.primary
-                                      .withAlpha(25)
-                                  : AppColors.green
-                                      .withAlpha(20),
+                              color: AppColors.primary.withAlpha(25),
                               borderRadius:
                                   BorderRadius.circular(14),
                             ),
@@ -257,29 +251,29 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                 autofocus: true,
                 decoration: InputDecoration(
                   labelText: 'Name',
-                  prefixIcon: Icon(Icons.person_rounded, size: 20, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                  prefixIcon: Icon(Icons.person_rounded, size: 20, color: AppColors.textMuted),
                 ),
                 textCapitalization: TextCapitalization.words,
-                style: TextStyle(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                style: TextStyle(color: AppColors.textPrimary),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: phoneController,
                 decoration: InputDecoration(
                   labelText: 'Phone',
-                  prefixIcon: Icon(Icons.phone_rounded, size: 20, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                  prefixIcon: Icon(Icons.phone_rounded, size: 20, color: AppColors.textMuted),
                 ),
                 keyboardType: TextInputType.phone,
-                style: TextStyle(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                style: TextStyle(color: AppColors.textPrimary),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: addressController,
                 decoration: InputDecoration(
                   labelText: 'Address',
-                  prefixIcon: Icon(Icons.location_on_rounded, size: 20, color: isDark ? AppColors.textMuted : const Color(0xFF9CA3AF)),
+                  prefixIcon: Icon(Icons.location_on_rounded, size: 20, color: AppColors.textMuted),
                 ),
-                style: TextStyle(color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E)),
+                style: TextStyle(color: AppColors.textPrimary),
               ),
             ],
           ),

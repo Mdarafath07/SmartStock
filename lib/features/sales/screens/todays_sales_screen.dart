@@ -54,26 +54,26 @@ class _TodaysSalesScreenState extends State<TodaysSalesScreen> {
                   Text(
                     "Today's Sales",
                     style: AppTextStyles.headlineMd.copyWith(
-                      color: isDark ? AppColors.textPrimary : const Color(0xFF1A1A2E),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const Spacer(),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: AppColors.greenBg,
+                      color: AppColors.statusInStockBg,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(Icons.calendar_today_rounded,
-                            size: 12, color: AppColors.green),
+                            size: 12, color: AppColors.success),
                         const SizedBox(width: 4),
                         Text(
                           'Today',
                           style: AppTextStyles.caption.copyWith(
-                            color: AppColors.green,
+                            color: AppColors.success,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -101,7 +101,7 @@ class _TodaysSalesScreenState extends State<TodaysSalesScreen> {
                             const SizedBox(height: 16),
                             Text('No sales today',
                                 style: AppTextStyles.titleSm.copyWith(
-                                  color: isDark ? AppColors.textSecondary : const Color(0xFF6B7280),
+                                  color: AppColors.textSecondary,
                                 )),
                           ],
                         ),

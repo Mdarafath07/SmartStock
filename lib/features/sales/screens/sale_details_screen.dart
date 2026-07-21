@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/sales/models/sale_model.dart';
 import 'package:smartstock/features/sales/providers/sale_provider.dart';
@@ -238,7 +239,7 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> with WidgetsBindi
                       'Profit',
                       _mask(priceFormatter.format(sale.profit)),
                       valueColor:
-                          sale.profit >= 0 ? Colors.green : Colors.red,
+                          sale.profit >= 0 ? AppColors.primary : AppColors.textMuted,
                     ),
                     _buildInfoRow(
                       theme,
@@ -247,7 +248,7 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> with WidgetsBindi
                           ? '${((sale.salePrice - sale.purchasePrice) / sale.salePrice * 100).toStringAsFixed(1)}%'
                           : '0.0%'),
                       valueColor:
-                          sale.profit >= 0 ? Colors.green : Colors.red,
+                          sale.profit >= 0 ? AppColors.primary : AppColors.textMuted,
                     ),
                   ],
                 ),
@@ -267,11 +268,11 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> with WidgetsBindi
                                 ?.copyWith(fontWeight: FontWeight.bold)),
                         const Spacer(),
                         if (sale.warrantyClaimed)
-                          _badge('Claimed', Colors.grey)
+                          _badge('Claimed', AppColors.textMuted)
                         else if (isWarrantyValid)
-                          _badge('Active', Colors.green)
+                          _badge('Active', AppColors.primary)
                         else
-                          _badge('Expired', Colors.red),
+                          _badge('Expired', AppColors.textMuted),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -310,7 +311,7 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> with WidgetsBindi
                         value: _getWarrantyProgress(sale),
                         backgroundColor:
                             theme.colorScheme.surfaceContainerHighest,
-                        color: Colors.green,
+                        color: AppColors.primary,
                       ),
                     ] else ...[
                       _buildInfoRow(theme, 'Expiry Date',

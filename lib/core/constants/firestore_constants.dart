@@ -6,4 +6,5 @@ class FirestoreConstants {
   static const String serialNumbers = 'serial_numbers';
   static const String sales = 'sales';
   static const String customers = 'customers';
+  static const String restrictions = 'restrictions';
 }

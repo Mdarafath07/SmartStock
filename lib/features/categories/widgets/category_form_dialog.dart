@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/services/connectivity_service.dart';
+import 'package:smartstock/features/categories/providers/category_provider.dart';
 import 'package:smartstock/features/categories/widgets/icon_picker.dart';
 
 class CategoryFormDialog extends StatefulWidget {
   final String? initialName;
   final String? initialIcon;
-  final void Function(String name, String icon) onSave;
+  final String? initialId;
+  final Future<void> Function(String name, String icon) onSave;
 
   const CategoryFormDialog({
     super.key,
     this.initialName,
     this.initialIcon,
+    this.initialId,
     required this.onSave,
   });
 
@@ -38,7 +41,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
     super.dispose();
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (_isSaving) return;
     if (!_formKey.currentState!.validate()) return;
     final connectivity = context.read<ConnectivityService>();
@@ -49,8 +52,17 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
       return;
     }
     setState(() => _isSaving = true);
-    widget.onSave(_controller.text.trim(), _selectedIcon);
-    Navigator.pop(context);
+    try {
+      await widget.onSave(_controller.text.trim(), _selectedIcon);
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        );
+      }
+    }
   }
 
   @override
@@ -78,6 +90,10 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter a category name';
+                    }
+                    final provider = context.read<CategoryProvider>();
+                    if (provider.isDuplicateName(value.trim(), excludeId: widget.initialId)) {
+                      return 'Category name already exists';
                     }
                     return null;
                   },

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:smartstock/core/routes/app_routes.dart';
 import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/theme/text_styles.dart';
 import 'package:smartstock/core/widgets/glass_card.dart';
 import 'package:smartstock/features/integrations/screens/sync_dashboard_screen.dart';
 import 'package:smartstock/features/settings/providers/settings_provider.dart';
+import 'package:smartstock/features/settings/services/data_export_service.dart';
 import 'package:smartstock/features/settings/services/settings_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -217,7 +219,9 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         children: [
           Text('Data', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : AppColors.textPrimary)),
           const SizedBox(height: 12),
-          _settingRow(icon: Icons.download_rounded, label: 'Download Data', value: 'Save all data as CSV file', isDark: isDark, onTap: () => _showSnackBar('Download started')),
+          _settingRow(icon: Icons.download_rounded, label: 'Download Data', value: 'Save all data as CSV file', isDark: isDark, onTap: () => _exportData()),
+          Divider(height: 1, color: isDark ? AppColors.greyDarker.withAlpha(60) : const Color(0xFFE2E8F0)),
+          _settingRow(icon: Icons.category_rounded, label: 'Manage Categories', value: 'View, add, and edit categories', isDark: isDark, onTap: () => Navigator.pushNamed(context, AppRoutes.categories)),
         ],
       ),
     );
@@ -454,6 +458,84 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _exportData() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: Card(
+          margin: EdgeInsets.all(80),
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Exporting data...'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    try {
+      final result = await DataExportService().exportAllData();
+      if (mounted) {
+        Navigator.pop(context);
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.green, size: 24),
+                SizedBox(width: 10),
+                Text('Export Complete'),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('${result.fileCount} CSV files exported'),
+                Text('${result.totalRows} records total'),
+                SizedBox(height: 8),
+                Container(
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    result.directoryPath,
+                    style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
+                  ),
+                ),
+                if (result.errors.isNotEmpty) ...[
+                  SizedBox(height: 8),
+                  Text('Errors: ${result.errors.length}',
+                      style: TextStyle(color: Colors.orange)),
+                ],
+              ],
+            ),
+            actions: [
+              FilledButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        _showSnackBar('Export failed: $e');
+      }
+    }
   }
 
   Color _getTextColor(BuildContext context) {

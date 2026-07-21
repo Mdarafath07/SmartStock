@@ -309,12 +309,12 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> with WidgetsBin
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           color: isActive
-              ? AppColors.statusInStockBg
+              ? AppColors.primary.withAlpha(15)
               : (isDark ? AppColors.surface : Colors.white),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isActive
-                ? AppColors.success.withAlpha(60)
+                ? AppColors.primary.withAlpha(60)
                 : (isDark ? AppColors.greyDarker.withAlpha(40) : const Color(0xFFE5E7EB)),
             width: 0.5,
           ),
@@ -325,7 +325,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> with WidgetsBin
             fontFamily: 'Inter',
             fontSize: 12,
             fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-            color: isActive ? AppColors.success : (AppColors.textSecondary),
+            color: isActive ? AppColors.primary : (AppColors.textSecondary),
           ),
         ),
       ),
@@ -354,7 +354,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> with WidgetsBin
               label: 'Revenue',
               value: currencyFormat.format(totalRevenue),
               icon: Icons.monetization_on_rounded,
-              iconColor: AppColors.success,
+              iconColor: AppColors.primary,
               bg: cardBg,
             ),
           ),
@@ -364,7 +364,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> with WidgetsBin
               label: 'Profit',
               value: currencyFormat.format(totalProfit),
               icon: Icons.trending_up_rounded,
-              iconColor: totalProfit >= 0 ? AppColors.success : AppColors.error,
+              iconColor: totalProfit >= 0 ? AppColors.primary : AppColors.textMuted,
               bg: cardBg,
             ),
           ),
@@ -489,7 +489,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> with WidgetsBin
                   width: 28,
                   height: 28,
                   decoration: BoxDecoration(
-                    color: AppColors.statusInStockBg,
+                    color: AppColors.primary.withAlpha(20),
                     borderRadius: BorderRadius.circular(7),
                   ),
                   child: Center(
@@ -501,7 +501,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> with WidgetsBin
                         fontFamily: 'Inter',
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.success,
+                        color: AppColors.primary,
                       ),
                     ),
                   ),
@@ -531,7 +531,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> with WidgetsBin
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                   decoration: BoxDecoration(
-                    color: AppColors.statusInStockBg,
+                    color: AppColors.greyLight.withAlpha(80),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -540,7 +540,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> with WidgetsBin
                       fontFamily: 'Geist',
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.success,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ),
@@ -578,7 +578,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> with WidgetsBin
                     fontFamily: 'Hanken Grotesk',
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.success,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],
@@ -602,8 +602,8 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> with WidgetsBin
                         height: 32,
                         decoration: BoxDecoration(
                           color: sale.profit >= 0
-                              ? AppColors.success
-                              : AppColors.error,
+                              ? AppColors.primary
+                              : AppColors.textMuted,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),

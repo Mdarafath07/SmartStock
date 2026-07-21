@@ -35,8 +35,17 @@ class CategoryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool isDuplicateName(String name, {String? excludeId}) {
+    return _categories.any((c) =>
+        c.name.toLowerCase() == name.trim().toLowerCase() &&
+        c.id != excludeId);
+  }
+
   Future<void> addCategory(String name, {String icon = 'inventory_2_rounded'}) async {
     try {
+      if (isDuplicateName(name)) {
+        throw Exception('A category with this name already exists');
+      }
       await _firestore.collection('categories').add({
         'name': name,
         'icon': icon,
@@ -45,11 +54,15 @@ class CategoryProvider extends ChangeNotifier {
     } catch (e) {
       _error = e.toString();
       notifyListeners();
+      rethrow;
     }
   }
 
   Future<void> updateCategory(String id, String name, {String? icon}) async {
     try {
+      if (isDuplicateName(name, excludeId: id)) {
+        throw Exception('A category with this name already exists');
+      }
       final data = <String, dynamic>{'name': name};
       if (icon != null) data['icon'] = icon;
       final batch = _firestore.batch();
@@ -65,6 +78,7 @@ class CategoryProvider extends ChangeNotifier {
     } catch (e) {
       _error = e.toString();
       notifyListeners();
+      rethrow;
     }
   }
 

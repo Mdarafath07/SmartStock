@@ -32,6 +32,7 @@ class _ProductListScreenState extends State<ProductListScreen>
   bool _sortPriceAsc = true;
   bool get _priceFilterActive => _minPrice != null || _maxPrice != null;
   Product? _serialSearchedProduct;
+  int? _productTypeFilter;
   Timer? _searchDebounce;
   Timer? _refreshTimer;
 
@@ -224,6 +225,11 @@ class _ProductListScreenState extends State<ProductListScreen>
     );
   }
 
+  List<Product> _filterByType(List<Product> products) {
+    if (_productTypeFilter == null) return products;
+    return products.where((p) => _productTypeFilter == 1 ? p.isSerialized : !p.isSerialized).toList();
+  }
+
   List<Product> _filterByPrice(List<Product> products) {
     if (!_priceFilterActive) return products;
     return products.where((p) {
@@ -259,6 +265,8 @@ class _ProductListScreenState extends State<ProductListScreen>
           _buildFilterRow(categoryProvider, isDark),
           const SizedBox(height: 4),
           _buildStatsRow(sorted, isDark),
+           const SizedBox(height: 4),
+          _buildTypeFilter(isDark),
           const SizedBox(height: 4),
           _buildSortBar(isDark),
           const SizedBox(height: 8),
@@ -489,6 +497,36 @@ class _ProductListScreenState extends State<ProductListScreen>
     );
   }
 
+  Widget _buildTypeFilter(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          _FilterChip(
+            label: 'All Types',
+            selected: _productTypeFilter == null,
+            onTap: () => setState(() => _productTypeFilter = null),
+            isDark: isDark,
+          ),
+          const SizedBox(width: 8),
+          _FilterChip(
+            label: 'Serialized',
+            selected: _productTypeFilter == 1,
+            onTap: () => setState(() => _productTypeFilter = _productTypeFilter == 1 ? null : 1),
+            isDark: isDark,
+          ),
+          const SizedBox(width: 8),
+          _FilterChip(
+            label: 'Quantity',
+            selected: _productTypeFilter == 2,
+            onTap: () => setState(() => _productTypeFilter = _productTypeFilter == 2 ? null : 2),
+            isDark: isDark,
+          ),
+        ],
+      ),
+    );
+  }
+
   List<Product> _filterBySearch(List<Product> products) {
     if (_searchQuery.isEmpty) {
       _serialSearchedProduct = null;
@@ -509,6 +547,7 @@ class _ProductListScreenState extends State<ProductListScreen>
 
   Widget _buildContent(List<Product> products, ProductProvider productProvider, bool isDark) {
     products = _filterBySearch(products);
+    products = _filterByType(products);
     products = _filterByPrice(products);
     if (productProvider.isLoading && products.isEmpty) {
       return _buildSkeleton(isDark);

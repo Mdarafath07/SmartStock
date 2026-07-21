@@ -326,8 +326,9 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> wit
                 builder: (_) => CategoryFormDialog(
                   initialName: category.name,
                   initialIcon: category.icon,
-                  onSave: (name, icon) {
-                    context.read<CategoryProvider>()
+                  initialId: category.id,
+                  onSave: (name, icon) async {
+                    await context.read<CategoryProvider>()
                         .updateCategory(category.id, name, icon: icon);
                   },
                 ),

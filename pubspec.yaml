@@ -48,6 +48,9 @@ dependencies:
   flutter_dotenv: ^5.2.1
   unified_esc_pos_printer: ^3.3.3
   connectivity_plus: ^7.3.0
+  network_info_plus: ^7.0.0
+  path_provider: ^2.1.6
+  url_launcher: ^6.3.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

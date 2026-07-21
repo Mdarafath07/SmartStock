@@ -42,8 +42,13 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
           .read<CategoryProvider>()
           .addCategory(_nameController.text.trim(), icon: _selectedIcon);
       if (mounted) Navigator.pop(context);
-    } catch (_) {
-      if (mounted) setState(() => _isSaving = false);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        );
+      }
     }
   }
 
@@ -71,6 +76,10 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Please enter a category name';
+                  }
+                  final provider = context.read<CategoryProvider>();
+                  if (provider.isDuplicateName(value.trim())) {
+                    return 'Category name already exists';
                   }
                   return null;
                 },

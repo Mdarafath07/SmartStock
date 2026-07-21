@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:smartstock/core/theme/app_colors.dart';
 import 'package:smartstock/core/widgets/debounced.dart';
 import 'package:smartstock/features/sales/models/sale_model.dart';
 import 'package:smartstock/features/settings/providers/settings_provider.dart';
@@ -18,7 +19,7 @@ class SaleCard extends StatelessWidget {
     final timeFormatter = DateFormat('hh:mm a');
     final symbol = context.watch<SettingsProvider>().currencySymbol;
     final priceFormatter = NumberFormat.currency(symbol: symbol, decimalDigits: 0);
-    final profitColor = sale.profit >= 0 ? Colors.green : Colors.red;
+    final profitColor = sale.profit >= 0 ? AppColors.primary : AppColors.textMuted;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -47,7 +48,7 @@ class SaleCard extends StatelessWidget {
                     else if (sale.isReplacement)
                       _badge('Replacement', const Color(0xFF6B7280), theme)
                     else if (sale.warrantyExpiryDate.isAfter(DateTime.now()))
-                      _badge('Warranty', Colors.green, theme)
+                      _badge('Warranty', AppColors.primary, theme)
                     else
                       Text(
                         timeFormatter.format(sale.saleDate),

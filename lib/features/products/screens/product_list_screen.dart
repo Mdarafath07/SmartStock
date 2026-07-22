@@ -23,6 +23,7 @@ class ProductListScreen extends StatefulWidget {
 class _ProductListScreenState extends State<ProductListScreen>
     with WidgetsBindingObserver {
   final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
   String? _selectedCategoryId;
   String _searchQuery = '';
   bool _sortNewestFirst = true;
@@ -34,30 +35,28 @@ class _ProductListScreenState extends State<ProductListScreen>
   Product? _serialSearchedProduct;
   int? _productTypeFilter;
   Timer? _searchDebounce;
-  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startAutoRefresh();
       context.read<ProductProvider>().loadProducts();
       context.read<CategoryProvider>().loadCategories();
     });
   }
 
-  void _startAutoRefresh() {
-    _refreshTimer?.cancel();
-    _refreshTimer = Timer.periodic(
-      const Duration(seconds: 120),
-      (_) => context.read<ProductProvider>().loadProducts(),
-    );
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 300) {
+      context.read<ProductProvider>().loadMoreProducts();
+    }
   }
 
   @override
   void dispose() {
-    _refreshTimer?.cancel();
+    _scrollController.dispose();
     _searchController.dispose();
     _searchDebounce?.cancel();
     WidgetsBinding.instance.removeObserver(this);
@@ -68,9 +67,6 @@ class _ProductListScreenState extends State<ProductListScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       context.read<ProductProvider>().loadProducts();
-      _startAutoRefresh();
-    } else if (state == AppLifecycleState.paused) {
-      _refreshTimer?.cancel();
     }
   }
 
@@ -256,24 +252,39 @@ class _ProductListScreenState extends State<ProductListScreen>
       });
 
     return Scaffold(
-      body: Column(
-        children: [
-          SizedBox(height: MediaQuery.of(context).padding.top + 8),
-          _buildAppBar(context, isDark),
-          _buildSearchBar(isDark),
-          const SizedBox(height: 4),
-          _buildFilterRow(categoryProvider, isDark),
-          const SizedBox(height: 4),
-          _buildStatsRow(sorted, isDark),
-           const SizedBox(height: 4),
-          _buildTypeFilter(isDark),
-          const SizedBox(height: 4),
-          _buildSortBar(isDark),
-          const SizedBox(height: 8),
-          Expanded(
-            child: _buildContent(sorted, productProvider, isDark),
-          ),
-        ],
+      body: RefreshIndicator(
+        onRefresh: () async => productProvider.loadProducts(categoryId: _selectedCategoryId),
+        child: CustomScrollView(
+          controller: _scrollController,
+          slivers: [
+            SliverToBoxAdapter(child: SizedBox(height: MediaQuery.of(context).padding.top + 8)),
+            SliverToBoxAdapter(child: _buildAppBar(context, isDark)),
+            SliverToBoxAdapter(child: _buildSearchBar(isDark)),
+            const SliverToBoxAdapter(child: SizedBox(height: 4)),
+            SliverToBoxAdapter(child: _buildFilterRow(categoryProvider, isDark)),
+            const SliverToBoxAdapter(child: SizedBox(height: 4)),
+            SliverToBoxAdapter(child: _buildStatsRow(productProvider, isDark)),
+            const SliverToBoxAdapter(child: SizedBox(height: 4)),
+            SliverToBoxAdapter(child: _buildTypeFilter(isDark)),
+            const SliverToBoxAdapter(child: SizedBox(height: 4)),
+            SliverToBoxAdapter(child: _buildSortBar(isDark)),
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
+            ..._buildContentSlivers(sorted, productProvider, isDark),
+            if (productProvider.isLoadingMore)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Center(
+                    child: SizedBox(
+                      width: 24, height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                ),
+              ),
+            const SliverToBoxAdapter(child: SizedBox(height: 80)),
+          ],
+        ),
       ),
     );
   }
@@ -396,28 +407,6 @@ class _ProductListScreenState extends State<ProductListScreen>
     );
   }
 
-  Widget _buildStatsRow(List<Product> products, bool isDark) {
-    final totalItems = products.fold<int>(0, (sum, p) => sum + p.availableQuantity);
-    final inStockProducts = products.where((p) => p.availableQuantity > 0).length;
-    final lowStockProducts = products.where((p) => p.availableQuantity > 0 && p.availableQuantity <= 5).length;
-    final outOfStockProducts = products.where((p) => p.availableQuantity <= 0).length;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          _MiniStat(label: 'Items', value: '$totalItems', color: AppColors.primary, isDark: isDark),
-          const SizedBox(width: 8),
-          _MiniStat(label: 'In Stock', value: '$inStockProducts', color: AppColors.success, isDark: isDark),
-          const SizedBox(width: 8),
-          _MiniStat(label: 'Low', value: '$lowStockProducts', color: AppColors.warning, isDark: isDark),
-          const SizedBox(width: 8),
-          _MiniStat(label: 'Out', value: '$outOfStockProducts', color: AppColors.error, isDark: isDark),
-        ],
-      ),
-    );
-  }
-
   Widget _buildSortBar(bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -497,6 +486,25 @@ class _ProductListScreenState extends State<ProductListScreen>
     );
   }
 
+  Widget _buildStatsRow(ProductProvider provider, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          _MiniStat(label: 'Products', value: '${provider.totalProducts}', color: AppColors.primary, isDark: isDark),
+          const SizedBox(width: 8),
+          _MiniStat(label: 'Items', value: '${provider.totalItems}', color: AppColors.primary, isDark: isDark),
+          const SizedBox(width: 8),
+          _MiniStat(label: 'In Stock', value: '${provider.inStock}', color: AppColors.success, isDark: isDark),
+          const SizedBox(width: 8),
+          _MiniStat(label: 'Low', value: '${provider.lowStock}', color: AppColors.warning, isDark: isDark),
+          const SizedBox(width: 8),
+          _MiniStat(label: 'Out', value: '${provider.outOfStock}', color: AppColors.error, isDark: isDark),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTypeFilter(bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -545,113 +553,164 @@ class _ProductListScreenState extends State<ProductListScreen>
     return matched;
   }
 
-  Widget _buildContent(List<Product> products, ProductProvider productProvider, bool isDark) {
+  List<Widget> _buildContentSlivers(List<Product> products, ProductProvider productProvider, bool isDark) {
     products = _filterBySearch(products);
     products = _filterByType(products);
     products = _filterByPrice(products);
+
     if (productProvider.isLoading && products.isEmpty) {
-      return _buildSkeleton(isDark);
+      return [_buildSkeleton(isDark)];
     }
 
     if (productProvider.error != null && products.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 72, height: 72,
-                decoration: BoxDecoration(color: AppColors.statusOutOfStockBg, borderRadius: BorderRadius.circular(18)),
-                child: const Icon(Icons.error_outline_rounded, size: 32, color: AppColors.error),
+      return [
+        SliverFillRemaining(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 72, height: 72,
+                    decoration: BoxDecoration(color: AppColors.statusOutOfStockBg, borderRadius: BorderRadius.circular(18)),
+                    child: const Icon(Icons.error_outline_rounded, size: 32, color: AppColors.error),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(productProvider.error!, style: AppTextStyles.bodyMd.copyWith(color: AppColors.textSecondary), textAlign: TextAlign.center),
+                  const SizedBox(height: 20),
+                  FilledButton.icon(
+                    onPressed: () => productProvider.loadProducts(),
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: const Text('Retry'),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              Text(productProvider.error!, style: AppTextStyles.bodyMd.copyWith(color: AppColors.textSecondary), textAlign: TextAlign.center),
-              const SizedBox(height: 20),
-              FilledButton.icon(
-                onPressed: () => productProvider.loadProducts(),
-                icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('Retry'),
-              ),
-            ],
+            ),
           ),
         ),
-      );
+      ];
     }
 
     if (products.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80, height: 80,
-              decoration: BoxDecoration(color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200), borderRadius: BorderRadius.circular(20)),
-              child: Icon(Icons.inventory_2_rounded, size: 36, color: isDark ? AppColors.greyDarker : const Color(0xFFD1D5DB)),
+      return [
+        SliverFillRemaining(
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 80, height: 80,
+                  decoration: BoxDecoration(color: (isDark ? AppColors.surfaceLight : const Color(0xFFF3F4F6)).withAlpha(200), borderRadius: BorderRadius.circular(20)),
+                  child: Icon(Icons.inventory_2_rounded, size: 36, color: isDark ? AppColors.greyDarker : const Color(0xFFD1D5DB)),
+                ),
+                const SizedBox(height: 16),
+                Text('No products found', style: AppTextStyles.headlineSm.copyWith(color: AppColors.textSecondary)),
+                const SizedBox(height: 4),
+                Text("Tap + to add your first product", style: AppTextStyles.bodySm.copyWith(color: AppColors.textMuted)),
+              ],
             ),
-            const SizedBox(height: 16),
-            Text('No products found', style: AppTextStyles.headlineSm.copyWith(color: AppColors.textSecondary)),
-            const SizedBox(height: 4),
-            Text("Tap + to add your first product", style: AppTextStyles.bodySm.copyWith(color: AppColors.textMuted)),
-          ],
+          ),
         ),
-      );
+      ];
     }
 
-    return RefreshIndicator(
-      onRefresh: () async => productProvider.loadProducts(categoryId: _selectedCategoryId),
-      child: _isGridView
-          ? GridView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.78,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: products.length,
-              itemBuilder: (context, index) {
-                return ProductCard(
-                  product: products[index],
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailsScreen(productId: products[index].id))).then((_) {
-                    if (!context.mounted) return;
-                    context.read<ProductProvider>().loadProducts();
-                  }),
-                  isGrid: true,
-                );
-              },
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
-              itemCount: products.length,
-              itemBuilder: (context, index) {
-                return ProductCard(
-                  product: products[index],
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailsScreen(productId: products[index].id))).then((_) {
-                    if (!context.mounted) return;
-                    context.read<ProductProvider>().loadProducts();
-                  }),
-                  isGrid: false,
-                );
-              },
+    if (_isGridView) {
+      return [
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.78,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
             ),
-    );
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => ProductCard(
+                product: products[index],
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailsScreen(productId: products[index].id))).then((_) {
+                  if (!context.mounted) return;
+                  context.read<ProductProvider>().loadProducts(categoryId: _selectedCategoryId);
+                }),
+                isGrid: true,
+              ),
+              childCount: products.length,
+            ),
+          ),
+        ),
+      ];
+    }
+
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) => ProductCard(
+              product: products[index],
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailsScreen(productId: products[index].id))).then((_) {
+                if (!context.mounted) return;
+                context.read<ProductProvider>().loadProducts(categoryId: _selectedCategoryId);
+              }),
+              isGrid: false,
+            ),
+            childCount: products.length,
+          ),
+        ),
+      ),
+    ];
   }
 
   Widget _buildSkeleton(bool isDark) {
-    return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.78,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.78,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (_, _) => Container(
+            decoration: BoxDecoration(
+              color: (isDark ? AppColors.shimmerBase : const Color(0xFFE5E7EB)).withAlpha(150),
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          childCount: 6,
+        ),
       ),
-      itemCount: 6,
-      itemBuilder: (_, _) => Container(
+    );
+  }
+}
+
+class _MiniStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  final bool isDark;
+
+  const _MiniStat({required this.label, required this.value, required this.color, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: (isDark ? AppColors.shimmerBase : const Color(0xFFE5E7EB)).withAlpha(150),
-          borderRadius: BorderRadius.circular(14),
+          color: color.withAlpha(12),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          children: [
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(value, style: AppTextStyles.labelMd.copyWith(color: color, fontWeight: FontWeight.w700)),
+            ),
+            Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
+          ],
         ),
       ),
     );
@@ -695,30 +754,4 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-class _MiniStat extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-  final bool isDark;
 
-  const _MiniStat({required this.label, required this.value, required this.color, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: color.withAlpha(12),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          children: [
-            Text(value, style: AppTextStyles.labelMd.copyWith(color: color, fontWeight: FontWeight.w700)),
-            Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
-          ],
-        ),
-      ),
-    );
-  }
-}

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/routes/app_routes.dart';
@@ -89,7 +90,11 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
 
                 _buildDataSection(isDark),
                 const SizedBox(height: 16),
+                _buildVerifyAccountSection(settings, isDark),
+                const SizedBox(height: 16),
                 _buildAboutSection(isDark),
+                const SizedBox(height: 16),
+                _buildEraseDataSection(settings, isDark),
                 const SizedBox(height: 32),
               ],
             ),
@@ -223,6 +228,450 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           Divider(height: 1, color: isDark ? AppColors.greyDarker.withAlpha(60) : const Color(0xFFE2E8F0)),
           _settingRow(icon: Icons.category_rounded, label: 'Manage Categories', value: 'View, add, and edit categories', isDark: isDark, onTap: () => Navigator.pushNamed(context, AppRoutes.categories)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildVerifyAccountSection(SettingsProvider settings, bool isDark) {
+    return ModernCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text('Account Verification', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : AppColors.textPrimary)),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: settings.isEmailVerified ? AppColors.success.withAlpha(25) : AppColors.warning.withAlpha(25),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  settings.isEmailVerified ? 'Verified' : 'Unverified',
+                  style: AppTextStyles.caption.copyWith(
+                    color: settings.isEmailVerified ? AppColors.success : AppColors.warning,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (settings.isEmailVerified) ...[
+            _settingRow(
+              icon: Icons.email_rounded,
+              label: 'Verified Email',
+              value: settings.verifiedEmail,
+              isDark: isDark,
+            ),
+            Divider(height: 1, color: isDark ? AppColors.greyDarker.withAlpha(60) : const Color(0xFFE2E8F0)),
+            _settingRow(
+              icon: Icons.swap_horiz_rounded,
+              label: 'Change Email',
+              value: 'Verify a different email address',
+              isDark: isDark,
+              onTap: () => _showChangeEmailDialog(settings),
+            ),
+          ] else ...[
+            _settingRow(
+              icon: Icons.verified_user_rounded,
+              label: 'Verify Email',
+              value: 'Add and verify your email address',
+              isDark: isDark,
+              onTap: () => _showVerifyEmailDialog(settings),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _showVerifyEmailDialog(SettingsProvider settings) {
+    final emailController = TextEditingController();
+    final otpController = TextEditingController();
+    bool sending = false;
+    bool otpSent = false;
+    String? pendingEmail;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark ? AppColors.cardDark : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(otpSent ? 'Enter OTP' : 'Verify Email',
+                  style: AppTextStyles.titleMd.copyWith(color: _getTextColor(context))),
+              const SizedBox(height: 4),
+              Text(otpSent
+                  ? 'A 6-digit OTP has been sent to $pendingEmail'
+                  : 'Enter your email to receive an OTP',
+                  style: AppTextStyles.bodySm.copyWith(color: AppColors.textSecondary)),
+              if (!otpSent) ...[
+                const SizedBox(height: 16),
+                TextField(
+                  controller: emailController,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                  keyboardType: TextInputType.emailAddress,
+                  style: TextStyle(color: _getTextColor(context)),
+                ),
+              ] else ...[
+                const SizedBox(height: 12),
+                TextField(
+                  controller: otpController,
+                  decoration: const InputDecoration(labelText: 'Enter OTP'),
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                  style: TextStyle(color: _getTextColor(context)),
+                ),
+              ],
+              const SizedBox(height: 20),
+              Row(children: [
+                Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel'))),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: sending
+                        ? null
+                        : () async {
+                            if (!otpSent) {
+                              final email = emailController.text.trim();
+                              if (email.isEmpty) return;
+                              setDialogState(() => sending = true);
+                              try {
+                                await settings.sendOtp(email);
+                                setDialogState(() {
+                                  sending = false;
+                                  otpSent = true;
+                                  pendingEmail = email;
+                                });
+                              } catch (e) {
+                                setDialogState(() => sending = false);
+                                _showSnackBar('Error: ${e.toString()}');
+                              }
+                            } else {
+                              final otp = otpController.text.trim();
+                              if (otp.length != 6) return;
+                              setDialogState(() => sending = true);
+                              final verified = await settings.verifyOtp(pendingEmail!, otp);
+                              setDialogState(() => sending = false);
+                              if (verified) {
+                                Navigator.pop(ctx);
+                                _showSnackBar('Email verified successfully!');
+                              } else {
+                                _showSnackBar('Invalid or expired OTP. Try again.');
+                              }
+                            }
+                          },
+                    child: sending
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : Text(otpSent ? 'Verify OTP' : 'Send OTP'),
+                  ),
+                ),
+              ]),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showChangeEmailDialog(SettingsProvider settings) {
+    final otpController = TextEditingController();
+    final newEmailController = TextEditingController();
+    final newOtpController = TextEditingController();
+    bool sending = false;
+    bool otpSent = false;
+    int step = 0;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          if (!otpSent) {
+            setDialogState(() => otpSent = true);
+            settings.sendChangeOtp(settings.verifiedEmail);
+          }
+          return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark ? AppColors.cardDark : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Change Email', style: AppTextStyles.titleMd.copyWith(color: _getTextColor(context))),
+              const SizedBox(height: 4),
+              Text(
+                step == 0
+                    ? 'Step 1: OTP sent to ${settings.verifiedEmail}'
+                    : step == 1
+                        ? 'Step 2: Enter your new email'
+                        : 'Step 3: OTP sent to ${newEmailController.text.isNotEmpty ? newEmailController.text : "new email"}',
+                style: AppTextStyles.bodySm.copyWith(color: AppColors.textSecondary),
+              ),
+              if (step == 0) ...[
+                const SizedBox(height: 12),
+                TextField(
+                  controller: otpController,
+                  decoration: const InputDecoration(labelText: 'Current Email OTP'),
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                  style: TextStyle(color: _getTextColor(context)),
+                ),
+              ] else if (step == 1) ...[
+                const SizedBox(height: 16),
+                TextField(
+                  controller: newEmailController,
+                  decoration: const InputDecoration(labelText: 'New Email'),
+                  keyboardType: TextInputType.emailAddress,
+                  style: TextStyle(color: _getTextColor(context)),
+                ),
+              ] else ...[
+                const SizedBox(height: 12),
+                TextField(
+                  controller: newOtpController,
+                  decoration: const InputDecoration(labelText: 'New Email OTP'),
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                  style: TextStyle(color: _getTextColor(context)),
+                ),
+              ],
+              const SizedBox(height: 20),
+              Row(children: [
+                Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel'))),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: sending
+                        ? null
+                        : () async {
+                            if (step == 0) {
+                              final otp = otpController.text.trim();
+                              if (otp.length != 6) return;
+                              setDialogState(() => sending = true);
+                              final verified = await settings.verifyChangeOtp(settings.verifiedEmail, otp);
+                              setDialogState(() => sending = false);
+                              if (verified) {
+                                setDialogState(() => step = 1);
+                              } else {
+                                _showSnackBar('Invalid OTP. Try again.');
+                              }
+                            } else if (step == 1) {
+                              final newEmail = newEmailController.text.trim();
+                              if (newEmail.isEmpty) return;
+                              setDialogState(() => sending = true);
+                              await settings.sendOtp(newEmail);
+                              setDialogState(() {
+                                sending = false;
+                                step = 2;
+                              });
+                            } else {
+                              final otp = newOtpController.text.trim();
+                              if (otp.length != 6) return;
+                              setDialogState(() => sending = true);
+                              final verified = await settings.verifyNewEmail(newEmailController.text.trim(), otp);
+                              setDialogState(() => sending = false);
+                              if (verified) {
+                                Navigator.pop(ctx);
+                                _showSnackBar('Email changed successfully!');
+                              } else {
+                                _showSnackBar('Invalid OTP. Try again.');
+                              }
+                            }
+                          },
+                    child: sending
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : Text(step == 0 ? 'Verify OTP' : step == 1 ? 'Send OTP' : 'Verify & Change'),
+                  ),
+                ),
+              ]),
+            ]),
+          ),
+        );
+      },
+      ),
+    );
+  }
+
+  Widget _buildEraseDataSection(SettingsProvider settings, bool isDark) {
+    return ModernCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, size: 18, color: AppColors.error),
+              const SizedBox(width: 8),
+              Text('Danger Zone', style: AppTextStyles.titleSm.copyWith(color: AppColors.error)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _settingRow(
+            icon: Icons.delete_forever_rounded,
+            label: 'Erase All Data',
+            value: 'Permanently delete all data',
+            isDark: isDark,
+            onTap: () => _showEraseDataDialog(settings),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEraseDataDialog(SettingsProvider settings) {
+    if (!settings.isEmailVerified) {
+      _showSnackBar('Please verify your email first');
+      return;
+    }
+
+    int countdown = 10;
+    bool countdownStarted = false;
+    bool otpSent = false;
+    bool sending = false;
+    bool erasing = false;
+    final otpController = TextEditingController();
+    Timer? timer;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          if (!countdownStarted) {
+            countdownStarted = true;
+            timer = Timer.periodic(const Duration(seconds: 1), (t) {
+              setDialogState(() {
+                countdown--;
+              });
+              if (countdown <= 0) {
+                t.cancel();
+              }
+            });
+          }
+
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Row(children: [
+              Icon(Icons.warning_amber_rounded, color: AppColors.error),
+              const SizedBox(width: 8),
+              Text('Erase All Data', style: TextStyle(color: _getTextColor(context))),
+            ]),
+            content: otpSent
+                ? Column(mainAxisSize: MainAxisSize.min, children: [
+                    Text('OTP sent to ${settings.verifiedEmail}', style: AppTextStyles.bodySm.copyWith(color: AppColors.textSecondary)),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: otpController,
+                      decoration: const InputDecoration(labelText: 'Enter OTP'),
+                      keyboardType: TextInputType.number,
+                      maxLength: 6,
+                      style: TextStyle(color: _getTextColor(context)),
+                    ),
+                  ])
+                : Column(mainAxisSize: MainAxisSize.min, children: [
+                    Text('All data will be permanently deleted. This action cannot be undone.', style: AppTextStyles.bodySm.copyWith(color: AppColors.textSecondary)),
+                    const SizedBox(height: 16),
+                    Text('Wait $countdown seconds', style: AppTextStyles.titleLg.copyWith(color: AppColors.error, fontWeight: FontWeight.w700)),
+                    if (countdown > 0) const SizedBox(height: 8),
+                    if (countdown > 0)
+                      LinearProgressIndicator(value: countdown / 10, backgroundColor: AppColors.error.withAlpha(30), color: AppColors.error),
+                  ]),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  timer?.cancel();
+                  Navigator.pop(ctx);
+                },
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: countdown > 0 || sending || erasing
+                    ? null
+                    : () async {
+                        if (!otpSent) {
+                          setDialogState(() => sending = true);
+                          await settings.sendOtp(settings.verifiedEmail);
+                          setDialogState(() {
+                            sending = false;
+                            otpSent = true;
+                          });
+                        } else {
+                          final otp = otpController.text.trim();
+                          if (otp.length != 6) return;
+                          setDialogState(() => sending = true);
+                          final verified = await settings.verifyOtp(settings.verifiedEmail, otp);
+                          setDialogState(() => sending = false);
+                          if (!verified) {
+                            _showSnackBar('Invalid OTP');
+                            return;
+                          }
+                          Navigator.pop(ctx);
+                          timer?.cancel();
+                          _showFinalConfirmDialog(settings);
+                        }
+                      },
+                child: sending
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : Text(otpSent ? 'Verify & Delete' : 'Continue'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _showFinalConfirmDialog(SettingsProvider settings) {
+    bool sending = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(children: [
+            Icon(Icons.delete_forever_rounded, color: AppColors.error),
+            const SizedBox(width: 8),
+            Text('Final Warning', style: TextStyle(color: _getTextColor(context))),
+          ]),
+          content: Text('Are you absolutely sure? This will permanently delete all products, sales, customers, and all other data. This cannot be undone.',
+              style: AppTextStyles.bodySm.copyWith(color: AppColors.textSecondary)),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+              onPressed: sending
+                  ? null
+                  : () async {
+                      setDialogState(() => sending = true);
+                      try {
+                        await settings.eraseAllData();
+                        Navigator.pop(ctx);
+                        _showSnackBar('All data has been erased successfully');
+                      } catch (e) {
+                        setDialogState(() => sending = false);
+                        _showSnackBar('Error: ${e.toString()}');
+                      }
+                    },
+              child: sending
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('Yes, Delete Everything'),
+            ),
+          ],
+        ),
       ),
     );
   }

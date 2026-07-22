@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:smartstock/core/services/connectivity_service.dart';
@@ -432,6 +433,7 @@ class _ProductFormState extends State<ProductForm> {
                   label: 'Purchase Price',
                   hint: '0.00',
                   keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))],
                   validator: (v) =>
                       v == null || v.trim().isEmpty ? 'Required' : null,
                 ),
@@ -443,6 +445,7 @@ class _ProductFormState extends State<ProductForm> {
                   label: 'Selling Price',
                   hint: '0.00',
                   keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))],
                   validator: (v) =>
                       v == null || v.trim().isEmpty ? 'Required' : null,
                 ),
@@ -780,12 +783,14 @@ class _ProductFormState extends State<ProductForm> {
     TextInputType? keyboardType,
     int maxLines = 1,
     String? Function(String?)? validator,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
       validator: validator,
+      inputFormatters: inputFormatters,
       style: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 14,

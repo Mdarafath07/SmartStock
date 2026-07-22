@@ -37,58 +37,116 @@ class DuplicateSerialException implements Exception {
 
 class ProductProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static const int _pageSize = 20;
 
   List<Product> _products = [];
   List<Product> get products => _products;
 
-  Product? _selectedProduct;
-  Product? get selectedProduct => _selectedProduct;
+  DocumentSnapshot? _lastDoc;
+  bool _hasMore = true;
+  String? _currentCategoryId;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  bool _isLoadingMore = false;
+  bool get isLoadingMore => _isLoadingMore;
+
   String? _error;
   String? get error => _error;
 
-  Future<void> loadProducts({String? categoryId}) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+  int _totalProducts = 0;
+  int get totalProducts => _totalProducts;
+  int _totalItems = 0;
+  int get totalItems => _totalItems;
+  int _inStock = 0;
+  int get inStock => _inStock;
+  int _lowStock = 0;
+  int get lowStock => _lowStock;
+  int _outOfStock = 0;
+  int get outOfStock => _outOfStock;
+
+  Future<void> loadStats({String? categoryId}) async {
+    try {
+      Query query = _firestore.collection('products');
+      if (categoryId != null && categoryId.isNotEmpty) {
+        query = query.where('categoryId', isEqualTo: categoryId);
+      }
+      final snapshot = await query.get();
+      int totalItems = 0;
+      int inStock = 0;
+      int lowStock = 0;
+      int outOfStock = 0;
+      for (final doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final qty = (data['availableQuantity'] as num?)?.toInt() ?? 0;
+        totalItems += qty;
+        if (qty > 0) inStock++;
+        if (qty > 0 && qty <= 5) lowStock++;
+        if (qty <= 0) outOfStock++;
+      }
+      _totalProducts = snapshot.docs.length;
+      _totalItems = totalItems;
+      _inStock = inStock;
+      _lowStock = lowStock;
+      _outOfStock = outOfStock;
+    } catch (_) {}
+  }
+
+  Future<void> loadProducts({String? categoryId, bool refresh = true}) async {
+    if (refresh) {
+      _isLoading = true;
+      _error = null;
+      _products = [];
+      _lastDoc = null;
+      _hasMore = true;
+      _currentCategoryId = categoryId;
+      notifyListeners();
+    }
 
     try {
-      final bool filterByCategory = categoryId != null && categoryId.isNotEmpty;
       Query query = _firestore.collection('products');
+      final filterByCategory = categoryId != null && categoryId.isNotEmpty;
       if (filterByCategory) {
         query = query.where('categoryId', isEqualTo: categoryId);
-      } else {
-        query = query.orderBy('createdAt', descending: true);
+      }
+      query = query.orderBy('createdAt', descending: true);
+      query = query.limit(_pageSize);
+
+      if (_lastDoc != null) {
+        query = query.startAfterDocument(_lastDoc!);
       }
 
-      final snapshot = await query.limit(100).get();
+      final snapshot = await query.get();
       final products = snapshot.docs
           .map((doc) =>
               Product.fromMap(doc.data() as Map<String, dynamic>, doc.id))
           .toList();
-      final enriched = await _enrichWithStockCounts(products);
-      _products = enriched;
-      if (filterByCategory) {
-        _products.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      if (refresh) {
+        _products = products;
+      } else {
+        _products = [..._products, ...products];
       }
+      _lastDoc = snapshot.docs.isNotEmpty ? snapshot.docs.last : null;
+      _hasMore = snapshot.docs.length >= _pageSize;
     } catch (e) {
-      _error = e.toString();
+      if (refresh) _error = e.toString();
     }
     _isLoading = false;
+    _isLoadingMore = false;
     notifyListeners();
+
+    if (refresh) {
+      loadStats(categoryId: categoryId);
+    }
   }
 
-  Future<List<Product>> _enrichWithStockCounts(List<Product> products) async {
-    if (products.isEmpty) return products;
-    return Future.wait(products.map((p) async {
-      if (!p.isSerialized) return p;
-      final available = await _countSerialNumbers(p.id, 'available');
-      final sold = await _countSerialNumbers(p.id, 'sold');
-      return p.copyWith(availableQuantity: available, soldQuantity: sold);
-    }));
+  Future<void> loadMoreProducts() async {
+    if (_isLoadingMore || !_hasMore) return;
+    _isLoadingMore = true;
+    notifyListeners();
+    await loadProducts(categoryId: _currentCategoryId, refresh: false);
   }
 
   Future<void> loadProductById(String id) async {
@@ -99,17 +157,7 @@ class ProductProvider extends ChangeNotifier {
       final doc = await _firestore.collection('products').doc(id).get();
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
-        final product = Product.fromMap(data, doc.id);
-        if (product.isSerialized) {
-          final availableCount = await _countSerialNumbers(id, 'available');
-          final soldCount = await _countSerialNumbers(id, 'sold');
-          _selectedProduct = product.copyWith(
-            availableQuantity: availableCount,
-            soldQuantity: soldCount,
-          );
-        } else {
-          _selectedProduct = product;
-        }
+        _selectedProduct = Product.fromMap(data, doc.id);
       }
     } catch (e) {
       _error = e.toString();
@@ -119,19 +167,8 @@ class ProductProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<int> _countSerialNumbers(String productId, String status) async {
-    try {
-      final snapshot = await _firestore
-          .collection('serial_numbers')
-          .where('productId', isEqualTo: productId)
-          .where('status', isEqualTo: status)
-          .count()
-          .get();
-      return snapshot.count ?? 0;
-    } catch (_) {
-      return 0;
-    }
-  }
+  Product? _selectedProduct;
+  Product? get selectedProduct => _selectedProduct;
 
   Future<String?> checkSerialAvailability(String serialNumber) async {
     try {
@@ -406,8 +443,6 @@ class ProductProvider extends ChangeNotifier {
     }
   }
 
-  /// Finds a product by scanning a serial number barcode.
-  /// Returns the product and the matching serial number doc, or null.
   Future<(Product, Map<String, dynamic>)?> findProductBySerialNumber(
       String serial) async {
     try {
@@ -426,12 +461,8 @@ class ProductProvider extends ChangeNotifier {
       if (!productDoc.exists) return null;
       final product = Product.fromMap(
           productDoc.data() as Map<String, dynamic>, productDoc.id);
-      if (!product.isSerialized) return null;
-      final availableCount = await _countSerialNumbers(productId, 'available');
-      final soldCount = await _countSerialNumbers(productId, 'sold');
       return (
-        product.copyWith(
-            availableQuantity: availableCount, soldQuantity: soldCount),
+        product,
         {
           'id': snapshot.docs.first.id,
           'serialNumber': serialData['serialNumber'] as String? ?? '',
@@ -567,5 +598,4 @@ class ProductProvider extends ChangeNotifier {
     }
     return result;
   }
-
 }

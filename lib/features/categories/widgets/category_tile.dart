@@ -8,6 +8,7 @@ import 'package:smartstock/features/categories/widgets/category_icons.dart';
 class CategoryTile extends StatelessWidget {
   final Category category;
   final VoidCallback onEdit;
+  final VoidCallback onDelete;
   final int index;
 
   static const _colors = [
@@ -18,6 +19,7 @@ class CategoryTile extends StatelessWidget {
     super.key,
     required this.category,
     required this.onEdit,
+    required this.onDelete,
     this.index = 0,
   });
 
@@ -107,6 +109,19 @@ class CategoryTile extends StatelessWidget {
                 ),
                 child: Icon(Icons.edit_outlined,
                     color: AppColors.primary, size: 16),
+              ),
+            ),
+            const SizedBox(width: 4),
+            GestureDetector(
+              onTap: onDelete,
+              child: Container(
+                width: 32, height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.errorContainer,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.delete_outline_rounded,
+                    color: AppColors.error, size: 16),
               ),
             ),
           ],

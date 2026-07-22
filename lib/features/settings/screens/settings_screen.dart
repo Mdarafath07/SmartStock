@@ -510,13 +510,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.warning_amber_rounded, size: 18, color: AppColors.error),
-              const SizedBox(width: 8),
-              Text('Danger Zone', style: AppTextStyles.titleSm.copyWith(color: AppColors.error)),
-            ],
-          ),
+          Text('Data Management', style: AppTextStyles.titleSm.copyWith(color: isDark ? AppColors.textPrimary : AppColors.textPrimary)),
           const SizedBox(height: 12),
           _settingRow(
             icon: Icons.delete_forever_rounded,

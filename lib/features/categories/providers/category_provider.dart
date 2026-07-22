@@ -82,4 +82,23 @@ class CategoryProvider extends ChangeNotifier {
     }
   }
 
+  Future<int> getProductCount(String categoryId) async {
+    final snapshot = await _firestore
+        .collection('products')
+        .where('categoryId', isEqualTo: categoryId)
+        .count()
+        .get();
+    return snapshot.count ?? 0;
+  }
+
+  Future<void> deleteCategory(String id) async {
+    final count = await getProductCount(id);
+    if (count > 0) {
+      throw Exception('Cannot delete: $count product${count == 1 ? '' : 's'} linked to this category');
+    }
+    await _firestore.collection('categories').doc(id).delete();
+    _categories.removeWhere((c) => c.id == id);
+    notifyListeners();
+  }
+
 }

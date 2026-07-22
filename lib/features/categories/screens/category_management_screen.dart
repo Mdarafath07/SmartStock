@@ -235,6 +235,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> wit
                 category: category,
                 index: index,
                 onEdit: () => _showEditCategory(context, category),
+                onDelete: () => _deleteCategory(context, provider, category),
               );
             },
           ),
@@ -248,6 +249,56 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> wit
       context,
       MaterialPageRoute(builder: (_) => const AddCategoryScreen()),
     );
+  }
+
+  void _deleteCategory(BuildContext context, CategoryProvider provider, Category category) async {
+    final count = await provider.getProductCount(category.id);
+    if (count > 0) {
+      _showSnackBar('Cannot delete "$category.name": $count product${count == 1 ? '' : 's'} linked');
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(children: [
+          Container(
+            width: 36, height: 36,
+            decoration: BoxDecoration(
+              color: AppColors.error.withAlpha(20),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Text('Delete Category', style: AppTextStyles.titleSm.copyWith(color: AppColors.textPrimary)),
+        ]),
+        content: Text('Are you sure you want to delete "$category.name"?', style: AppTextStyles.bodyMd.copyWith(color: AppColors.textSecondary)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel', style: AppTextStyles.button.copyWith(color: AppColors.textMuted))),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Delete', style: AppTextStyles.button),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await provider.deleteCategory(category.id);
+        if (context.mounted) _showSnackBar('"${category.name}" deleted');
+      } catch (e) {
+        if (context.mounted) _showSnackBar(e.toString());
+      }
+    }
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _showEditCategory(BuildContext context, Category category) {
